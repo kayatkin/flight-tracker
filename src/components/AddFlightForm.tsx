@@ -10,6 +10,7 @@ interface AddFlightFormProps {
 const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
   const today = new Date().toISOString().split('T')[0];
 
+  // totalPrice теперь string, чтобы избежать 0 по умолчанию
   const [formData, setFormData] = useState({
     origin: '',
     destination: '',
@@ -25,7 +26,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
     layoverDuration: 60,
     airline: '',
     passengers: 1 as 1 | 2 | 3 | 4,
-    totalPrice: 0,
+    totalPrice: '', // ← изменили на string
   });
 
   const [analysis, setAnalysis] = useState<{
@@ -34,8 +35,17 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
     diff?: number;
   } | null>(null);
 
+  // Обработка ввода — блокируем не-цифры в totalPrice
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
+
+    if (name === 'totalPrice') {
+      // Разрешаем только цифры (и пустую строку)
+      const numericValue = value.replace(/\D/g, '');
+      setFormData((prev) => ({ ...prev, totalPrice: numericValue }));
+      return;
+    }
+
     const val = type === 'number' ? Number(value) : value;
     setFormData((prev) => ({ ...prev, [name]: val }));
   };
@@ -51,16 +61,19 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
       alert('Укажите города вылета и назначения');
       return;
     }
-    if (!formData.departureDate || !formData.departureTime || !formData.arrivalTime) {
-      alert('Укажите дату и время вылета/прилёта');
+    if (!formData.departureDate) {
+      alert('Укажите дату вылета');
       return;
     }
-    if (formData.type === 'roundTrip' && (!formData.returnDate || !formData.returnDepartureTime || !formData.returnArrivalTime)) {
-      alert('Укажите дату и время обратного рейса');
+    // Время больше не обязательно
+    if (formData.type === 'roundTrip' && !formData.returnDate) {
+      alert('Укажите дату возвращения');
       return;
     }
-    if (formData.totalPrice <= 0) {
-      alert('Укажите корректную стоимость');
+    // Проверка стоимости: не пусто и > 0
+    const priceNum = Number(formData.totalPrice);
+    if (!formData.totalPrice || priceNum <= 0) {
+      alert('Укажите корректную стоимость (только цифры, больше 0)');
       return;
     }
 
@@ -71,8 +84,8 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
       type: formData.type,
       departureDate: formData.departureDate,
       returnDate: formData.type === 'roundTrip' ? formData.returnDate : undefined,
-      departureTime: formData.departureTime,
-      arrivalTime: formData.arrivalTime,
+      departureTime: formData.departureTime || undefined,
+      arrivalTime: formData.arrivalTime || undefined,
       returnDepartureTime: formData.type === 'roundTrip' ? formData.returnDepartureTime : undefined,
       returnArrivalTime: formData.type === 'roundTrip' ? formData.returnArrivalTime : undefined,
       isDirect: formData.isDirect,
@@ -80,7 +93,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
       layoverDuration: formData.isDirect ? undefined : formData.layoverDuration,
       airline: formData.airline.trim(),
       passengers: formData.passengers,
-      totalPrice: formData.totalPrice,
+      totalPrice: priceNum, // ← сохраняем как число
       dateFound: new Date().toISOString().split('T')[0],
     };
 
@@ -226,7 +239,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
               name="departureTime"
               value={formData.departureTime}
               onChange={handleChange}
-              required
+              // required УБРАНО
               style={{
                 width: '100%',
                 padding: '8px',
@@ -243,7 +256,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
               name="arrivalTime"
               value={formData.arrivalTime}
               onChange={handleChange}
-              required
+              // required УБРАНО
               style={{
                 width: '100%',
                 padding: '8px',
@@ -283,7 +296,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
                   name="returnDepartureTime"
                   value={formData.returnDepartureTime || ''}
                   onChange={handleChange}
-                  required
+                  // required УБРАНО
                   style={{
                     width: '100%',
                     padding: '8px',
@@ -300,7 +313,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
                   name="returnArrivalTime"
                   value={formData.returnArrivalTime || ''}
                   onChange={handleChange}
-                  required
+                  // required УБРАНО
                   style={{
                     width: '100%',
                     padding: '8px',
@@ -419,12 +432,12 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
         <div>
           <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Стоимость (всего, ₽)</label>
           <input
-            type="number"
+            type="text" // ← text, чтобы не было 0
             name="totalPrice"
             value={formData.totalPrice}
             onChange={handleChange}
-            min="1"
-            required
+            placeholder="12500"
+            inputMode="numeric" // оптимизация клавиатуры на мобильных
             style={{
               width: '100%',
               padding: '8px',

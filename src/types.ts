@@ -6,8 +6,8 @@ export interface Flight {
   type: 'oneWay' | 'roundTrip';
   departureDate: string; // YYYY-MM-DD
   returnDate?: string;
-  departureTime: string; // HH:mm
-  arrivalTime: string;
+  departureTime?: string; // HH:mm
+  arrivalTime?: string;
   returnDepartureTime?: string;
   returnArrivalTime?: string;
   isDirect: boolean;
