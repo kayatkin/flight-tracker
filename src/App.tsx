@@ -19,14 +19,14 @@ const App: React.FC = () => {
   const [userName, setUserName] = useState<string>('Гость');
   const [activeTab, setActiveTab] = useState<'add' | 'history'>('add');
   const [flights, setFlights] = useState<Flight[]>([]);
+  const [airlines, setAirlines] = useState<string[]>([]); // ← добавлено
 
-  // Загрузка сохранённых билетов из localStorage
+  // Загрузка сохранённых билетов
   useEffect(() => {
     const saved = localStorage.getItem('flights');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Опционально: можно добавить валидацию структуры, но для MVP — достаточно
         setFlights(parsed);
       } catch (e) {
         console.error('Failed to parse flights from localStorage', e);
@@ -35,12 +35,35 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Сохранение билетов при изменении
+  // Загрузка сохранённых авиакомпаний
+  useEffect(() => {
+    const saved = localStorage.getItem('airlines');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setAirlines(parsed);
+        }
+      } catch (e) {
+        console.error('Failed to parse airlines from localStorage', e);
+        setAirlines([]);
+      }
+    }
+  }, []);
+
+  // Сохранение билетов
   useEffect(() => {
     localStorage.setItem('flights', JSON.stringify(flights));
   }, [flights]);
 
-  // Определение имени пользователя (Telegram или локальная разработка)
+  // Сохранение авиакомпаний
+  useEffect(() => {
+    if (airlines.length > 0) {
+      localStorage.setItem('airlines', JSON.stringify(airlines));
+    }
+  }, [airlines]);
+
+  // Определение имени пользователя
   useEffect(() => {
     try {
       if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
@@ -109,7 +132,14 @@ const App: React.FC = () => {
       {activeTab === 'add' && (
         <AddFlightForm
           flights={flights}
-          onAdd={(newFlight) => setFlights([...flights, newFlight])}
+          airlines={airlines} // ← передаём
+          onAdd={(newFlight) => {
+            setFlights([...flights, newFlight]);
+            // Добавляем авиакомпанию, если новая
+            if (newFlight.airline && !airlines.includes(newFlight.airline)) {
+              setAirlines([...airlines, newFlight.airline]);
+            }
+          }}
         />
       )}
 

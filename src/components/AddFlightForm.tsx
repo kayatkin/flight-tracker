@@ -1,16 +1,16 @@
 // src/components/AddFlightForm.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Flight } from '../types';
 
 interface AddFlightFormProps {
   flights: Flight[];
+  airlines: string[];
   onAdd: (flight: Flight) => void;
 }
 
-const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
+const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd }) => {
   const today = new Date().toISOString().split('T')[0];
 
-  // totalPrice теперь string, чтобы избежать 0 по умолчанию
   const [formData, setFormData] = useState({
     origin: '',
     destination: '',
@@ -21,37 +21,46 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
     arrivalTime: '',
     returnDepartureTime: '',
     returnArrivalTime: '',
-    isDirect: true,
-    layoverCity: '',
-    layoverDuration: 60,
+    isDirectThere: true,
+    isDirectBack: true,
+    layoverCityThere: '',
+    layoverDurationThere: 60,
+    layoverCityBack: '',
+    layoverDurationBack: 60,
     airline: '',
     passengers: 1 as 1 | 2 | 3 | 4,
-    totalPrice: '', // ← изменили на string
+    totalPrice: '',
   });
 
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [analysis, setAnalysis] = useState<{
     type: 'good' | 'neutral' | 'bad';
     message: string;
     diff?: number;
   } | null>(null);
 
-  // Обработка ввода — блокируем не-цифры в totalPrice
+  useEffect(() => {
+    if (formData.airline) {
+      const term = formData.airline.toLowerCase();
+      const matches = airlines
+        .filter(airline => airline.toLowerCase().startsWith(term))
+        .slice(0, 5);
+      setSuggestions(matches);
+    } else {
+      setSuggestions([]);
+    }
+  }, [formData.airline, airlines]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
 
     if (name === 'totalPrice') {
-      // Разрешаем только цифры (и пустую строку)
       const numericValue = value.replace(/\D/g, '');
       setFormData((prev) => ({ ...prev, totalPrice: numericValue }));
       return;
     }
 
-    const val = type === 'number' ? Number(value) : value;
-    setFormData((prev) => ({ ...prev, [name]: val }));
-  };
-
-  const handleCheckbox = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({ ...prev, isDirect: e.target.checked }));
+    setFormData((prev) => ({ ...prev, [name]: type === 'number' ? Number(value) : value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -65,12 +74,10 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
       alert('Укажите дату вылета');
       return;
     }
-    // Время больше не обязательно
     if (formData.type === 'roundTrip' && !formData.returnDate) {
       alert('Укажите дату возвращения');
       return;
     }
-    // Проверка стоимости: не пусто и > 0
     const priceNum = Number(formData.totalPrice);
     if (!formData.totalPrice || priceNum <= 0) {
       alert('Укажите корректную стоимость (только цифры, больше 0)');
@@ -88,16 +95,22 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
       arrivalTime: formData.arrivalTime || undefined,
       returnDepartureTime: formData.type === 'roundTrip' ? formData.returnDepartureTime : undefined,
       returnArrivalTime: formData.type === 'roundTrip' ? formData.returnArrivalTime : undefined,
-      isDirect: formData.isDirect,
-      layoverCity: formData.isDirect ? undefined : formData.layoverCity.trim() || undefined,
-      layoverDuration: formData.isDirect ? undefined : formData.layoverDuration,
+      isDirectThere: formData.isDirectThere,
+      isDirectBack: formData.isDirectBack,
+      layoverCityThere: formData.isDirectThere ? undefined : formData.layoverCityThere.trim() || undefined,
+      layoverDurationThere: formData.isDirectThere ? undefined : formData.layoverDurationThere,
+      layoverCityBack: formData.type === 'roundTrip' && !formData.isDirectBack 
+        ? formData.layoverCityBack.trim() || undefined 
+        : undefined,
+      layoverDurationBack: formData.type === 'roundTrip' && !formData.isDirectBack 
+        ? formData.layoverDurationBack 
+        : undefined,
       airline: formData.airline.trim(),
       passengers: formData.passengers,
-      totalPrice: priceNum, // ← сохраняем как число
+      totalPrice: priceNum,
       dateFound: new Date().toISOString().split('T')[0],
     };
 
-    // Анализ выгоды
     const comparableFlights = flights.filter((f) => 
       f.origin === newFlight.origin &&
       f.destination === newFlight.destination &&
@@ -136,6 +149,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
     }
 
     onAdd(newFlight);
+    setSuggestions([]);
     setTimeout(() => setAnalysis(null), 5000);
   };
 
@@ -239,7 +253,6 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
               name="departureTime"
               value={formData.departureTime}
               onChange={handleChange}
-              // required УБРАНО
               style={{
                 width: '100%',
                 padding: '8px',
@@ -256,7 +269,6 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
               name="arrivalTime"
               value={formData.arrivalTime}
               onChange={handleChange}
-              // required УБРАНО
               style={{
                 width: '100%',
                 padding: '8px',
@@ -296,7 +308,6 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
                   name="returnDepartureTime"
                   value={formData.returnDepartureTime || ''}
                   onChange={handleChange}
-                  // required УБРАНО
                   style={{
                     width: '100%',
                     padding: '8px',
@@ -313,7 +324,6 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
                   name="returnArrivalTime"
                   value={formData.returnArrivalTime || ''}
                   onChange={handleChange}
-                  // required УБРАНО
                   style={{
                     width: '100%',
                     padding: '8px',
@@ -328,72 +338,129 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
         )}
       </div>
 
-      {/* Прямой рейс / Пересадка */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: '#f5f5f5', padding: '12px', borderRadius: '8px' }}>
-        <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>🔄 Рейс</h4>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <input
-            type="checkbox"
-            id="isDirect"
-            checked={formData.isDirect}
-            onChange={handleCheckbox}
-            style={{ width: '20px', height: '20px' }}
-          />
-          <label htmlFor="isDirect" style={{ fontWeight: 'bold' }}>Прямой рейс</label>
+      {/* Пересадки */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', backgroundColor: '#f5f5f5', padding: '12px', borderRadius: '8px' }}>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>🔄 Пересадки</h4>
+
+        {/* Туда */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <input
+              type="checkbox"
+              id="isDirectThere"
+              checked={formData.isDirectThere}
+              onChange={(e) => setFormData(prev => ({ ...prev, isDirectThere: e.target.checked }))}
+              style={{ width: '20px', height: '20px' }}
+            />
+            <label htmlFor="isDirectThere" style={{ fontWeight: 'bold' }}>
+              Прямой рейс туда
+            </label>
+          </div>
+          {!formData.isDirectThere && (
+            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px' }}>Город пересадки (туда)</label>
+                <input
+                  type="text"
+                  value={formData.layoverCityThere || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, layoverCityThere: e.target.value }))}
+                  placeholder="Стамбул"
+                  style={{
+                    width: '100%',
+                    padding: '6px',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                  }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px' }}>Длительность (мин)</label>
+                <input
+                  type="number"
+                  value={formData.layoverDurationThere || 60}
+                  onChange={(e) => setFormData(prev => ({ ...prev, layoverDurationThere: Number(e.target.value) || 60 }))}
+                  min="30"
+                  max="1440"
+                  style={{
+                    width: '100%',
+                    padding: '6px',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
-        {!formData.isDirect && (
-          <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Город пересадки</label>
+        {/* Обратно (только для roundTrip) */}
+        {formData.type === 'roundTrip' && (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
               <input
-                type="text"
-                name="layoverCity"
-                value={formData.layoverCity}
-                onChange={handleChange}
-                placeholder="Стамбул"
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ccc',
-                  borderRadius: '6px',
-                  fontSize: '16px',
-                }}
+                type="checkbox"
+                id="isDirectBack"
+                checked={formData.isDirectBack}
+                onChange={(e) => setFormData(prev => ({ ...prev, isDirectBack: e.target.checked }))}
+                style={{ width: '20px', height: '20px' }}
               />
+              <label htmlFor="isDirectBack" style={{ fontWeight: 'bold' }}>
+                Прямой рейс обратно
+              </label>
             </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Длительность пересадки (мин)</label>
-              <input
-                type="number"
-                name="layoverDuration"
-                value={formData.layoverDuration}
-                onChange={handleChange}
-                min="30"
-                max="1440"
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ccc',
-                  borderRadius: '6px',
-                  fontSize: '16px',
-                }}
-              />
-            </div>
+            {!formData.isDirectBack && (
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px' }}>Город пересадки (обратно)</label>
+                  <input
+                    type="text"
+                    value={formData.layoverCityBack || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, layoverCityBack: e.target.value }))}
+                    placeholder="Доха"
+                    style={{
+                      width: '100%',
+                      padding: '6px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      fontSize: '14px',
+                    }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px' }}>Длительность (мин)</label>
+                  <input
+                    type="number"
+                    value={formData.layoverDurationBack || 60}
+                    onChange={(e) => setFormData(prev => ({ ...prev, layoverDurationBack: Number(e.target.value) || 60 }))}
+                    min="30"
+                    max="1440"
+                    style={{
+                      width: '100%',
+                      padding: '6px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      fontSize: '14px',
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Авиакомпания и пассажиры */}
+      {/* Авиакомпания с автозаполнением */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: '#f5f5f5', padding: '12px', borderRadius: '8px' }}>
-        <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>🏢 Авиакомпания и пассажиры</h4>
-        <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Авиакомпания</label>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>✈️ Авиакомпания</h4>
+        <div style={{ position: 'relative' }}>
           <input
             type="text"
             name="airline"
             value={formData.airline}
             onChange={handleChange}
-            placeholder="Aeroflot"
+            placeholder="Начните вводить..."
             required
             style={{
               width: '100%',
@@ -402,10 +469,52 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
               borderRadius: '6px',
               fontSize: '16px',
             }}
+            autoComplete="off"
           />
+          {formData.airline && suggestions.length > 0 && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                backgroundColor: 'white',
+                border: '1px solid #ccc',
+                borderRadius: '6px',
+                marginTop: '4px',
+                maxHeight: '150px',
+                overflowY: 'auto',
+                zIndex: 10,
+                boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+              }}
+            >
+              {suggestions.map((airline, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => {
+                    setFormData((prev) => ({ ...prev, airline }));
+                    setSuggestions([]);
+                  }}
+                  style={{
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                    borderBottom: '1px solid #eee',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f8ff')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                >
+                  {airline}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+      </div>
+
+      {/* Пассажиры */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: '#f5f5f5', padding: '12px', borderRadius: '8px' }}>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>👥 Пассажиры</h4>
         <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Пассажиров</label>
           <select
             name="passengers"
             value={formData.passengers}
@@ -432,12 +541,12 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
         <div>
           <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Стоимость (всего, ₽)</label>
           <input
-            type="text" // ← text, чтобы не было 0
+            type="text"
             name="totalPrice"
             value={formData.totalPrice}
             onChange={handleChange}
             placeholder="12500"
-            inputMode="numeric" // оптимизация клавиатуры на мобильных
+            inputMode="numeric"
             style={{
               width: '100%',
               padding: '8px',
@@ -479,7 +588,6 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
         </div>
       )}
 
-      {/* Кнопка сохранить */}
       <button
         type="submit"
         style={{

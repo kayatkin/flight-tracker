@@ -2,6 +2,13 @@
 import React, { useState, useMemo } from 'react';
 import { Flight } from '../types';
 
+// Утилита: YYYY-MM-DD → DD-MM-YYYY
+const formatDateToDMY = (isoDate: string): string => {
+  if (!isoDate) return '';
+  const [year, month, day] = isoDate.split('-');
+  return `${day}-${month}-${year}`;
+};
+
 interface HistoryViewProps {
   flights: Flight[];
   onDelete: (id: string) => void;
@@ -9,7 +16,6 @@ interface HistoryViewProps {
 
 const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  // Теперь храним ТОЛЬКО один активный город (как в Wallet)
   const [activeDestination, setActiveDestination] = useState<string | null>(null);
 
   const grouped = useMemo(() => {
@@ -43,13 +49,29 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
   };
 
   const formatLayover = (flight: Flight) => {
-    if (flight.isDirect) return 'Прямой';
-    if (flight.layoverCity) {
-      const hours = Math.floor(flight.layoverDuration! / 60);
-      const mins = flight.layoverDuration! % 60;
-      return `Пересадка: ${flight.layoverCity} (${hours}ч ${mins}м)`;
+    const parts: string[] = [];
+  
+    // Туда
+    if (flight.isDirectThere) {
+      parts.push('Туда: прямой');
+    } else if (flight.layoverCityThere && flight.layoverDurationThere) {
+      const h = Math.floor(flight.layoverDurationThere / 60);
+      const m = flight.layoverDurationThere % 60;
+      parts.push(`Туда: ${flight.layoverCityThere} (${h}ч ${m}м)`);
     }
-    return 'С пересадкой';
+  
+    // Обратно
+    if (flight.type === 'roundTrip') {
+      if (flight.isDirectBack) {
+        parts.push('Обратно: прямой');
+      } else if (flight.layoverCityBack && flight.layoverDurationBack) {
+        const h = Math.floor(flight.layoverDurationBack / 60);
+        const m = flight.layoverDurationBack % 60;
+        parts.push(`Обратно: ${flight.layoverCityBack} (${h}ч ${m}м)`);
+      }
+    }
+  
+    return parts.join(' • ');
   };
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
@@ -85,8 +107,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
         </div>
 
         <div style={{ fontSize: '14px', color: '#555', margin: '6px 0' }}>
-          📅 {flight.departureDate}
-          {flight.type === 'roundTrip' && flight.returnDate && ` — ${flight.returnDate}`}
+          📅 {formatDateToDMY(flight.departureDate)}
+          {flight.type === 'roundTrip' && flight.returnDate && ` — ${formatDateToDMY(flight.returnDate)}`}
         </div>
 
         {(flight.departureTime || flight.arrivalTime) && (
@@ -113,7 +135,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
         </div>
 
         <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
-          👥 {flight.passengers} пассажир(ов) • Найдено: {flight.dateFound}
+          👥 {flight.passengers} пассажир(ов) • Найдено: {formatDateToDMY(flight.dateFound)}
         </div>
 
         <button
@@ -148,7 +170,6 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
 
   return (
     <div style={{ padding: '0 12px', paddingBottom: '20px' }}>
-      {/* Панель поиска */}
       <div style={{ marginBottom: '20px' }}>
         <div style={{ position: 'relative' }}>
           <input
@@ -201,7 +222,6 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
                   transform: isActive ? 'scale(1.02)' : 'scale(1)',
                 }}
               >
-                {/* Заголовок — всегда виден (как "корешок") */}
                 <div style={{ padding: '16px', backgroundColor: '#f8f9fa' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <strong style={{ fontSize: '18px', color: '#0088cc' }}>📍 {destination}</strong>
@@ -213,12 +233,11 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
                     💰 {formatPrice(bestFlight.totalPrice / bestFlight.passengers)} на человека
                   </div>
                   <div style={{ fontSize: '14px', color: '#777', marginTop: '4px' }}>
-                    📅 {bestFlight.departureDate}
-                    {bestFlight.type === 'roundTrip' && bestFlight.returnDate && ` — ${bestFlight.returnDate}`}
+                    📅 {formatDateToDMY(bestFlight.departureDate)}
+                    {bestFlight.type === 'roundTrip' && bestFlight.returnDate && ` — ${formatDateToDMY(bestFlight.returnDate)}`}
                   </div>
                 </div>
 
-                {/* Содержимое — только при активности */}
                 {isActive && (
                   <div style={{ padding: '16px', paddingTop: '8px' }}>
                     <div style={{ marginBottom: '12px' }}>

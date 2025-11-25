@@ -4,17 +4,21 @@ export interface Flight {
   origin: string;
   destination: string;
   type: 'oneWay' | 'roundTrip';
-  departureDate: string; // YYYY-MM-DD
+  departureDate: string;
   returnDate?: string;
-  departureTime?: string; // HH:mm
+  departureTime?: string;
   arrivalTime?: string;
   returnDepartureTime?: string;
   returnArrivalTime?: string;
-  isDirect: boolean;
-  layoverCity?: string;
-  layoverDuration?: number; // minutes
+  // ← Убираем isDirect, layoverCity, layoverDuration
+  isDirectThere: boolean;            // туда
+  isDirectBack: boolean;             // обратно (только для roundTrip)
+  layoverCityThere?: string;         // пересадка туда
+  layoverDurationThere?: number;     // длительность туда (мин)
+  layoverCityBack?: string;          // пересадка обратно
+  layoverDurationBack?: number;      // длительность обратно (мин)
   airline: string;
   passengers: 1 | 2 | 3 | 4;
   totalPrice: number;
-  dateFound: string; // YYYY-MM-DD
+  dateFound: string;
 }
