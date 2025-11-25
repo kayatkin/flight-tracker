@@ -113,11 +113,13 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
 
         {(flight.departureTime || flight.arrivalTime) && (
           <div style={{ fontSize: '14px', color: '#555' }}>
-            ⏱️ {flight.departureTime || '—'} → {flight.arrivalTime || '—'}
+            ➡️ {flight.departureTime || '—'} → {flight.arrivalTime || '—'}
+            {flight.arrivalNextDay && <span style={{ fontSize: '12px', color: '#888', marginLeft: '4px' }}> (+1)</span>}
             {flight.type === 'roundTrip' && (
               <>
                 <br />
                 ↩️ {flight.returnDepartureTime || '—'} → {flight.returnArrivalTime || '—'}
+                {flight.returnArrivalNextDay && <span style={{ fontSize: '12px', color: '#888', marginLeft: '4px' }}> (+1)</span>}
               </>
             )}
           </div>

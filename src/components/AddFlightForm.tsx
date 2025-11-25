@@ -30,6 +30,8 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd 
     airline: '',
     passengers: 1 as 1 | 2 | 3 | 4,
     totalPrice: '',
+    arrivalNextDay: false,
+    returnArrivalNextDay: false,
   });
 
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -109,6 +111,9 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd 
       passengers: formData.passengers,
       totalPrice: priceNum,
       dateFound: new Date().toISOString().split('T')[0],
+      // ➕ Поля для сдвига даты прилёта
+      arrivalNextDay: formData.arrivalNextDay,
+      returnArrivalNextDay: formData.type === 'roundTrip' ? formData.returnArrivalNextDay : undefined,
     };
 
     const comparableFlights = flights.filter((f) => 
@@ -277,6 +282,14 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd 
                 fontSize: '16px',
               }}
             />
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', fontSize: '14px' }}>
+              <input
+                type="checkbox"
+                checked={formData.arrivalNextDay}
+                onChange={(e) => setFormData(prev => ({ ...prev, arrivalNextDay: e.target.checked }))}
+              />
+              Прилёт на следующий день (+1)
+            </label>
           </div>
         </div>
 
@@ -332,12 +345,20 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd 
                     fontSize: '16px',
                   }}
                 />
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', fontSize: '14px' }}>
+                  <input
+                    type="checkbox"
+                    checked={formData.returnArrivalNextDay}
+                    onChange={(e) => setFormData(prev => ({ ...prev, returnArrivalNextDay: e.target.checked }))}
+                  />
+                  Прилёт на следующий день (+1)
+                </label>
               </div>
             </div>
           </>
         )}
       </div>
-
+      
       {/* Пересадки */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', backgroundColor: '#f5f5f5', padding: '12px', borderRadius: '8px' }}>
         <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>🔄 Пересадки</h4>

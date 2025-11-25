@@ -21,4 +21,7 @@ export interface Flight {
   passengers: 1 | 2 | 3 | 4;
   totalPrice: number;
   dateFound: string;
+  // ➕ Новые поля для сдвига даты прилёта
+  arrivalNextDay?: boolean;          // +1 день к прилёту туда
+  returnArrivalNextDay?: boolean;    // +1 день к прилёту обратно
 }
