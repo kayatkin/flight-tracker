@@ -68,8 +68,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
     }
   };
 
-  // Новый компонент: полная карточка билета
-  const renderFullFlightCard = (flight: Flight, isBest: boolean = false) => {
+  const renderFullFlightCard = (flight: Flight, isBest: boolean, showDelete = true) => {
     return (
       <div
         key={flight.id}
@@ -93,13 +92,11 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
           {flight.type === 'roundTrip' && ' (туда-обратно)'}
         </div>
 
-        {/* Дата */}
         <div style={{ fontSize: '14px', color: '#555', margin: '6px 0' }}>
           📅 {flight.departureDate}
           {flight.type === 'roundTrip' && flight.returnDate && ` — ${flight.returnDate}`}
         </div>
 
-        {/* Время (если есть) */}
         {(flight.departureTime || flight.arrivalTime) && (
           <div style={{ fontSize: '14px', color: '#555' }}>
             ⏱️ {flight.departureTime || '—'} → {flight.arrivalTime || '—'}
@@ -112,43 +109,40 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
           </div>
         )}
 
-        {/* Пересадка */}
         <div style={{ fontSize: '14px', color: '#666', margin: '6px 0' }}>
           {formatLayover(flight)}
         </div>
 
-        {/* Авиакомпания */}
         <div>✈️ {flight.airline || '—'}</div>
 
-        {/* Цена */}
         <div style={{ marginTop: '8px' }}>
           💰 Всего: {formatPrice(flight.totalPrice)} |{' '}
           <strong>{formatPrice(flight.totalPrice / flight.passengers)} на человека</strong>
         </div>
 
-        {/* Доп. инфо */}
         <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
           👥 {flight.passengers} пассажир(ов) • Найдено: {flight.dateFound}
         </div>
 
-        {/* Кнопка удаления */}
-        <button
-          onClick={(e) => handleDelete(flight.id, e)}
-          style={{
-            position: 'absolute',
-            top: '8px',
-            right: '8px',
-            background: 'none',
-            border: 'none',
-            color: '#f44336',
-            fontSize: '18px',
-            cursor: 'pointer',
-            padding: '4px',
-          }}
-          title="Удалить билет"
-        >
-          🗑️
-        </button>
+        {showDelete && (
+          <button
+            onClick={(e) => handleDelete(flight.id, e)}
+            style={{
+              position: 'absolute',
+              top: '8px',
+              right: '8px',
+              background: 'none',
+              border: 'none',
+              color: '#f44336',
+              fontSize: '18px',
+              cursor: 'pointer',
+              padding: '4px',
+            }}
+            title="Удалить билет"
+          >
+            🗑️
+          </button>
+        )}
       </div>
     );
   };
@@ -164,6 +158,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
 
   return (
     <div style={{ padding: '0 12px' }}>
+      {/* Панель поиска */}
       <div style={{ marginBottom: '20px' }}>
         <div style={{ position: 'relative' }}>
           <input
@@ -193,7 +188,9 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
           const flightList = grouped[destination];
           const bestFlight = getBestFlight(flightList);
           const isExpanded = expandedDestinations.has(destination);
-          const otherFlights = flightList.filter(f => f.id !== bestFlight.id);
+          const otherFlights = flightList.filter(f => f.id !== bestFlight.id).sort((a, b) => 
+            a.totalPrice / a.passengers - b.totalPrice / b.passengers
+          );
 
           return (
             <div
@@ -208,11 +205,9 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
             >
               {/* Заголовок группы */}
               <div
-                onClick={() => toggleExpanded(destination)}
                 style={{
                   padding: '14px 16px',
                   backgroundColor: '#f9f9f9',
-                  cursor: 'pointer',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -224,57 +219,33 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
                     {flightList.length} билет{flightList.length === 1 ? '' : 'ов'}
                   </div>
                 </div>
-                <span style={{ fontSize: '20px', transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
-                  ▼
-                </span>
-              </div>
-
-              {/* Лучший билет — кратко */}
-              <div
-                style={{
-                  padding: '14px',
-                  backgroundColor: '#f1f9f1',
-                  borderBottom: otherFlights.length > 0 ? '1px solid #eee' : 'none',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <div>
-                      <strong>{bestFlight.origin} → {bestFlight.destination}</strong>
-                      {bestFlight.type === 'roundTrip' && ' (туда-обратно)'}
-                    </div>
-                    <div style={{ fontSize: '14px', color: '#555', margin: '4px 0' }}>
-                      📅 {bestFlight.departureDate}
-                      {bestFlight.type === 'roundTrip' && bestFlight.returnDate && ` — ${bestFlight.returnDate}`}
-                    </div>
-                    <div style={{ fontSize: '14px', color: '#666' }}>
-                      💰 {formatPrice(bestFlight.totalPrice / bestFlight.passengers)} на человека
-                    </div>
-                  </div>
-                  <button
-                    onClick={(e) => handleDelete(bestFlight.id, e)}
+                {flightList.length > 1 && (
+                  <span
+                    onClick={() => toggleExpanded(destination)}
                     style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#f44336',
-                      fontSize: '18px',
+                      fontSize: '20px',
+                      transform: isExpanded ? 'rotate(180deg)' : 'none',
+                      transition: 'transform 0.2s',
                       cursor: 'pointer',
-                      flexShrink: 0,
-                      marginLeft: '12px',
                     }}
-                    title="Удалить лучший билет"
                   >
-                    🗑️
-                  </button>
-                </div>
+                    ▼
+                  </span>
+                )}
               </div>
 
-              {/* Полные карточки — только при раскрытии */}
-              {isExpanded && (
-                <div style={{ padding: '0 14px 14px 14px' }}>
-                  {otherFlights
-                    .sort((a, b) => a.totalPrice / a.passengers - b.totalPrice / b.passengers)
-                    .map((flight) => renderFullFlightCard(flight, false))}
+              {/* Самый выгодный билет — всегда виден, в полной карточке */}
+              <div style={{ padding: '0 14px 14px 14px' }}>
+                {renderFullFlightCard(bestFlight, true, true)}
+              </div>
+
+              {/* Остальные билеты — только при раскрытии */}
+              {isExpanded && otherFlights.length > 0 && (
+                <div style={{ padding: '0 14px 14px 14px', borderTop: '1px solid #eee' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '10px', color: '#555' }}>
+                    Другие предложения:
+                  </div>
+                  {otherFlights.map((flight) => renderFullFlightCard(flight, false, true))}
                 </div>
               )}
 
@@ -288,9 +259,10 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
                     cursor: 'pointer',
                     fontSize: '14px',
                     backgroundColor: '#fafafa',
+                    borderTop: isExpanded ? '1px solid #eee' : 'none',
                   }}
                 >
-                  {isExpanded ? '▲ Скрыть детали' : '▼ Показать детали'}
+                  {isExpanded ? '▲ Скрыть остальные' : `▼ Показать ещё ${otherFlights.length}`}
                 </div>
               )}
             </div>
