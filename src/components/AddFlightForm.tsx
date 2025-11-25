@@ -1,5 +1,5 @@
 // src/components/AddFlightForm.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Flight } from '../types';
 
 interface AddFlightFormProps {
@@ -47,7 +47,6 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Валидация
     if (!formData.origin || !formData.destination) {
       alert('Укажите города вылета и назначения');
       return;
@@ -124,219 +123,317 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
     }
 
     onAdd(newFlight);
-
-    // Опционально: очистить форму или показать "сохранено"
     setTimeout(() => setAnalysis(null), 5000);
   };
 
-  // Убедимся, что при смене типа рейса очищаются обратные поля
-  useEffect(() => {
-    if (formData.type === 'oneWay') {
-      setFormData((prev) => ({
-        ...prev,
-        returnDate: '',
-        returnDepartureTime: '',
-        returnArrivalTime: '',
-      }));
-    }
-  }, [formData.type]);
-
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '12px' }}>
+      
       {/* Города */}
-      <div>
-        <label>Город вылета</label>
-        <input
-          type="text"
-          name="origin"
-          value={formData.origin}
-          onChange={handleChange}
-          placeholder="Москва"
-          required
-        />
-      </div>
-
-      <div>
-        <label>Город назначения</label>
-        <input
-          type="text"
-          name="destination"
-          value={formData.destination}
-          onChange={handleChange}
-          placeholder="Тбилиси"
-          required
-        />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: '#f5f5f5', padding: '12px', borderRadius: '8px' }}>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>📍 Маршрут</h4>
+        <div>
+          <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Город вылета</label>
+          <input
+            type="text"
+            name="origin"
+            value={formData.origin}
+            onChange={handleChange}
+            placeholder="Москва"
+            required
+            style={{
+              width: '100%',
+              padding: '8px',
+              border: '1px solid #ccc',
+              borderRadius: '6px',
+              fontSize: '16px',
+            }}
+          />
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Город назначения</label>
+          <input
+            type="text"
+            name="destination"
+            value={formData.destination}
+            onChange={handleChange}
+            placeholder="Тбилиси"
+            required
+            style={{
+              width: '100%',
+              padding: '8px',
+              border: '1px solid #ccc',
+              borderRadius: '6px',
+              fontSize: '16px',
+            }}
+          />
+        </div>
       </div>
 
       {/* Тип рейса */}
-      <div>
-        <label>
-          <input
-            type="radio"
-            name="type"
-            checked={formData.type === 'oneWay'}
-            onChange={() => setFormData((prev) => ({ ...prev, type: 'oneWay' }))}
-          />
-          Только туда
-        </label>
-        <label style={{ marginLeft: '16px' }}>
-          <input
-            type="radio"
-            name="type"
-            checked={formData.type === 'roundTrip'}
-            onChange={() => setFormData((prev) => ({ ...prev, type: 'roundTrip' }))}
-          />
-          Туда и обратно
-        </label>
-      </div>
-
-      {/* Дата вылета */}
-      <div>
-        <label>Дата вылета</label>
-        <input
-          type="date"
-          name="departureDate"
-          value={formData.departureDate}
-          onChange={handleChange}
-          min={today}
-          required
-        />
-      </div>
-
-      {/* Время вылета/прилёта туда */}
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <div style={{ flex: 1 }}>
-          <label>Вылет (время)</label>
-          <input
-            type="time"
-            name="departureTime"
-            value={formData.departureTime}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div style={{ flex: 1 }}>
-          <label>Прилёт (время)</label>
-          <input
-            type="time"
-            name="arrivalTime"
-            value={formData.arrivalTime}
-            onChange={handleChange}
-            required
-          />
-        </div>
-      </div>
-
-      {/* Обратно (если нужно) */}
-      {formData.type === 'roundTrip' && (
-        <>
-          <div>
-            <label>Дата возвращения</label>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: '#f5f5f5', padding: '12px', borderRadius: '8px' }}>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>✈️ Тип рейса</h4>
+        <div style={{ display: 'flex', gap: '16px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <input
-              type="date"
-              name="returnDate"
-              value={formData.returnDate}
+              type="radio"
+              name="type"
+              checked={formData.type === 'oneWay'}
+              onChange={() => setFormData((prev) => ({ ...prev, type: 'oneWay' }))}
+              style={{ width: '20px', height: '20px' }}
+            />
+            Только туда
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <input
+              type="radio"
+              name="type"
+              checked={formData.type === 'roundTrip'}
+              onChange={() => setFormData((prev) => ({ ...prev, type: 'roundTrip' }))}
+              style={{ width: '20px', height: '20px' }}
+            />
+            Туда и обратно
+          </label>
+        </div>
+      </div>
+
+      {/* Дата и время */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: '#f5f5f5', padding: '12px', borderRadius: '8px' }}>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>📅 Дата и время</h4>
+        <div>
+          <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Дата вылета</label>
+          <input
+            type="date"
+            name="departureDate"
+            value={formData.departureDate}
+            onChange={handleChange}
+            min={today}
+            required
+            style={{
+              width: '100%',
+              padding: '8px',
+              border: '1px solid #ccc',
+              borderRadius: '6px',
+              fontSize: '16px',
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Вылет (время)</label>
+            <input
+              type="time"
+              name="departureTime"
+              value={formData.departureTime}
               onChange={handleChange}
-              min={formData.departureDate}
               required
+              style={{
+                width: '100%',
+                padding: '8px',
+                border: '1px solid #ccc',
+                borderRadius: '6px',
+                fontSize: '16px',
+              }}
             />
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <div style={{ flex: 1 }}>
-              <label>Обратный вылет</label>
-              <input
-                type="time"
-                name="returnDepartureTime"
-                value={formData.returnDepartureTime || ''}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label>Обратный прилёт</label>
-              <input
-                type="time"
-                name="returnArrivalTime"
-                value={formData.returnArrivalTime || ''}
-                onChange={handleChange}
-                required
-              />
-            </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Прилёт (время)</label>
+            <input
+              type="time"
+              name="arrivalTime"
+              value={formData.arrivalTime}
+              onChange={handleChange}
+              required
+              style={{
+                width: '100%',
+                padding: '8px',
+                border: '1px solid #ccc',
+                borderRadius: '6px',
+                fontSize: '16px',
+              }}
+            />
           </div>
-        </>
-      )}
+        </div>
 
-      {/* Прямой рейс */}
-      <div>
-        <label>
+        {formData.type === 'roundTrip' && (
+          <>
+            <div>
+              <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Дата возвращения</label>
+              <input
+                type="date"
+                name="returnDate"
+                value={formData.returnDate}
+                onChange={handleChange}
+                min={formData.departureDate}
+                required
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  border: '1px solid #ccc',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Обратный вылет</label>
+                <input
+                  type="time"
+                  name="returnDepartureTime"
+                  value={formData.returnDepartureTime || ''}
+                  onChange={handleChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #ccc',
+                    borderRadius: '6px',
+                    fontSize: '16px',
+                  }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Обратный прилёт</label>
+                <input
+                  type="time"
+                  name="returnArrivalTime"
+                  value={formData.returnArrivalTime || ''}
+                  onChange={handleChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #ccc',
+                    borderRadius: '6px',
+                    fontSize: '16px',
+                  }}
+                />
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Прямой рейс / Пересадка */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: '#f5f5f5', padding: '12px', borderRadius: '8px' }}>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>🔄 Рейс</h4>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <input
             type="checkbox"
+            id="isDirect"
             checked={formData.isDirect}
             onChange={handleCheckbox}
+            style={{ width: '20px', height: '20px' }}
           />
-          Прямой рейс
-        </label>
-      </div>
+          <label htmlFor="isDirect" style={{ fontWeight: 'bold' }}>Прямой рейс</label>
+        </div>
 
-      {!formData.isDirect && (
-        <>
-          <div>
-            <label>Город пересадки</label>
-            <input
-              type="text"
-              name="layoverCity"
-              value={formData.layoverCity}
-              onChange={handleChange}
-              placeholder="Стамбул"
-            />
+        {!formData.isDirect && (
+          <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Город пересадки</label>
+              <input
+                type="text"
+                name="layoverCity"
+                value={formData.layoverCity}
+                onChange={handleChange}
+                placeholder="Стамбул"
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  border: '1px solid #ccc',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Длительность пересадки (мин)</label>
+              <input
+                type="number"
+                name="layoverDuration"
+                value={formData.layoverDuration}
+                onChange={handleChange}
+                min="30"
+                max="1440"
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  border: '1px solid #ccc',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                }}
+              />
+            </div>
           </div>
-          <div>
-            <label>Длительность пересадки (мин)</label>
-            <input
-              type="number"
-              name="layoverDuration"
-              value={formData.layoverDuration}
-              onChange={handleChange}
-              min="30"
-              max="1440"
-            />
-          </div>
-        </>
-      )}
+        )}
+      </div>
 
       {/* Авиакомпания и пассажиры */}
-      <div>
-        <label>Авиакомпания</label>
-        <input
-          type="text"
-          name="airline"
-          value={formData.airline}
-          onChange={handleChange}
-          placeholder="Aeroflot"
-          required
-        />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: '#f5f5f5', padding: '12px', borderRadius: '8px' }}>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>🏢 Авиакомпания и пассажиры</h4>
+        <div>
+          <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Авиакомпания</label>
+          <input
+            type="text"
+            name="airline"
+            value={formData.airline}
+            onChange={handleChange}
+            placeholder="Aeroflot"
+            required
+            style={{
+              width: '100%',
+              padding: '8px',
+              border: '1px solid #ccc',
+              borderRadius: '6px',
+              fontSize: '16px',
+            }}
+          />
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Пассажиров</label>
+          <select
+            name="passengers"
+            value={formData.passengers}
+            onChange={handleChange as any}
+            style={{
+              width: '100%',
+              padding: '8px',
+              border: '1px solid #ccc',
+              borderRadius: '6px',
+              fontSize: '16px',
+            }}
+          >
+            <option value={1}>1</option>
+            <option value={2}>2</option>
+            <option value={3}>3</option>
+            <option value={4}>4</option>
+          </select>
+        </div>
       </div>
 
-      <div>
-        <label>Пассажиров</label>
-        <select name="passengers" value={formData.passengers} onChange={handleChange as any}>
-          <option value={1}>1</option>
-          <option value={2}>2</option>
-          <option value={3}>3</option>
-          <option value={4}>4</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Стоимость (всего, ₽)</label>
-        <input
-          type="number"
-          name="totalPrice"
-          value={formData.totalPrice}
-          onChange={handleChange}
-          min="1"
-          required
-        />
+      {/* Стоимость */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: '#f5f5f5', padding: '12px', borderRadius: '8px' }}>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>💰 Стоимость</h4>
+        <div>
+          <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Стоимость (всего, ₽)</label>
+          <input
+            type="number"
+            name="totalPrice"
+            value={formData.totalPrice}
+            onChange={handleChange}
+            min="1"
+            required
+            style={{
+              width: '100%',
+              padding: '8px',
+              border: '1px solid #ccc',
+              borderRadius: '6px',
+              fontSize: '16px',
+            }}
+          />
+        </div>
       </div>
 
       {/* Анализ */}
@@ -357,6 +454,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
                 : analysis.type === 'neutral'
                 ? '1px solid #ff9800'
                 : '1px solid #f44336',
+            textAlign: 'center',
           }}
         >
           <strong>{analysis.message}</strong>
@@ -368,19 +466,22 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, onAdd }) => {
         </div>
       )}
 
+      {/* Кнопка сохранить */}
       <button
         type="submit"
         style={{
-          padding: '12px',
+          padding: '16px',
           backgroundColor: '#0088cc',
           color: 'white',
           border: 'none',
-          borderRadius: '6px',
-          fontSize: '16px',
+          borderRadius: '8px',
+          fontSize: '18px',
+          fontWeight: 'bold',
           cursor: 'pointer',
+          marginTop: '16px',
         }}
       >
-        Сохранить билет
+        💼 Сохранить билет
       </button>
     </form>
   );
