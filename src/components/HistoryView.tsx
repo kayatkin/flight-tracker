@@ -9,7 +9,8 @@ interface HistoryViewProps {
 
 const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [expandedDestinations, setExpandedDestinations] = useState<Set<string>>(new Set());
+  // Теперь храним ТОЛЬКО один активный город (как в Wallet)
+  const [activeDestination, setActiveDestination] = useState<string | null>(null);
 
   const grouped = useMemo(() => {
     const groups: Record<string, Flight[]> = {};
@@ -51,16 +52,6 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
     return 'С пересадкой';
   };
 
-  const toggleExpanded = (destination: string) => {
-    const newSet = new Set(expandedDestinations);
-    if (newSet.has(destination)) {
-      newSet.delete(destination);
-    } else {
-      newSet.add(destination);
-    }
-    setExpandedDestinations(newSet);
-  };
-
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (window.confirm('Удалить этот билет?')) {
@@ -68,7 +59,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
     }
   };
 
-  const renderFullFlightCard = (flight: Flight, isBest: boolean, showDelete = true) => {
+  const renderFullFlightCard = (flight: Flight, isBest: boolean) => {
     return (
       <div
         key={flight.id}
@@ -76,9 +67,10 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
           padding: '14px',
           marginBottom: '12px',
           border: isBest ? '2px solid #4caf50' : '1px solid #ddd',
-          borderRadius: '8px',
+          borderRadius: '12px',
           backgroundColor: isBest ? '#f1f9f1' : '#fff',
           position: 'relative',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
         }}
       >
         {isBest && (
@@ -124,25 +116,23 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
           👥 {flight.passengers} пассажир(ов) • Найдено: {flight.dateFound}
         </div>
 
-        {showDelete && (
-          <button
-            onClick={(e) => handleDelete(flight.id, e)}
-            style={{
-              position: 'absolute',
-              top: '8px',
-              right: '8px',
-              background: 'none',
-              border: 'none',
-              color: '#f44336',
-              fontSize: '18px',
-              cursor: 'pointer',
-              padding: '4px',
-            }}
-            title="Удалить билет"
-          >
-            🗑️
-          </button>
-        )}
+        <button
+          onClick={(e) => handleDelete(flight.id, e)}
+          style={{
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            background: 'none',
+            border: 'none',
+            color: '#f44336',
+            fontSize: '18px',
+            cursor: 'pointer',
+            padding: '4px',
+          }}
+          title="Удалить билет"
+        >
+          🗑️
+        </button>
       </div>
     );
   };
@@ -157,20 +147,20 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
   }
 
   return (
-    <div style={{ padding: '0 12px' }}>
+    <div style={{ padding: '0 12px', paddingBottom: '20px' }}>
       {/* Панель поиска */}
       <div style={{ marginBottom: '20px' }}>
         <div style={{ position: 'relative' }}>
           <input
             type="text"
-            placeholder="🔍 Поиск по городу назначения..."
+            placeholder="🔍 Поиск по городу..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
               width: '100%',
               padding: '12px 16px 12px 40px',
               border: '1px solid #ccc',
-              borderRadius: '8px',
+              borderRadius: '12px',
               fontSize: '16px',
               backgroundColor: '#fff',
             }}
@@ -184,90 +174,70 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
           Ничего не найдено по запросу «{searchTerm}»
         </div>
       ) : (
-        filteredDestinations.map((destination) => {
-          const flightList = grouped[destination];
-          const bestFlight = getBestFlight(flightList);
-          const isExpanded = expandedDestinations.has(destination);
-          const otherFlights = flightList.filter(f => f.id !== bestFlight.id).sort((a, b) => 
-            a.totalPrice / a.passengers - b.totalPrice / b.passengers
-          );
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {filteredDestinations.map((destination) => {
+            const flightList = grouped[destination];
+            const bestFlight = getBestFlight(flightList);
+            const otherFlights = flightList
+              .filter(f => f.id !== bestFlight.id)
+              .sort((a, b) => a.totalPrice / a.passengers - b.totalPrice / b.passengers);
 
-          return (
-            <div
-              key={destination}
-              style={{
-                marginBottom: '16px',
-                border: '1px solid #e0e0e0',
-                borderRadius: '10px',
-                overflow: 'hidden',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
-              }}
-            >
-              {/* Заголовок группы */}
+            const isActive = activeDestination === destination;
+
+            return (
               <div
+                key={destination}
+                onClick={() => setActiveDestination(isActive ? null : destination)}
                 style={{
-                  padding: '14px 16px',
-                  backgroundColor: '#f9f9f9',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
+                  backgroundColor: '#fff',
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  boxShadow: isActive
+                    ? '0 6px 20px rgba(0,0,0,0.15)'
+                    : '0 2px 8px rgba(0,0,0,0.1)',
+                  border: isActive ? '1px solid #0088cc' : '1px solid #eee',
+                  cursor: 'pointer',
+                  transition: 'box-shadow 0.2s, transform 0.2s',
+                  transform: isActive ? 'scale(1.02)' : 'scale(1)',
                 }}
               >
-                <div>
-                  <strong style={{ fontSize: '18px', color: '#0088cc' }}>📍 {destination}</strong>
-                  <div style={{ fontSize: '14px', color: '#666' }}>
-                    {flightList.length} билет{flightList.length === 1 ? '' : 'ов'}
+                {/* Заголовок — всегда виден (как "корешок") */}
+                <div style={{ padding: '16px', backgroundColor: '#f8f9fa' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <strong style={{ fontSize: '18px', color: '#0088cc' }}>📍 {destination}</strong>
+                    <span style={{ fontSize: '14px', color: '#666' }}>
+                      {flightList.length} билет{flightList.length === 1 ? '' : 'ов'}
+                    </span>
+                  </div>
+                  <div style={{ marginTop: '8px', fontSize: '15px', color: '#444' }}>
+                    💰 {formatPrice(bestFlight.totalPrice / bestFlight.passengers)} на человека
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#777', marginTop: '4px' }}>
+                    📅 {bestFlight.departureDate}
+                    {bestFlight.type === 'roundTrip' && bestFlight.returnDate && ` — ${bestFlight.returnDate}`}
                   </div>
                 </div>
-                {flightList.length > 1 && (
-                  <span
-                    onClick={() => toggleExpanded(destination)}
-                    style={{
-                      fontSize: '20px',
-                      transform: isExpanded ? 'rotate(180deg)' : 'none',
-                      transition: 'transform 0.2s',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    ▼
-                  </span>
+
+                {/* Содержимое — только при активности */}
+                {isActive && (
+                  <div style={{ padding: '16px', paddingTop: '8px' }}>
+                    <div style={{ marginBottom: '12px' }}>
+                      {renderFullFlightCard(bestFlight, true)}
+                    </div>
+                    {otherFlights.length > 0 && (
+                      <>
+                        <div style={{ fontSize: '14px', fontWeight: 'bold', margin: '12px 0 8px', color: '#555' }}>
+                          Другие предложения:
+                        </div>
+                        {otherFlights.map((flight) => renderFullFlightCard(flight, false))}
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
-
-              {/* Самый выгодный билет — всегда виден, в полной карточке */}
-              <div style={{ padding: '0 14px 14px 14px' }}>
-                {renderFullFlightCard(bestFlight, true, true)}
-              </div>
-
-              {/* Остальные билеты — только при раскрытии */}
-              {isExpanded && otherFlights.length > 0 && (
-                <div style={{ padding: '0 14px 14px 14px', borderTop: '1px solid #eee' }}>
-                  <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '10px', color: '#555' }}>
-                    Другие предложения:
-                  </div>
-                  {otherFlights.map((flight) => renderFullFlightCard(flight, false, true))}
-                </div>
-              )}
-
-              {otherFlights.length > 0 && (
-                <div
-                  onClick={() => toggleExpanded(destination)}
-                  style={{
-                    padding: '12px 16px',
-                    textAlign: 'center',
-                    color: '#0088cc',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    backgroundColor: '#fafafa',
-                    borderTop: isExpanded ? '1px solid #eee' : 'none',
-                  }}
-                >
-                  {isExpanded ? '▲ Скрыть остальные' : `▼ Показать ещё ${otherFlights.length}`}
-                </div>
-              )}
-            </div>
-          );
-        })
+            );
+          })}
+        </div>
       )}
     </div>
   );
