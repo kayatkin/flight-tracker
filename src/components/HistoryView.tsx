@@ -13,12 +13,10 @@ const groupFlightsByDestination = (flights: Flight[]) => {
   return groups;
 };
 
-// Форматирование цены
 const formatPrice = (price: number) => {
   return new Intl.NumberFormat('ru-RU').format(price) + ' ₽';
 };
 
-// Форматирование пересадки
 const formatLayover = (flight: Flight) => {
   if (flight.isDirect) return 'Прямой';
   if (flight.layoverCity && flight.layoverDuration) {
@@ -29,7 +27,6 @@ const formatLayover = (flight: Flight) => {
   return 'С пересадкой';
 };
 
-// Определение лучшего билета в группе (мин цена на человека)
 const getBestFlightInGroup = (flights: Flight[]): Flight | null => {
   if (flights.length === 0) return null;
   return flights.reduce((best, curr) => {
@@ -39,7 +36,12 @@ const getBestFlightInGroup = (flights: Flight[]): Flight | null => {
   });
 };
 
-const HistoryView: React.FC<{ flights: Flight[] }> = ({ flights }) => {
+interface HistoryViewProps {
+  flights: Flight[];
+  onDelete: (id: string) => void;
+}
+
+const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
   if (flights.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '40px 0', color: '#888' }}>
@@ -51,6 +53,13 @@ const HistoryView: React.FC<{ flights: Flight[] }> = ({ flights }) => {
 
   const grouped = groupFlightsByDestination(flights);
   const destinations = Object.keys(grouped).sort();
+
+  const handleDelete = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // предотвращает срабатывание других кликов
+    if (window.confirm('Вы уверены, что хотите удалить этот билет?')) {
+      onDelete(id);
+    }
+  };
 
   return (
     <div>
@@ -67,7 +76,7 @@ const HistoryView: React.FC<{ flights: Flight[] }> = ({ flights }) => {
             </h4>
 
             {flightList
-              .sort((a, b) => a.totalPrice / a.passengers - b.totalPrice / b.passengers) // сначала дешёвые
+              .sort((a, b) => a.totalPrice / a.passengers - b.totalPrice / b.passengers)
               .map((flight) => {
                 const isBest = bestFlight?.id === flight.id;
                 const pricePerPerson = flight.totalPrice / flight.passengers;
@@ -81,6 +90,7 @@ const HistoryView: React.FC<{ flights: Flight[] }> = ({ flights }) => {
                       border: isBest ? '2px solid #4caf50' : '1px solid #ddd',
                       borderRadius: '6px',
                       backgroundColor: isBest ? '#f1f9f1' : '#fafafa',
+                      position: 'relative',
                     }}
                   >
                     {isBest && (
@@ -113,9 +123,7 @@ const HistoryView: React.FC<{ flights: Flight[] }> = ({ flights }) => {
                       {formatLayover(flight)}
                     </div>
 
-                    <div>
-                      ✈️ {flight.airline}
-                    </div>
+                    <div>✈️ {flight.airline}</div>
 
                     <div style={{ marginTop: '8px' }}>
                       💰 Всего: {formatPrice(flight.totalPrice)} |{' '}
@@ -125,6 +133,25 @@ const HistoryView: React.FC<{ flights: Flight[] }> = ({ flights }) => {
                     <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
                       👥 {flight.passengers} пассажир(ов) • Найдено: {flight.dateFound}
                     </div>
+
+                    {/* Кнопка удаления */}
+                    <button
+                      onClick={(e) => handleDelete(flight.id, e)}
+                      style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        background: 'none',
+                        border: 'none',
+                        color: '#f44336',
+                        fontSize: '18px',
+                        cursor: 'pointer',
+                        padding: '4px',
+                      }}
+                      title="Удалить билет"
+                    >
+                      🗑️
+                    </button>
                   </div>
                 );
               })}

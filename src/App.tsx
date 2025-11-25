@@ -113,7 +113,12 @@ const App: React.FC = () => {
         />
       )}
 
-      {activeTab === 'history' && <HistoryView flights={flights} />}
+      {activeTab === 'history' && (
+        <HistoryView 
+          flights={flights} 
+          onDelete={(id) => setFlights(flights.filter(f => f.id !== id))} 
+        />
+      )}
     </div>
   );
 };
