@@ -10,7 +10,6 @@ export interface Flight {
   arrivalTime?: string;
   returnDepartureTime?: string;
   returnArrivalTime?: string;
-  // ← Убираем isDirect, layoverCity, layoverDuration
   isDirectThere: boolean;            // туда
   isDirectBack: boolean;             // обратно (только для roundTrip)
   layoverCityThere?: string;         // пересадка туда

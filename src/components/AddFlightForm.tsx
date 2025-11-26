@@ -1,6 +1,7 @@
 // src/components/AddFlightForm.tsx
 import React, { useState, useEffect } from 'react';
 import { Flight } from '../types';
+import styles from './AddFlightForm.module.css';
 
 interface AddFlightFormProps {
   flights: Flight[];
@@ -101,22 +102,21 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd 
       isDirectBack: formData.isDirectBack,
       layoverCityThere: formData.isDirectThere ? undefined : formData.layoverCityThere.trim() || undefined,
       layoverDurationThere: formData.isDirectThere ? undefined : formData.layoverDurationThere,
-      layoverCityBack: formData.type === 'roundTrip' && !formData.isDirectBack 
-        ? formData.layoverCityBack.trim() || undefined 
+      layoverCityBack: formData.type === 'roundTrip' && !formData.isDirectBack
+        ? formData.layoverCityBack.trim() || undefined
         : undefined,
-      layoverDurationBack: formData.type === 'roundTrip' && !formData.isDirectBack 
-        ? formData.layoverDurationBack 
+      layoverDurationBack: formData.type === 'roundTrip' && !formData.isDirectBack
+        ? formData.layoverDurationBack
         : undefined,
       airline: formData.airline.trim(),
       passengers: formData.passengers,
       totalPrice: priceNum,
       dateFound: new Date().toISOString().split('T')[0],
-      // ➕ Поля для сдвига даты прилёта
       arrivalNextDay: formData.arrivalNextDay,
       returnArrivalNextDay: formData.type === 'roundTrip' ? formData.returnArrivalNextDay : undefined,
     };
 
-    const comparableFlights = flights.filter((f) => 
+    const comparableFlights = flights.filter((f) =>
       f.origin === newFlight.origin &&
       f.destination === newFlight.destination &&
       f.passengers === newFlight.passengers &&
@@ -159,13 +159,12 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd 
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '12px' }}>
-      
+    <form onSubmit={handleSubmit} className={styles.form}>
       {/* Города */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: '#f5f5f5', padding: '12px', borderRadius: '8px' }}>
-        <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>📍 Маршрут</h4>
+      <div className={styles.section}>
+        <h4 className={styles.sectionTitle}>📍 Маршрут</h4>
         <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Город вылета</label>
+          <label className={styles.label}>Город вылета</label>
           <input
             type="text"
             name="origin"
@@ -173,17 +172,11 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd 
             onChange={handleChange}
             placeholder="Москва"
             required
-            style={{
-              width: '100%',
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: '6px',
-              fontSize: '16px',
-            }}
+            className={styles.input}
           />
         </div>
         <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Город назначения</label>
+          <label className={styles.label}>Город назначения</label>
           <input
             type="text"
             name="destination"
@@ -191,38 +184,32 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd 
             onChange={handleChange}
             placeholder="Тбилиси"
             required
-            style={{
-              width: '100%',
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: '6px',
-              fontSize: '16px',
-            }}
+            className={styles.input}
           />
         </div>
       </div>
 
       {/* Тип рейса */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: '#f5f5f5', padding: '12px', borderRadius: '8px' }}>
-        <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>✈️ Тип рейса</h4>
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+      <div className={styles.section}>
+        <h4 className={styles.sectionTitle}>✈️ Тип рейса</h4>
+        <div className={styles.radioGroup}>
+          <label className={styles.radioLabel}>
             <input
               type="radio"
               name="type"
               checked={formData.type === 'oneWay'}
               onChange={() => setFormData((prev) => ({ ...prev, type: 'oneWay' }))}
-              style={{ width: '20px', height: '20px' }}
+              className={styles.radioInput}
             />
             Только туда
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <label className={styles.radioLabel}>
             <input
               type="radio"
               name="type"
               checked={formData.type === 'roundTrip'}
               onChange={() => setFormData((prev) => ({ ...prev, type: 'roundTrip' }))}
-              style={{ width: '20px', height: '20px' }}
+              className={styles.radioInput}
             />
             Туда и обратно
           </label>
@@ -230,10 +217,10 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd 
       </div>
 
       {/* Дата и время */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: '#f5f5f5', padding: '12px', borderRadius: '8px' }}>
-        <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>📅 Дата и время</h4>
+      <div className={styles.section}>
+        <h4 className={styles.sectionTitle}>📅 Дата и время</h4>
         <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Дата вылета</label>
+          <label className={styles.label}>Дата вылета</label>
           <input
             type="date"
             name="departureDate"
@@ -241,48 +228,30 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd 
             onChange={handleChange}
             min={today}
             required
-            style={{
-              width: '100%',
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: '6px',
-              fontSize: '16px',
-            }}
+            className={styles.dateInput}
           />
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Вылет (время)</label>
+            <label className={styles.label}>Вылет (время)</label>
             <input
               type="time"
               name="departureTime"
               value={formData.departureTime}
               onChange={handleChange}
-              style={{
-                width: '100%',
-                padding: '8px',
-                border: '1px solid #ccc',
-                borderRadius: '6px',
-                fontSize: '16px',
-              }}
+              className={styles.timeInput}
             />
           </div>
           <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Прилёт (время)</label>
+            <label className={styles.label}>Прилёт (время)</label>
             <input
               type="time"
               name="arrivalTime"
               value={formData.arrivalTime}
               onChange={handleChange}
-              style={{
-                width: '100%',
-                padding: '8px',
-                border: '1px solid #ccc',
-                borderRadius: '6px',
-                fontSize: '16px',
-              }}
+              className={styles.timeInput}
             />
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', fontSize: '14px' }}>
+            <label className={styles.checkboxLabel}>
               <input
                 type="checkbox"
                 checked={formData.arrivalNextDay}
@@ -296,7 +265,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd 
         {formData.type === 'roundTrip' && (
           <>
             <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Дата возвращения</label>
+              <label className={styles.label}>Дата возвращения</label>
               <input
                 type="date"
                 name="returnDate"
@@ -304,48 +273,30 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd 
                 onChange={handleChange}
                 min={formData.departureDate}
                 required
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ccc',
-                  borderRadius: '6px',
-                  fontSize: '16px',
-                }}
+                className={styles.dateInput}
               />
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
               <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Обратный вылет</label>
+                <label className={styles.label}>Обратный вылет</label>
                 <input
                   type="time"
                   name="returnDepartureTime"
                   value={formData.returnDepartureTime || ''}
                   onChange={handleChange}
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    border: '1px solid #ccc',
-                    borderRadius: '6px',
-                    fontSize: '16px',
-                  }}
+                  className={styles.timeInput}
                 />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Обратный прилёт</label>
+                <label className={styles.label}>Обратный прилёт</label>
                 <input
                   type="time"
                   name="returnArrivalTime"
                   value={formData.returnArrivalTime || ''}
                   onChange={handleChange}
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    border: '1px solid #ccc',
-                    borderRadius: '6px',
-                    fontSize: '16px',
-                  }}
+                  className={styles.timeInput}
                 />
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', fontSize: '14px' }}>
+                <label className={styles.checkboxLabel}>
                   <input
                     type="checkbox"
                     checked={formData.returnArrivalNextDay}
@@ -358,112 +309,78 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd 
           </>
         )}
       </div>
-      
-      {/* Пересадки */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', backgroundColor: '#f5f5f5', padding: '12px', borderRadius: '8px' }}>
-        <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>🔄 Пересадки</h4>
 
-        {/* Туда */}
+      {/* Пересадки */}
+      <div className={styles.section}>
+        <h4 className={styles.sectionTitle}>🔄 Пересадки</h4>
+
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+          <label className={styles.checkboxLabel}>
             <input
               type="checkbox"
-              id="isDirectThere"
               checked={formData.isDirectThere}
               onChange={(e) => setFormData(prev => ({ ...prev, isDirectThere: e.target.checked }))}
-              style={{ width: '20px', height: '20px' }}
             />
-            <label htmlFor="isDirectThere" style={{ fontWeight: 'bold' }}>
-              Прямой рейс туда
-            </label>
-          </div>
+            Прямой рейс туда
+          </label>
           {!formData.isDirectThere && (
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px' }}>Город пересадки (туда)</label>
+            <div className={styles.layoverGroup}>
+              <div>
+                <label className={styles.label}>Город пересадки (туда)</label>
                 <input
                   type="text"
                   value={formData.layoverCityThere || ''}
                   onChange={(e) => setFormData(prev => ({ ...prev, layoverCityThere: e.target.value }))}
                   placeholder="Стамбул"
-                  style={{
-                    width: '100%',
-                    padding: '6px',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    fontSize: '14px',
-                  }}
+                  className={styles.layoverInput}
                 />
               </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px' }}>Длительность (мин)</label>
+              <div>
+                <label className={styles.label}>Длительность (мин)</label>
                 <input
                   type="number"
                   value={formData.layoverDurationThere || 60}
                   onChange={(e) => setFormData(prev => ({ ...prev, layoverDurationThere: Number(e.target.value) || 60 }))}
                   min="30"
                   max="1440"
-                  style={{
-                    width: '100%',
-                    padding: '6px',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    fontSize: '14px',
-                  }}
+                  className={styles.layoverInput}
                 />
               </div>
             </div>
           )}
         </div>
 
-        {/* Обратно (только для roundTrip) */}
         {formData.type === 'roundTrip' && (
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <label className={styles.checkboxLabel}>
               <input
                 type="checkbox"
-                id="isDirectBack"
                 checked={formData.isDirectBack}
                 onChange={(e) => setFormData(prev => ({ ...prev, isDirectBack: e.target.checked }))}
-                style={{ width: '20px', height: '20px' }}
               />
-              <label htmlFor="isDirectBack" style={{ fontWeight: 'bold' }}>
-                Прямой рейс обратно
-              </label>
-            </div>
+              Прямой рейс обратно
+            </label>
             {!formData.isDirectBack && (
-              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px' }}>Город пересадки (обратно)</label>
+              <div className={styles.layoverGroup}>
+                <div>
+                  <label className={styles.label}>Город пересадки (обратно)</label>
                   <input
                     type="text"
                     value={formData.layoverCityBack || ''}
                     onChange={(e) => setFormData(prev => ({ ...prev, layoverCityBack: e.target.value }))}
                     placeholder="Доха"
-                    style={{
-                      width: '100%',
-                      padding: '6px',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                      fontSize: '14px',
-                    }}
+                    className={styles.layoverInput}
                   />
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px' }}>Длительность (мин)</label>
+                <div>
+                  <label className={styles.label}>Длительность (мин)</label>
                   <input
                     type="number"
                     value={formData.layoverDurationBack || 60}
                     onChange={(e) => setFormData(prev => ({ ...prev, layoverDurationBack: Number(e.target.value) || 60 }))}
                     min="30"
                     max="1440"
-                    style={{
-                      width: '100%',
-                      padding: '6px',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                      fontSize: '14px',
-                    }}
+                    className={styles.layoverInput}
                   />
                 </div>
               </div>
@@ -472,10 +389,10 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd 
         )}
       </div>
 
-      {/* Авиакомпания с автозаполнением */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: '#f5f5f5', padding: '12px', borderRadius: '8px' }}>
-        <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>✈️ Авиакомпания</h4>
-        <div style={{ position: 'relative' }}>
+      {/* Авиакомпания */}
+      <div className={styles.section}>
+        <h4 className={styles.sectionTitle}>✈️ Авиакомпания</h4>
+        <div className={styles.suggestionsContainer}>
           <input
             type="text"
             name="airline"
@@ -483,32 +400,11 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd 
             onChange={handleChange}
             placeholder="Начните вводить..."
             required
-            style={{
-              width: '100%',
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: '6px',
-              fontSize: '16px',
-            }}
+            className={styles.input}
             autoComplete="off"
           />
           {formData.airline && suggestions.length > 0 && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                right: 0,
-                backgroundColor: 'white',
-                border: '1px solid #ccc',
-                borderRadius: '6px',
-                marginTop: '4px',
-                maxHeight: '150px',
-                overflowY: 'auto',
-                zIndex: 10,
-                boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-              }}
-            >
+            <div className={styles.suggestionsList}>
               {suggestions.map((airline, idx) => (
                 <div
                   key={idx}
@@ -516,13 +412,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd 
                     setFormData((prev) => ({ ...prev, airline }));
                     setSuggestions([]);
                   }}
-                  style={{
-                    padding: '8px 12px',
-                    cursor: 'pointer',
-                    borderBottom: '1px solid #eee',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f0f8ff')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                  className={styles.suggestionItem}
                 >
                   {airline}
                 </div>
@@ -533,74 +423,45 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd 
       </div>
 
       {/* Пассажиры */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: '#f5f5f5', padding: '12px', borderRadius: '8px' }}>
-        <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>👥 Пассажиры</h4>
-        <div>
-          <select
-            name="passengers"
-            value={formData.passengers}
-            onChange={handleChange as any}
-            style={{
-              width: '100%',
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: '6px',
-              fontSize: '16px',
-            }}
-          >
-            <option value={1}>1</option>
-            <option value={2}>2</option>
-            <option value={3}>3</option>
-            <option value={4}>4</option>
-          </select>
-        </div>
+      <div className={styles.section}>
+        <h4 className={styles.sectionTitle}>👥 Пассажиры</h4>
+        <select
+          name="passengers"
+          value={formData.passengers}
+          onChange={handleChange as any}
+          className={styles.select}
+        >
+          <option value={1}>1</option>
+          <option value={2}>2</option>
+          <option value={3}>3</option>
+          <option value={4}>4</option>
+        </select>
       </div>
 
       {/* Стоимость */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', backgroundColor: '#f5f5f5', padding: '12px', borderRadius: '8px' }}>
-        <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>💰 Стоимость</h4>
-        <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>Стоимость (всего, ₽)</label>
-          <input
-            type="text"
-            name="totalPrice"
-            value={formData.totalPrice}
-            onChange={handleChange}
-            placeholder="12500"
-            inputMode="numeric"
-            style={{
-              width: '100%',
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: '6px',
-              fontSize: '16px',
-            }}
-          />
-        </div>
+      <div className={styles.section}>
+        <h4 className={styles.sectionTitle}>💰 Стоимость</h4>
+        <input
+          type="text"
+          name="totalPrice"
+          value={formData.totalPrice}
+          onChange={handleChange}
+          placeholder="12500"
+          inputMode="numeric"
+          className={styles.input}
+        />
       </div>
 
       {/* Анализ */}
       {analysis && (
-        <div
-          style={{
-            padding: '12px',
-            borderRadius: '8px',
-            backgroundColor:
-              analysis.type === 'good'
-                ? '#e6ffe6'
-                : analysis.type === 'neutral'
-                ? '#fff8e1'
-                : '#ffe6e6',
-            border:
-              analysis.type === 'good'
-                ? '1px solid #4caf50'
-                : analysis.type === 'neutral'
-                ? '1px solid #ff9800'
-                : '1px solid #f44336',
-            textAlign: 'center',
-          }}
-        >
-          <strong>{analysis.message}</strong>
+        <div className={
+          analysis.type === 'good'
+            ? styles.analysisGood
+            : analysis.type === 'neutral'
+              ? styles.analysisNeutral
+              : styles.analysisBad
+        }>
+          <div>{analysis.message}</div>
           {analysis.diff !== undefined && (
             <div style={{ fontSize: '14px', marginTop: '4px' }}>
               Разница: {analysis.diff > 0 ? '+' : ''}{analysis.diff} ₽
@@ -609,20 +470,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd 
         </div>
       )}
 
-      <button
-        type="submit"
-        style={{
-          padding: '16px',
-          backgroundColor: '#0088cc',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          fontSize: '18px',
-          fontWeight: 'bold',
-          cursor: 'pointer',
-          marginTop: '16px',
-        }}
-      >
+      <button type="submit" className={styles.submitButton}>
         💼 Сохранить билет
       </button>
     </form>

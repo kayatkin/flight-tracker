@@ -1,0 +1,37 @@
+/* src/App.module.css */
+
+.app {
+  padding: 16px;
+  font-family: sans-serif;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.title {
+  margin: 0 0 12px 0;
+}
+
+.greeting {
+  margin: 0 0 20px 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.tabButton {
+  flex: 1;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.tabButton.active {
+  background-color: #e6f2ff;
+}

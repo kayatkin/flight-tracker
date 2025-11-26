@@ -1,12 +1,10 @@
 // src/App.tsx
 import React, { useEffect, useState } from 'react';
 import { Flight } from './types';
-
-// Импорт компонентов
 import AddFlightForm from './components/AddFlightForm';
 import HistoryView from './components/HistoryView';
+import styles from './App.module.css';
 
-// Попытка импорта Telegram SDK
 let retrieveLaunchParams: () => any = () => ({});
 try {
   const sdk = require('@telegram-apps/sdk');
@@ -19,9 +17,8 @@ const App: React.FC = () => {
   const [userName, setUserName] = useState<string>('Гость');
   const [activeTab, setActiveTab] = useState<'add' | 'history'>('add');
   const [flights, setFlights] = useState<Flight[]>([]);
-  const [airlines, setAirlines] = useState<string[]>([]); // ← добавлено
+  const [airlines, setAirlines] = useState<string[]>([]);
 
-  // Загрузка сохранённых билетов
   useEffect(() => {
     const saved = localStorage.getItem('flights');
     if (saved) {
@@ -35,7 +32,6 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Загрузка сохранённых авиакомпаний
   useEffect(() => {
     const saved = localStorage.getItem('airlines');
     if (saved) {
@@ -51,19 +47,16 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Сохранение билетов
   useEffect(() => {
     localStorage.setItem('flights', JSON.stringify(flights));
   }, [flights]);
 
-  // Сохранение авиакомпаний
   useEffect(() => {
     if (airlines.length > 0) {
       localStorage.setItem('airlines', JSON.stringify(airlines));
     }
   }, [airlines]);
 
-  // Определение имени пользователя
   useEffect(() => {
     try {
       if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
@@ -79,51 +72,22 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div
-      style={{
-        padding: '16px',
-        fontFamily: 'sans-serif',
-        maxWidth: '500px',
-        margin: '0 auto',
-      }}
-    >
-      <h2>✈️ Flight Tracker</h2>
-      <p>
+    <div className={styles.app}>
+      <h2 className={styles.title}>✈️ Flight Tracker</h2>
+      <p className={styles.greeting}>
         Привет, <strong>{userName}</strong>!
       </p>
 
-      <div
-        style={{
-          display: 'flex',
-          gap: '16px',
-          marginBottom: '20px',
-        }}
-      >
+      <div className={styles.tabs}>
         <button
           onClick={() => setActiveTab('add')}
-          style={{
-            flex: 1,
-            padding: '10px',
-            fontSize: '16px',
-            border: '1px solid #ccc',
-            borderRadius: '6px',
-            backgroundColor: activeTab === 'add' ? '#e6f2ff' : 'white',
-            cursor: 'pointer',
-          }}
+          className={`${styles.tabButton} ${activeTab === 'add' ? styles.active : ''}`}
         >
           ➕ Добавить
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          style={{
-            flex: 1,
-            padding: '10px',
-            fontSize: '16px',
-            border: '1px solid #ccc',
-            borderRadius: '6px',
-            backgroundColor: activeTab === 'history' ? '#e6f2ff' : 'white',
-            cursor: 'pointer',
-          }}
+          className={`${styles.tabButton} ${activeTab === 'history' ? styles.active : ''}`}
         >
           📚 История
         </button>
@@ -132,10 +96,9 @@ const App: React.FC = () => {
       {activeTab === 'add' && (
         <AddFlightForm
           flights={flights}
-          airlines={airlines} // ← передаём
+          airlines={airlines}
           onAdd={(newFlight) => {
             setFlights([...flights, newFlight]);
-            // Добавляем авиакомпанию, если новая
             if (newFlight.airline && !airlines.includes(newFlight.airline)) {
               setAirlines([...airlines, newFlight.airline]);
             }
