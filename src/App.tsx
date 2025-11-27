@@ -54,7 +54,7 @@ const App: React.FC = () => {
         const { data, error } = await supabase
           .from('flights')
           .select('*')
-          .eq('user _id', userId)
+          .eq('user_id', userId)
           .single();
 
         console.log('[DEBUG] Supabase load result:', { data, error });
