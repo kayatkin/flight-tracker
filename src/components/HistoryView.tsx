@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { Flight } from '../types';
 import styles from './HistoryView.module.css';
-import PriceChartModal from './PriceChartModal'; // ← новый компонент
+import PriceChartModal from './PriceChartModal';
 
 // Утилита: YYYY-MM-DD → DD-MM-YYYY
 const formatDateToDMY = (isoDate: string): string => {
@@ -19,7 +19,7 @@ interface HistoryViewProps {
 const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeDestination, setActiveDestination] = useState<string | null>(null);
-  const [chartDestination, setChartDestination] = useState<string | null>(null); // ← для графика
+  const [chartDestination, setChartDestination] = useState<string | null>(null);
 
   const grouped = useMemo(() => {
     const groups: Record<string, Flight[]> = {};
@@ -88,9 +88,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
         key={flight.id}
         className={`${styles.fullCard} ${isBest ? styles.best : styles.normal}`}
       >
-        {isBest && (
-          <div className={styles.bestTag}>✅ Самый выгодный</div>
-        )}
+        {isBest && <div className={styles.bestTag}>✅ Самый выгодный</div>}
 
         <div className={styles.route}>
           <strong>{flight.origin} → {flight.destination}</strong>
@@ -116,10 +114,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
           </div>
         )}
 
-        <div className={styles.layover}>
-          {formatLayover(flight)}
-        </div>
-
+        <div className={styles.layover}>{formatLayover(flight)}</div>
         <div className={styles.airline}>✈️ {flight.airline || '—'}</div>
 
         <div className={styles.price}>
@@ -186,28 +181,31 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
                 className={`${styles.card} ${isActive ? styles.active : ''}`}
               >
                 <div className={styles.cardHeader}>
-                  <div className={styles.cardTitle}>📍 {destination}</div>
-                  <div className={styles.cardSubtitle}>
-                    {flightList.length} билет{flightList.length === 1 ? '' : 'ов'}
+                  {/* ➕ Одна строка: город, количество, иконка */}
+                  <div className={styles.cardTitleWithMeta}>
+                    <span>📍 {destination}</span>
+                    <span className={styles.ticketCount}>({flightList.length})</span>
+                    <button
+                      className={styles.chartButton}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setChartDestination(destination);
+                      }}
+                      title="График сезонности цен"
+                    >
+                      📈
+                    </button>
                   </div>
+
                   <div className={styles.cardPrice}>
                     💰 {formatPrice(bestFlight.totalPrice / bestFlight.passengers)} на человека
                   </div>
                   <div className={styles.cardDate}>
                     📅 {formatDateToDMY(bestFlight.departureDate)}
-                    {bestFlight.type === 'roundTrip' && bestFlight.returnDate && ` — ${formatDateToDMY(bestFlight.returnDate)}`}
+                    {bestFlight.type === 'roundTrip' &&
+                      bestFlight.returnDate &&
+                      ` — ${formatDateToDMY(bestFlight.returnDate)}`}
                   </div>
-                  {/* ➕ Кнопка графика */}
-                  <button
-                    className={styles.chartButton}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setChartDestination(destination);
-                    }}
-                    title="График сезонности цен"
-                  >
-                    📈
-                  </button>
                 </div>
 
                 {isActive && (
@@ -227,7 +225,6 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
         </div>
       )}
 
-      {/* ➕ Модальное окно графика */}
       {chartDestination && (
         <PriceChartModal
           flights={grouped[chartDestination]}
