@@ -4,7 +4,7 @@ import { Flight } from './types';
 import AddFlightForm from './components/AddFlightForm';
 import HistoryView from './components/HistoryView';
 import styles from './App.module.css';
-import { supabase } from './lib/supabaseClient'; // ← создаём этот файл отдельно
+import { supabase } from './lib/supabaseClient';
 
 let retrieveLaunchParams: () => any = () => ({});
 try {
@@ -30,47 +30,52 @@ const App: React.FC = () => {
       let userFirstName = 'Гость';
 
       try {
-        // Проверяем, запущено ли в Telegram
         if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
           const launchParams = retrieveLaunchParams();
           const user = launchParams?.initData?.user;
           userId = user?.id?.toString() || null;
           userFirstName = user?.first_name || 'Друг';
+          console.log('[DEBUG] Telegram user detected:', { id: userId, name: userFirstName });
         } else {
-          // Локальная разработка — фиксированный ID
           userId = 'dev_user_123';
           userFirstName = 'Разработчик';
+          console.log('[DEBUG] Local dev mode (not in Telegram)');
         }
 
         setUserName(userFirstName);
 
         if (!userId) {
+          console.warn('[DEBUG] No user ID, skipping Supabase load');
           setLoading(false);
           return;
         }
 
-        // Загружаем данные из Supabase
+        console.log('[DEBUG] Loading data from Supabase for user_id:', userId);
         const { data, error } = await supabase
           .from('flights')
           .select('*')
-          .eq('user_id', userId)
+          .eq('user _id', userId)
           .single();
 
+        console.log('[DEBUG] Supabase load result:', { data, error });
+
         if (error && error.code !== 'PGRST116') {
-          // PGRST116 = "no rows returned", это нормально
-          console.error('Supabase load error:', error);
+          console.error('[ERROR] Supabase load failed:', error);
           setLoading(false);
           return;
         }
 
         if (data) {
+          console.log('[DEBUG] Data loaded successfully from Supabase');
           setFlights(data.flights || []);
           setAirlines(data.airlines || []);
           setOriginCities(data.origin_cities || []);
           setDestinationCities(data.destination_cities || []);
+        } else {
+          console.log('[DEBUG] No data found in Supabase for this user');
         }
       } catch (err) {
-        console.error('Init error:', err);
+        console.error('[CRITICAL] Init user/load data crashed:', err);
         setUserName('Ошибка');
       } finally {
         setLoading(false);
@@ -94,7 +99,18 @@ const App: React.FC = () => {
         userId = 'dev_user_123';
       }
 
-      if (!userId) return;
+      if (!userId) {
+        console.warn('[DEBUG] No user ID, skipping save');
+        return;
+      }
+
+      console.log('[DEBUG] Saving to Supabase for user_id:', userId);
+      console.log('[DEBUG] Data to save:', {
+        flightsCount: flights.length,
+        airlines,
+        originCities,
+        destinationCities,
+      });
 
       try {
         const { error } = await supabase.from('flights').upsert(
@@ -110,10 +126,12 @@ const App: React.FC = () => {
         );
 
         if (error) {
-          console.error('Supabase save error:', error);
+          console.error('[ERROR] Supabase save failed:', error);
+        } else {
+          console.log('[DEBUG] Data saved successfully to Supabase');
         }
       } catch (err) {
-        console.error('Save failed:', err);
+        console.error('[CRITICAL] Save to Supabase crashed:', err);
       }
     };
 
