@@ -18,45 +18,37 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'add' | 'history'>('add');
   const [flights, setFlights] = useState<Flight[]>([]);
   const [airlines, setAirlines] = useState<string[]>([]);
+  const [originCities, setOriginCities] = useState<string[]>([]);
+  const [destinationCities, setDestinationCities] = useState<string[]>([]);
 
+  // Загрузка данных из localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('flights');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setFlights(parsed);
-      } catch (e) {
-        console.error('Failed to parse flights from localStorage', e);
-        setFlights([]);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('airlines');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          setAirlines(parsed);
+    const load = (key: string): any[] => {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+          console.error(`Failed to parse ${key} from localStorage`, e);
         }
-      } catch (e) {
-        console.error('Failed to parse airlines from localStorage', e);
-        setAirlines([]);
       }
-    }
+      return [];
+    };
+
+    setFlights(load('flights'));
+    setAirlines(load('airlines'));
+    setOriginCities(load('originCities'));
+    setDestinationCities(load('destinationCities'));
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('flights', JSON.stringify(flights));
-  }, [flights]);
+  // Сохранение в localStorage
+  useEffect(() => localStorage.setItem('flights', JSON.stringify(flights)), [flights]);
+  useEffect(() => localStorage.setItem('airlines', JSON.stringify(airlines)), [airlines]);
+  useEffect(() => localStorage.setItem('originCities', JSON.stringify(originCities)), [originCities]);
+  useEffect(() => localStorage.setItem('destinationCities', JSON.stringify(destinationCities)), [destinationCities]);
 
-  useEffect(() => {
-    if (airlines.length > 0) {
-      localStorage.setItem('airlines', JSON.stringify(airlines));
-    }
-  }, [airlines]);
-
+  // Инициализация имени пользователя
   useEffect(() => {
     try {
       if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
@@ -97,10 +89,19 @@ const App: React.FC = () => {
         <AddFlightForm
           flights={flights}
           airlines={airlines}
+          originCities={originCities}
+          destinationCities={destinationCities}
           onAdd={(newFlight) => {
             setFlights([...flights, newFlight]);
+            // Обновление списков
             if (newFlight.airline && !airlines.includes(newFlight.airline)) {
               setAirlines([...airlines, newFlight.airline]);
+            }
+            if (newFlight.origin && !originCities.includes(newFlight.origin)) {
+              setOriginCities([...originCities, newFlight.origin]);
+            }
+            if (newFlight.destination && !destinationCities.includes(newFlight.destination)) {
+              setDestinationCities([...destinationCities, newFlight.destination]);
             }
           }}
         />
