@@ -4,6 +4,7 @@ import { Flight } from './types';
 import AddFlightForm from './components/AddFlightForm';
 import HistoryView from './components/HistoryView';
 import styles from './App.module.css';
+import { supabase } from './lib/supabaseClient'; // ← создаём этот файл отдельно
 
 let retrieveLaunchParams: () => any = () => ({});
 try {
@@ -20,48 +21,113 @@ const App: React.FC = () => {
   const [airlines, setAirlines] = useState<string[]>([]);
   const [originCities, setOriginCities] = useState<string[]>([]);
   const [destinationCities, setDestinationCities] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Загрузка данных из localStorage
+  // Инициализация пользователя и загрузка данных
   useEffect(() => {
-    const load = (key: string): any[] => {
-      const saved = localStorage.getItem(key);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          return Array.isArray(parsed) ? parsed : [];
-        } catch (e) {
-          console.error(`Failed to parse ${key} from localStorage`, e);
+    const initUserAndLoadData = async () => {
+      let userId: string | null = null;
+      let userFirstName = 'Гость';
+
+      try {
+        // Проверяем, запущено ли в Telegram
+        if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
+          const launchParams = retrieveLaunchParams();
+          const user = launchParams?.initData?.user;
+          userId = user?.id?.toString() || null;
+          userFirstName = user?.first_name || 'Друг';
+        } else {
+          // Локальная разработка — фиксированный ID
+          userId = 'dev_user_123';
+          userFirstName = 'Разработчик';
         }
+
+        setUserName(userFirstName);
+
+        if (!userId) {
+          setLoading(false);
+          return;
+        }
+
+        // Загружаем данные из Supabase
+        const { data, error } = await supabase
+          .from('flights')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          // PGRST116 = "no rows returned", это нормально
+          console.error('Supabase load error:', error);
+          setLoading(false);
+          return;
+        }
+
+        if (data) {
+          setFlights(data.flights || []);
+          setAirlines(data.airlines || []);
+          setOriginCities(data.origin_cities || []);
+          setDestinationCities(data.destination_cities || []);
+        }
+      } catch (err) {
+        console.error('Init error:', err);
+        setUserName('Ошибка');
+      } finally {
+        setLoading(false);
       }
-      return [];
     };
 
-    setFlights(load('flights'));
-    setAirlines(load('airlines'));
-    setOriginCities(load('originCities'));
-    setDestinationCities(load('destinationCities'));
+    initUserAndLoadData();
   }, []);
 
-  // Сохранение в localStorage
-  useEffect(() => localStorage.setItem('flights', JSON.stringify(flights)), [flights]);
-  useEffect(() => localStorage.setItem('airlines', JSON.stringify(airlines)), [airlines]);
-  useEffect(() => localStorage.setItem('originCities', JSON.stringify(originCities)), [originCities]);
-  useEffect(() => localStorage.setItem('destinationCities', JSON.stringify(destinationCities)), [destinationCities]);
-
-  // Инициализация имени пользователя
+  // Автоматическое сохранение в Supabase (с debounce)
   useEffect(() => {
-    try {
+    if (loading) return;
+
+    const saveToSupabase = async () => {
+      let userId: string | null = null;
+
       if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
         const launchParams = retrieveLaunchParams();
-        const user = launchParams?.initData?.user;
-        setUserName(user?.first_name || 'Друг');
+        userId = launchParams?.initData?.user?.id?.toString() || null;
       } else {
-        setUserName('Разработчик');
+        userId = 'dev_user_123';
       }
-    } catch (err) {
-      setUserName('Разработчик');
-    }
-  }, []);
+
+      if (!userId) return;
+
+      try {
+        const { error } = await supabase.from('flights').upsert(
+          {
+            user_id: userId,
+            flights,
+            airlines,
+            origin_cities: originCities,
+            destination_cities: destinationCities,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' }
+        );
+
+        if (error) {
+          console.error('Supabase save error:', error);
+        }
+      } catch (err) {
+        console.error('Save failed:', err);
+      }
+    };
+
+    const timer = setTimeout(saveToSupabase, 1000);
+    return () => clearTimeout(timer);
+  }, [flights, airlines, originCities, destinationCities, loading]);
+
+  if (loading) {
+    return (
+      <div className={styles.app} style={{ textAlign: 'center', padding: '40px' }}>
+        <p>Загрузка данных...</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.app}>
@@ -93,7 +159,6 @@ const App: React.FC = () => {
           destinationCities={destinationCities}
           onAdd={(newFlight) => {
             setFlights([...flights, newFlight]);
-            // Обновление списков
             if (newFlight.airline && !airlines.includes(newFlight.airline)) {
               setAirlines([...airlines, newFlight.airline]);
             }
