@@ -4,6 +4,7 @@
   "private": true,
   "homepage": "https://kayatkin.github.io/flight-tracker",
   "dependencies": {
+    "@supabase/supabase-js": "^2.86.0",
     "@telegram-apps/sdk": "^3.11.8",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
