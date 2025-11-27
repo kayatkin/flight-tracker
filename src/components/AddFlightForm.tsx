@@ -77,10 +77,27 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({ flights, airlines, onAdd 
       alert('Укажите дату вылета');
       return;
     }
-    if (formData.type === 'roundTrip' && !formData.returnDate) {
-      alert('Укажите дату возвращения');
-      return;
+    if (formData.type === 'roundTrip') {
+      if (!formData.returnDate) {
+        alert('Укажите дату возвращения');
+        return;
+      }
+
+      // 🔒 Валидация: дата+время обратного рейса должна быть позже прилёта "туда"
+      const departureDateTime = new Date(`${formData.departureDate}T${formData.departureTime || '00:00'}`);
+      const arrivalDateTime = new Date(`${formData.departureDate}T${formData.arrivalTime || '00:00'}`);
+      if (formData.arrivalNextDay) {
+        arrivalDateTime.setDate(arrivalDateTime.getDate() + 1);
+      }
+
+      const returnDepartureDateTime = new Date(`${formData.returnDate}T${formData.returnDepartureTime || '00:00'}`);
+
+      if (returnDepartureDateTime <= arrivalDateTime) {
+        alert('Дата и время обратного вылета должны быть позже времени прилёта "туда"');
+        return;
+      }
     }
+
     const priceNum = Number(formData.totalPrice);
     if (!formData.totalPrice || priceNum <= 0) {
       alert('Укажите корректную стоимость (только цифры, больше 0)');
