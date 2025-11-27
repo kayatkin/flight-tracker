@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { Flight } from '../types';
 import styles from './HistoryView.module.css';
+import PriceChartModal from './PriceChartModal'; // ← новый компонент
 
 // Утилита: YYYY-MM-DD → DD-MM-YYYY
 const formatDateToDMY = (isoDate: string): string => {
@@ -18,6 +19,7 @@ interface HistoryViewProps {
 const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeDestination, setActiveDestination] = useState<string | null>(null);
+  const [chartDestination, setChartDestination] = useState<string | null>(null); // ← для графика
 
   const grouped = useMemo(() => {
     const groups: Record<string, Flight[]> = {};
@@ -195,6 +197,17 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
                     📅 {formatDateToDMY(bestFlight.departureDate)}
                     {bestFlight.type === 'roundTrip' && bestFlight.returnDate && ` — ${formatDateToDMY(bestFlight.returnDate)}`}
                   </div>
+                  {/* ➕ Кнопка графика */}
+                  <button
+                    className={styles.chartButton}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setChartDestination(destination);
+                    }}
+                    title="График сезонности цен"
+                  >
+                    📈
+                  </button>
                 </div>
 
                 {isActive && (
@@ -212,6 +225,15 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
             );
           })}
         </div>
+      )}
+
+      {/* ➕ Модальное окно графика */}
+      {chartDestination && (
+        <PriceChartModal
+          flights={grouped[chartDestination]}
+          destination={chartDestination}
+          onClose={() => setChartDestination(null)}
+        />
       )}
     </div>
   );
