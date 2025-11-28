@@ -6,12 +6,12 @@ import HistoryView from './components/HistoryView';
 import styles from './App.module.css';
 import { supabase } from './lib/supabaseClient';
 
-let retrieveLaunchParams: () => any = () => ({});
-try {
-  const sdk = require('@telegram-apps/sdk');
-  retrieveLaunchParams = sdk.retrieveLaunchParams;
-} catch (e) {
-  console.warn('Telegram SDK not available — using fallback');
+// Инициализация WebApp
+let WebApp: any = null;
+
+if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
+  WebApp = (window as any).Telegram.WebApp;
+  WebApp.ready(); // 🔑 ГЛАВНОЕ: сообщаем Telegram, что приложение готово
 }
 
 const App: React.FC = () => {
@@ -30,13 +30,17 @@ const App: React.FC = () => {
       let userFirstName = 'Гость';
 
       try {
-        if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
-          const launchParams = retrieveLaunchParams();
-          const user = launchParams?.initData?.user;
-          userId = user?.id?.toString() || null;
-          userFirstName = user?.first_name || 'Друг';
-          console.log('[DEBUG] Telegram user detected:', { id: userId, name: userFirstName });
-        } else {
+        if (WebApp && WebApp.initData) {
+          const initData = JSON.parse(WebApp.initData);
+          const user = initData.user;
+          if (user) {
+            userId = user.id?.toString() || null;
+            userFirstName = user.first_name || 'Друг';
+            console.log('[DEBUG] Telegram user from WebApp:', { id: userId, name: userFirstName });
+          }
+        }
+
+        if (!userId) {
           userId = 'dev_user_123';
           userFirstName = 'Разработчик';
           console.log('[DEBUG] Local dev mode (not in Telegram)');
@@ -45,7 +49,6 @@ const App: React.FC = () => {
         setUserName(userFirstName);
 
         if (!userId) {
-          console.warn('[DEBUG] No user ID, skipping Supabase load');
           setLoading(false);
           return;
         }
@@ -55,24 +58,19 @@ const App: React.FC = () => {
           .from('flights')
           .select('*')
           .eq('user_id', userId)
-          .single();
+          .maybeSingle(); // безопаснее для новых пользователей
 
-        console.log('[DEBUG] Supabase load result:', { data, error });
-
-        if (error && error.code !== 'PGRST116') {
+        if (error) {
           console.error('[ERROR] Supabase load failed:', error);
           setLoading(false);
           return;
         }
 
         if (data) {
-          console.log('[DEBUG] Data loaded successfully from Supabase');
           setFlights(data.flights || []);
           setAirlines(data.airlines || []);
           setOriginCities(data.origin_cities || []);
           setDestinationCities(data.destination_cities || []);
-        } else {
-          console.log('[DEBUG] No data found in Supabase for this user');
         }
       } catch (err) {
         console.error('[CRITICAL] Init user/load data crashed:', err);
@@ -85,32 +83,21 @@ const App: React.FC = () => {
     initUserAndLoadData();
   }, []);
 
-  // Автоматическое сохранение в Supabase (с debounce)
+  // Автоматическое сохранение в Supabase
   useEffect(() => {
     if (loading) return;
 
     const saveToSupabase = async () => {
       let userId: string | null = null;
 
-      if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
-        const launchParams = retrieveLaunchParams();
-        userId = launchParams?.initData?.user?.id?.toString() || null;
-      } else {
-        userId = 'dev_user_123';
+      if (WebApp && WebApp.initData) {
+        const initData = JSON.parse(WebApp.initData);
+        userId = initData.user?.id?.toString() || null;
       }
 
       if (!userId) {
-        console.warn('[DEBUG] No user ID, skipping save');
-        return;
+        userId = 'dev_user_123';
       }
-
-      console.log('[DEBUG] Saving to Supabase for user_id:', userId);
-      console.log('[DEBUG] Data to save:', {
-        flightsCount: flights.length,
-        airlines,
-        originCities,
-        destinationCities,
-      });
 
       try {
         const { error } = await supabase.from('flights').upsert(
@@ -127,8 +114,6 @@ const App: React.FC = () => {
 
         if (error) {
           console.error('[ERROR] Supabase save failed:', error);
-        } else {
-          console.log('[DEBUG] Data saved successfully to Supabase');
         }
       } catch (err) {
         console.error('[CRITICAL] Save to Supabase crashed:', err);
@@ -147,6 +132,19 @@ const App: React.FC = () => {
     );
   }
 
+  // Безопасное получение user_id для отображения
+  const getUserId = () => {
+    if (WebApp?.initData) {
+      try {
+        const initData = JSON.parse(WebApp.initData);
+        return initData.user?.id?.toString() || 'не определён';
+      } catch {
+        return 'не определён';
+      }
+    }
+    return 'не определён';
+  };
+
   return (
     <div className={styles.app}>
       <h2 className={styles.title}>✈️ Flight Tracker</h2>
@@ -154,7 +152,7 @@ const App: React.FC = () => {
         Привет, <strong>{userName}</strong>!
       </p>
       <p style={{ fontSize: '12px', color: '#888', marginTop: '-8px' }}>
-      Ваш user_id: {window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'не определён'}
+        Ваш user_id: {getUserId()}
       </p>
       <div className={styles.tabs}>
         <button
