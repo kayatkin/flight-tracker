@@ -153,7 +153,9 @@ const App: React.FC = () => {
       <p className={styles.greeting}>
         Привет, <strong>{userName}</strong>!
       </p>
-
+      <p style={{ fontSize: '12px', color: '#888', marginTop: '-8px' }}>
+      Ваш user_id: {window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'не определён'}
+      </p>
       <div className={styles.tabs}>
         <button
           onClick={() => setActiveTab('add')}
