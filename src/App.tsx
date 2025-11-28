@@ -6,105 +6,117 @@ import HistoryView from './components/HistoryView';
 import styles from './App.module.css';
 import { supabase } from './lib/supabaseClient';
 
-// Инициализация WebApp
-let WebApp: any = null;
-
-if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
-  WebApp = (window as any).Telegram.WebApp;
-  WebApp.ready(); // 🔑 ГЛАВНОЕ: сообщаем Telegram, что приложение готово
-  WebApp.expand(); // 📱 Раскрываем на весь экран
-}
-
 const App: React.FC = () => {
   const [userName, setUserName] = useState<string>('Гость');
+  const [userId, setUserId] = useState<string>('не определён');
   const [activeTab, setActiveTab] = useState<'add' | 'history'>('add');
   const [flights, setFlights] = useState<Flight[]>([]);
   const [airlines, setAirlines] = useState<string[]>([]);
   const [originCities, setOriginCities] = useState<string[]>([]);
   const [destinationCities, setDestinationCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isTelegram, setIsTelegram] = useState<boolean>(false);
 
-  // 🔧 ПРАВИЛЬНАЯ функция парсинга initData
-  const parseInitData = () => {
-    if (!WebApp?.initData) return null;
-    
-    try {
-      // Парсим строку параметров URL (например: "user=...&auth_date=...")
-      const urlParams = new URLSearchParams(WebApp.initData);
-      const userParam = urlParams.get('user');
-      
-      if (userParam) {
-        const user = JSON.parse(decodeURIComponent(userParam));
-        console.log('[DEBUG] Parsed user data:', user);
-        return user;
-      }
-    } catch (error) {
-      console.error('[ERROR] Failed to parse initData:', error);
+  // 🔧 Функция для получения Telegram WebApp
+  const getTelegramWebApp = () => {
+    if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
+      return (window as any).Telegram.WebApp;
     }
-    
     return null;
   };
 
-  // 🔧 ПРАВИЛЬНАЯ функция получения user_id
-  const getUserId = () => {
+  // 🔧 Функция для получения данных пользователя из Telegram
+  const getTelegramUser = () => {
+    const webApp = getTelegramWebApp();
+    
+    if (!webApp) {
+      console.log('[DEBUG] Telegram WebApp not found');
+      return null;
+    }
+
+    console.log('[DEBUG] Telegram WebApp found:', {
+      version: webApp.version,
+      platform: webApp.platform,
+      initData: webApp.initData ? 'exists' : 'missing',
+      initDataUnsafe: webApp.initDataUnsafe ? 'exists' : 'missing'
+    });
+
     // Способ 1: Через initDataUnsafe (самый простой)
-    if (WebApp?.initDataUnsafe?.user) {
-      const userId = WebApp.initDataUnsafe.user.id;
-      console.log('[DEBUG] User ID from initDataUnsafe:', userId);
-      return userId.toString();
+    if (webApp.initDataUnsafe?.user) {
+      const user = webApp.initDataUnsafe.user;
+      console.log('[DEBUG] User from initDataUnsafe:', user);
+      return {
+        id: user.id.toString(),
+        firstName: user.first_name || 'Друг',
+        source: 'initDataUnsafe'
+      };
     }
-    
-    // Способ 2: Через парсинг initData
-    const user = parseInitData();
-    if (user?.id) {
-      console.log('[DEBUG] User ID from parsed initData:', user.id);
-      return user.id.toString();
-    }
-    
-    // Способ 3: Режим разработки
-    console.log('[DEBUG] Using dev user ID');
-    return 'dev_user_' + Date.now();
-  };
 
-  // 🔧 ПРАВИЛЬНАЯ функция получения имени пользователя
-  const getUserName = () => {
-    // Способ 1: Через initDataUnsafe
-    if (WebApp?.initDataUnsafe?.user) {
-      return WebApp.initDataUnsafe.user.first_name || 'Друг';
-    }
-    
-    // Способ 2: Через парсинг initData
-    const user = parseInitData();
-    if (user?.first_name) {
-      return user.first_name;
-    }
-    
-    return 'Гость';
-  };
-
-  // Инициализация пользователя и загрузка данных
-  useEffect(() => {
-    const initUserAndLoadData = async () => {
+    // Способ 2: Через парсинг initData строки
+    if (webApp.initData) {
       try {
-        const userId = getUserId();
-        const userFirstName = getUserName();
+        const urlParams = new URLSearchParams(webApp.initData);
+        const userParam = urlParams.get('user');
+        
+        if (userParam) {
+          const user = JSON.parse(decodeURIComponent(userParam));
+          console.log('[DEBUG] User from initData parsing:', user);
+          return {
+            id: user.id.toString(),
+            firstName: user.first_name || 'Друг',
+            source: 'initData'
+          };
+        }
+      } catch (error) {
+        console.error('[ERROR] Failed to parse initData:', error);
+      }
+    }
 
-        console.log('[DEBUG] Final user info:', {
-          id: userId,
-          name: userFirstName,
-          hasWebApp: !!WebApp,
-          initData: WebApp?.initData ? 'exists' : 'missing',
-          initDataUnsafe: WebApp?.initDataUnsafe ? 'exists' : 'missing'
-        });
+    console.log('[DEBUG] No user data found in Telegram WebApp');
+    return null;
+  };
 
-        setUserName(userFirstName);
+  // Инициализация приложения
+  useEffect(() => {
+    const initApp = async () => {
+      try {
+        const webApp = getTelegramWebApp();
+        
+        if (webApp) {
+          // Инициализируем Telegram WebApp
+          webApp.ready();
+          webApp.expand();
+          setIsTelegram(true);
+          console.log('[DEBUG] Telegram WebApp initialized');
+        } else {
+          console.log('[DEBUG] Running in non-Telegram environment');
+          setIsTelegram(false);
+        }
+
+        // Получаем данные пользователя
+        const telegramUser = getTelegramUser();
+        let currentUserId: string;
+        let currentUserName: string;
+
+        if (telegramUser) {
+          currentUserId = telegramUser.id;
+          currentUserName = telegramUser.firstName;
+          console.log('[DEBUG] Using Telegram user:', { id: currentUserId, name: currentUserName });
+        } else {
+          currentUserId = 'dev_user_' + Date.now();
+          currentUserName = 'Разработчик';
+          console.log('[DEBUG] Using development user:', { id: currentUserId, name: currentUserName });
+        }
+
+        setUserId(currentUserId);
+        setUserName(currentUserName);
 
         // Загружаем данные из Supabase
-        console.log('[DEBUG] Loading data from Supabase for user_id:', userId);
+        console.log('[DEBUG] Loading data from Supabase for user_id:', currentUserId);
         const { data, error } = await supabase
           .from('flights')
           .select('*')
-          .eq('user_id', userId)
+          .eq('user_id', currentUserId)
           .maybeSingle();
 
         if (error && error.code !== 'PGRST116') {
@@ -118,15 +130,17 @@ const App: React.FC = () => {
         } else {
           console.log('[DEBUG] No data found in Supabase for this user');
         }
+
       } catch (err) {
-        console.error('[CRITICAL] Init user/load data crashed:', err);
+        console.error('[CRITICAL] App initialization crashed:', err);
         setUserName('Ошибка');
+        setUserId('error');
       } finally {
         setLoading(false);
       }
     };
 
-    initUserAndLoadData();
+    initApp();
   }, []);
 
   // Автоматическое сохранение в Supabase
@@ -134,8 +148,6 @@ const App: React.FC = () => {
     if (loading) return;
 
     const saveToSupabase = async () => {
-      const userId = getUserId();
-
       try {
         const { error } = await supabase.from('flights').upsert(
           {
@@ -161,7 +173,7 @@ const App: React.FC = () => {
 
     const timer = setTimeout(saveToSupabase, 1000);
     return () => clearTimeout(timer);
-  }, [flights, airlines, originCities, destinationCities, loading]);
+  }, [flights, airlines, originCities, destinationCities, loading, userId]);
 
   if (loading) {
     return (
@@ -171,12 +183,6 @@ const App: React.FC = () => {
     );
   }
 
-  // 🔧 ПРАВИЛЬНОЕ отображение user_id
-  const displayUserId = () => {
-    const userId = getUserId();
-    return userId.startsWith('dev_user_') ? 'не определён (режим разработки)' : userId;
-  };
-
   return (
     <div className={styles.app}>
       <h2 className={styles.title}>✈️ Flight Tracker</h2>
@@ -184,12 +190,12 @@ const App: React.FC = () => {
         Привет, <strong>{userName}</strong>!
       </p>
       <p style={{ fontSize: '12px', color: '#888', marginTop: '-8px' }}>
-        Ваш user_id: {displayUserId()}
+        Ваш user_id: {userId}
       </p>
       
       {/* Отладочная информация */}
       <div style={{ fontSize: '10px', color: '#ccc', marginTop: '5px' }}>
-        {WebApp ? `Telegram Web App v${WebApp.version}` : 'Not in Telegram'}
+        {isTelegram ? `Telegram Web App - User ID: ${userId}` : 'Not in Telegram - Development Mode'}
       </div>
 
       <div className={styles.tabs}>
