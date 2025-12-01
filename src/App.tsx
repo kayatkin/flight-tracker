@@ -67,7 +67,6 @@ const App: React.FC = () => {
   const [destinationCities, setDestinationCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isTelegram, setIsTelegram] = useState<boolean>(false);
-  const [debugInfo, setDebugInfo] = useState<string>('');
 
   // 🔧 Простая функция для получения Telegram WebApp
   const getTelegramWebApp = (): TelegramWebApp | null => {
@@ -128,16 +127,26 @@ const App: React.FC = () => {
     return devUserId;
   };
 
-  // 🔧 Инициализация Telegram WebApp
+  // 🔧 Инициализация Telegram WebApp и применение темы
   const initTelegramWebApp = (webApp: TelegramWebApp): void => {
     try {
-      // Инициализируем Telegram WebApp
+      // Применяем тему из Telegram
+      const themeParams = webApp.themeParams || {};
+      document.documentElement.style.setProperty('--tg-bg-color', themeParams.bg_color || '#ffffff');
+      document.documentElement.style.setProperty('--tg-text-color', themeParams.text_color || '#000000');
+      document.documentElement.style.setProperty('--tg-hint-color', themeParams.hint_color || '#999999');
+      document.documentElement.style.setProperty('--tg-link-color', themeParams.link_color || '#2481cc');
+
+      // Инициализируем WebApp
       webApp.ready();
       webApp.expand();
       
-      console.log('[TELEGRAM] WebApp initialized');
+      console.log('[TELEGRAM] WebApp initialized with theme');
     } catch (error) {
       console.error('[TELEGRAM] Failed to initialize:', error);
+      // Fallback тема
+      document.documentElement.style.setProperty('--tg-bg-color', '#ffffff');
+      document.documentElement.style.setProperty('--tg-text-color', '#000000');
     }
   };
 
@@ -160,7 +169,7 @@ const App: React.FC = () => {
           telegramDetected = true;
           setIsTelegram(true);
           
-          // Инициализируем Telegram WebApp
+          // Инициализируем Telegram WebApp с темой
           initTelegramWebApp(webApp);
           
           // Получаем данные пользователя
@@ -183,10 +192,16 @@ const App: React.FC = () => {
             console.log('[INIT] Using anonymous Telegram user:', currentUserId);
           }
         } else {
-          // Development mode
+          // Development mode — светлая тема по умолчанию
           console.log('[INIT] Development mode detected');
           telegramDetected = false;
           setIsTelegram(false);
+          
+          // Устанавливаем светлую тему для локальной разработки
+          document.documentElement.style.setProperty('--tg-bg-color', '#ffffff');
+          document.documentElement.style.setProperty('--tg-text-color', '#000000');
+          document.documentElement.style.setProperty('--tg-hint-color', '#999999');
+          document.documentElement.style.setProperty('--tg-link-color', '#2481cc');
           
           currentUserId = getDevelopmentUserId();
           currentUserName = 'Разработчик';
@@ -220,7 +235,6 @@ const App: React.FC = () => {
           setDestinationCities(data.destination_cities || []);
         } else {
           console.log('[SUPABASE] No data found for this user');
-          // Инициализируем пустые массивы
           setFlights([]);
           setAirlines([]);
           setOriginCities([]);
@@ -229,7 +243,9 @@ const App: React.FC = () => {
         
       } catch (err) {
         console.error('[CRITICAL] App initialization crashed:', err);
-        // Fallback значения
+        // Fallback тема и данные
+        document.documentElement.style.setProperty('--tg-bg-color', '#ffffff');
+        document.documentElement.style.setProperty('--tg-text-color', '#000000');
         setUserName('Гость');
         setUserId('error_user');
         setFlights([]);
@@ -296,40 +312,27 @@ const App: React.FC = () => {
       <p className={styles.greeting}>
         Привет, <strong>{userName}</strong>!
       </p>
-      <p style={{ fontSize: '12px', color: '#888', marginTop: '-8px' }}>
+      <p style={{ fontSize: '12px', color: 'var(--tg-hint-color)', marginTop: '-8px' }}>
         Ваш user_id: {userId}
       </p>
       
       {/* Информация о режиме */}
       <div style={{ 
         fontSize: '10px', 
-        color: isTelegram ? 'green' : 'orange', 
+        color: isTelegram ? 'var(--tg-link-color)' : 'orange', 
         marginTop: '5px',
         padding: '5px',
-        backgroundColor: '#f5f5f5',
+        backgroundColor: 'var(--tg-bg-color)',
         borderRadius: '4px',
-        border: `1px solid ${isTelegram ? 'green' : 'orange'}`,
+        border: `1px solid ${isTelegram ? 'var(--tg-link-color)' : 'orange'}`,
         display: 'flex',
         alignItems: 'center',
         gap: '5px'
       }}>
         <span>{isTelegram ? '✅' : '🛠️'}</span>
         <span>
-          {isTelegram ? `Telegram Mini App Mode (${userName})` : 'Development Mode (Local Storage)'}
+          {isTelegram ? `Telegram Mini App Mode` : 'Development Mode'}
         </span>
-      </div>
-      
-      {/* Отладочная информация */}
-      <div style={{ 
-        fontSize: '8px', 
-        color: '#aaa', 
-        marginTop: '3px',
-        padding: '3px',
-        backgroundColor: '#f0f0f0',
-        borderRadius: '3px',
-        fontFamily: 'monospace'
-      }}>
-        Platform: {typeof window !== 'undefined' && window.Telegram?.WebApp?.platform || 'unknown'}
       </div>
       
       <div className={styles.tabs}>
@@ -357,7 +360,6 @@ const App: React.FC = () => {
             const updatedFlights = [...flights, newFlight];
             setFlights(updatedFlights);
             
-            // Обновляем списки уникальных значений
             if (newFlight.airline && !airlines.includes(newFlight.airline)) {
               setAirlines([...airlines, newFlight.airline]);
             }

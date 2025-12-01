@@ -1,18 +1,40 @@
 /* src/App.module.css */
 
+/* Тема по умолчанию (для локальной разработки) */
+:root {
+  --tg-bg-color: #ffffff;
+  --tg-text-color: #000000;
+  --tg-hint-color: #888888;
+  --tg-link-color: #0088cc;
+  --tg-border-color: #e0e0e0;
+  --tg-card-bg: #ffffff;
+  --tg-active-bg: #f0f8ff;
+}
+
 .app {
   padding: 16px;
-  font-family: sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   max-width: 500px;
   margin: 0 auto;
+  background-color: var(--tg-bg-color);
+  color: var(--tg-text-color);
 }
 
 .title {
+  font-size: 24px;
+  font-weight: bold;
   margin: 0 0 12px 0;
+  color: var(--tg-text-color);
 }
 
 .greeting {
+  font-size: 18px;
   margin: 0 0 20px 0;
+  color: var(--tg-text-color);
+}
+
+.greeting strong {
+  color: var(--tg-link-color);
 }
 
 .tabs {
@@ -25,13 +47,21 @@
   flex: 1;
   padding: 10px;
   font-size: 16px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--tg-border-color);
   border-radius: 6px;
-  background-color: white;
+  background-color: var(--tg-card-bg);
+  color: var(--tg-text-color);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.tabButton:hover {
+  background-color: var(--tg-active-bg);
 }
 
 .tabButton.active {
-  background-color: #e6f2ff;
+  background-color: var(--tg-active-bg);
+  border-color: var(--tg-link-color);
+  color: var(--tg-link-color);
+  font-weight: bold;
 }
