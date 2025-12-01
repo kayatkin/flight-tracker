@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="Flight Tracker Mini App" />
+    <title>Flight Tracker</title>
+    <script src="https://telegram.org/js/telegram-web-app.js  "></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            max-width: 600px; 
+            margin: 0 auto; 
+        }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .warning { color: orange; font-weight: bold; }
+        .info-box { 
+            background: #f5f5f5; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin: 15px 0; 
+            border-left: 4px solid #007bff;
+        }
+        .test-result { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Telegram Mini App Diagnostic</h1>
+    <div id="diagnostic-results"></div>
+
+    <script>
+        function runDiagnostics() {
+            const results = document.getElementById('diagnostic-results');
+            let html = '';
+            
+            // Test 1: Check if Telegram object exists
+            html += '<div class="test-result">';
+            if (window.Telegram) {
+                html += '<span class="success">✅</span> window.Telegram object found<br>';
+            } else {
+                html += '<span class="error">❌</span> window.Telegram object NOT found<br>';
+            }
+            
+            // Test 2: Check if WebApp exists
+            if (window.Telegram?.WebApp) {
+                const webApp = window.Telegram.WebApp;
+                html += '<span class="success">✅</span> Telegram.WebApp found<br>';
+                
+                // Test 3: Check platform and version
+                html += `<span class="success">📱</span> Platform: ${webApp.platform || 'unknown'}<br>`;
+                html += `<span class="success">🔢</span> Version: ${webApp.version || 'unknown'}<br>`;
+                
+                // Test 4: Check initData
+                if (webApp.initData) {
+                    html += '<span class="success">✅</span> initData: EXISTS<br>';
+                } else {
+                    html += '<span class="error">❌</span> initData: MISSING<br>';
+                }
+                
+                // Test 5: Check user data
+                if (webApp.initDataUnsafe?.user) {
+                    const user = webApp.initDataUnsafe.user;
+                    html += '<span class="success">✅</span> User Data: FOUND<br>';
+                    html += `<span class="success">👤</span> User ID: ${user.id}<br>`;
+                    html += `<span class="success">📛</span> First Name: ${user.first_name || 'N/A'}<br>`;
+                    html += `<span class="success">🔖</span> Username: ${user.username || 'N/A'}<br>`;
+                } else {
+                    html += '<span class="error">❌</span> User Data: NOT FOUND<br>';
+                }
+                
+                // Initialize WebApp
+                try {
+                    webApp.ready();
+                    webApp.expand();
+                    html += '<span class="success">✅</span> WebApp initialized successfully<br>';
+                } catch (e) {
+                    html += `<span class="error">❌</span> WebApp init failed: ${e.message}<br>`;
+                }
+                
+            } else {
+                html += '<span class="error">❌</span> Telegram.WebApp NOT found<br>';
+            }
+            
+            // Test 6: Check for alternative Telegram objects
+            html += '<div class="test-result">';
+            html += '<strong>Alternative Telegram objects check:</strong><br>';
+            const altObjects = ['tg', 'TelegramWebApp', 'telegram'];
+            let foundAlt = false;
+            altObjects.forEach(obj => {
+                if (window[obj]) {
+                    html += `<span class="warning">⚠️</span> Found: window.${obj}<br>`;
+                    foundAlt = true;
+                }
+            });
+            if (!foundAlt) {
+                html += '<span class="error">❌</span> No alternative Telegram objects found<br>';
+            }
+            
+            // Test 7: Check if we're in iframe (Telegram loads apps in iframe)
+            html += '<div class="test-result">';
+            if (window.parent !== window) {
+                html += '<span class="success">✅</span> Running inside iframe (expected for Telegram)<br>';
+                html += `<span class="success">🔗</span> Parent origin: ${document.referrer || 'unknown'}<br>`;
+            } else {
+                html += '<span class="warning">⚠️</span> Running in top window (unexpected for Telegram)<br>';
+            }
+            
+            // Test 8: Check URL parameters
+            html += '<div class="test-result">';
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.toString()) {
+                html += `<span class="success">🔍</span> URL Parameters: ${urlParams.toString()}<br>`;
+            } else {
+                html += '<span class="warning">⚠️</span> No URL parameters<br>';
+            }
+            
+            // Summary
+            html += '<div class="info-box">';
+            html += '<h3>📊 Diagnostic Summary</h3>';
+            if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
+                html += '<p class="success">✅ FULLY WORKING: Telegram Mini App is properly loaded with user data</p>';
+            } else if (window.Telegram?.WebApp) {
+                html += '<p class="warning">⚠️ PARTIAL: Telegram WebApp found but missing user data</p>';
+            } else if (window.Telegram) {
+                html += '<p class="warning">⚠️ LIMITED: Telegram object found but WebApp missing</p>';
+            } else {
+                html += '<p class="error">❌ BROKEN: Telegram environment not detected</p>';
+            }
+            html += '</div>';
+            
+            results.innerHTML = html;
+            
+            // Log to console for debugging
+            console.log('=== TELEGRAM DIAGNOSTICS ===');
+            console.log('Telegram:', window.Telegram);
+            console.log('WebApp:', window.Telegram?.WebApp);
+            console.log('initData:', window.Telegram?.WebApp?.initData);
+            console.log('User:', window.Telegram?.WebApp?.initDataUnsafe?.user);
+            console.log('In iframe:', window.parent !== window);
+            console.log('Referrer:', document.referrer);
+        }
+
+        // Run diagnostics with delay to ensure Telegram script loads
+        setTimeout(runDiagnostics, 100);
+        setTimeout(runDiagnostics, 1000);
+        setTimeout(runDiagnostics, 3000);
+    </script>
+</body>
+</html>
