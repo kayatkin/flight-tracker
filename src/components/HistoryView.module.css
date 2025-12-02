@@ -138,7 +138,6 @@
   margin: 12px 0 8px;
 }
 
-/* Стили для карточки билета с поддержкой анимации */
 .fullCard {
   padding: 14px;
   margin-bottom: 12px;
@@ -148,12 +147,6 @@
   background-color: var(--tg-theme-secondary-bg-color, #fff);
   color: var(--tg-theme-text-color, #000);
   border: 1px solid var(--tg-theme-hint-color, #ddd);
-  /* Плавные переходы для анимации удаления */
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-origin: center;
-  will-change: transform, opacity, max-height, margin, padding;
-  overflow: hidden;
-  max-height: 500px; /* Достаточно для контента */
 }
 
 .fullCard.best {
@@ -166,28 +159,11 @@
   background-color: var(--tg-theme-secondary-bg-color, #fff);
 }
 
-/* Анимация удаления - оптимизированная */
-.fullCard.deleting {
-  opacity: 0;
-  transform: translateX(100%) scale(0.9);
-  max-height: 0;
-  margin-bottom: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  border-width: 0;
-  box-shadow: none;
-}
-
 .bestTag {
   font-size: 12px;
   color: #2e7d32;
   font-weight: bold;
   margin-bottom: 6px;
-  transition: opacity 0.3s ease;
-}
-
-.fullCard.deleting .bestTag {
-  opacity: 0;
 }
 
 .route {
@@ -195,55 +171,30 @@
   margin-bottom: 6px;
   color: var(--tg-theme-text-color, #000);
   font-size: 16px;
-  transition: opacity 0.3s ease;
-}
-
-.fullCard.deleting .route {
-  opacity: 0;
 }
 
 .dateTime {
   font-size: 14px;
   color: var(--tg-theme-hint-color, #555);
   margin: 6px 0;
-  transition: opacity 0.3s ease;
-}
-
-.fullCard.deleting .dateTime {
-  opacity: 0;
 }
 
 .layover {
   font-size: 14px;
   color: var(--tg-theme-hint-color, #666);
   margin: 6px 0;
-  transition: opacity 0.3s ease;
-}
-
-.fullCard.deleting .layover {
-  opacity: 0;
 }
 
 .airline {
   margin: 6px 0;
   color: var(--tg-theme-text-color, #000);
   font-size: 14px;
-  transition: opacity 0.3s ease;
-}
-
-.fullCard.deleting .airline {
-  opacity: 0;
 }
 
 .price {
   margin-top: 8px;
   color: var(--tg-theme-text-color, #000);
   font-size: 16px;
-  transition: opacity 0.3s ease;
-}
-
-.fullCard.deleting .price {
-  opacity: 0;
 }
 
 .price strong {
@@ -266,12 +217,6 @@
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--tg-border-color, #eee);
-  transition: opacity 0.3s ease;
-}
-
-.fullCard.deleting .meta {
-  opacity: 0;
-  border-top-color: transparent;
 }
 
 .metaText {
@@ -295,14 +240,9 @@
   margin-left: 8px;
 }
 
-.deleteButton:hover:not(:disabled) {
+.deleteButton:hover {
   background-color: rgba(244, 67, 54, 0.1);
   transform: scale(1.05);
-}
-
-.deleteButton:disabled {
-  opacity: 0.5;
-  cursor: default;
 }
 
 /* Фильтры */
@@ -361,7 +301,6 @@
   
   .fullCard {
     padding: 12px;
-    max-height: 400px;
   }
   
   .meta {
@@ -373,23 +312,5 @@
     padding: 2px 6px;
     min-width: 32px;
     min-height: 32px;
-  }
-}
-
-/* Улучшение для пользователей с prefers-reduced-motion */
-@media (prefers-reduced-motion: reduce) {
-  .fullCard,
-  .fullCard.deleting,
-  .fullCard *,
-  .deleteButton {
-    transition: none !important;
-    animation: none !important;
-  }
-  
-  .fullCard.deleting {
-    opacity: 0;
-    max-height: 0;
-    margin-bottom: 0;
-    padding: 0;
   }
 }
