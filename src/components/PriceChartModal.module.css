@@ -1,4 +1,5 @@
 /* src/components/PriceChartModal.module.css */
+
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -10,10 +11,11 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  backdrop-filter: blur(4px);
 }
 
 .modalContent {
-  background: white;
+  background: var(--tg-card-bg, #ffffff);
   border-radius: 16px;
   width: 95%;
   max-width: 500px;
@@ -21,45 +23,194 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--tg-border-color, rgba(255, 255, 255, 0.1));
 }
 
 .modalHeader {
-  padding: 16px;
-  background: #f8f9fa;
+  padding: 16px 20px;
+  background: var(--tg-bg-color, #f8f9fa);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--tg-border-color, #eee);
 }
 
 .modalHeader h3 {
   margin: 0;
   font-size: 18px;
-  color: #0088cc;
+  color: var(--tg-link-color, #0088cc);
+  font-weight: 600;
 }
 
 .closeButton {
   background: none;
   border: none;
-  font-size: 20px;
+  font-size: 24px;
   cursor: pointer;
-  color: #888;
+  color: var(--tg-hint-color, #888);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
 }
 
 .closeButton:hover {
-  color: #000;
+  color: var(--tg-text-color, #000);
+  background-color: var(--tg-active-bg, rgba(0, 0, 0, 0.05));
 }
 
 .chartContainer {
   flex: 1;
   min-height: 300px;
-  padding: 16px;
+  padding: 20px;
+  position: relative;
+}
+
+/* Стили для Canvas Chart.js */
+.chartContainer canvas {
+  width: 100% !important;
+  height: auto !important;
+  max-height: 400px;
 }
 
 .legend {
-  padding: 12px 16px 16px;
+  padding: 16px 20px;
+  font-size: 14px;
+  color: var(--tg-hint-color, #666);
+  background: var(--tg-bg-color, #fafafa);
+  border-top: 1px solid var(--tg-border-color, #eee);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 10px;
+}
+
+.legendColor {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendText {
+  flex: 1;
   font-size: 13px;
-  color: #666;
-  background: #fafafa;
-  border-top: 1px solid #eee;
+  color: var(--tg-text-color, #333);
+}
+
+.legendValue {
+  font-weight: 600;
+  color: var(--tg-link-color, #0088cc);
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+  .modalContent {
+    width: 100%;
+    max-width: none;
+    max-height: 90vh;
+    border-radius: 0;
+    margin: 0;
+  }
+  
+  .modalHeader {
+    padding: 14px 16px;
+  }
+  
+  .modalHeader h3 {
+    font-size: 16px;
+  }
+  
+  .chartContainer {
+    padding: 16px;
+    min-height: 250px;
+  }
+  
+  .legend {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+}
+
+/* Анимация появления */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modalContent {
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+/* Стили для темной темы */
+[data-tg-theme] .modalOverlay {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+[data-tg-theme] .modalContent {
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Стили для Chart.js в темной теме */
+[data-tg-theme] .chartContainer canvas {
+  filter: brightness(0.9);
+}
+
+/* Дополнительные элементы управления */
+.modalControls {
+  display: flex;
+  gap: 10px;
+  padding: 0 20px 16px;
+  justify-content: center;
+}
+
+.controlButton {
+  padding: 8px 16px;
+  background: var(--tg-bg-color, #f0f0f0);
+  border: 1px solid var(--tg-border-color, #ddd);
+  border-radius: 8px;
+  color: var(--tg-text-color, #333);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.controlButton:hover {
+  background: var(--tg-active-bg, rgba(0, 0, 0, 0.05));
+  border-color: var(--tg-link-color, #0088cc);
+}
+
+.controlButton.active {
+  background: var(--tg-link-color, #0088cc);
+  color: white;
+  border-color: var(--tg-link-color, #0088cc);
+}
+
+/* Информационная панель */
+.infoPanel {
+  padding: 12px 20px;
+  background: var(--tg-active-bg, rgba(0, 136, 204, 0.1));
+  border-radius: 8px;
+  margin: 0 20px 16px;
+  font-size: 14px;
+  color: var(--tg-text-color, #333);
+  border-left: 4px solid var(--tg-link-color, #0088cc);
+}
+
+.infoPanel strong {
+  color: var(--tg-link-color, #0088cc);
 }

@@ -67,22 +67,132 @@ const App: React.FC = () => {
   const [destinationCities, setDestinationCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isTelegram, setIsTelegram] = useState<boolean>(false);
+  const [themeApplied, setThemeApplied] = useState<boolean>(false);
 
-  // 🔧 Простая функция для получения Telegram WebApp
+  // 🔧 Функция для применения тем Telegram
+  const applyTelegramTheme = (webApp: TelegramWebApp): void => {
+    try {
+      const themeParams = webApp.themeParams || {};
+      
+      // Устанавливаем все стандартные переменные Telegram
+      document.documentElement.style.setProperty(
+        '--tg-theme-bg-color', 
+        themeParams.bg_color || '#ffffff'
+      );
+      document.documentElement.style.setProperty(
+        '--tg-theme-text-color', 
+        themeParams.text_color || '#000000'
+      );
+      document.documentElement.style.setProperty(
+        '--tg-theme-hint-color', 
+        themeParams.hint_color || '#999999'
+      );
+      document.documentElement.style.setProperty(
+        '--tg-theme-link-color', 
+        themeParams.link_color || '#2481cc'
+      );
+      document.documentElement.style.setProperty(
+        '--tg-theme-button-color', 
+        themeParams.button_color || '#2481cc'
+      );
+      document.documentElement.style.setProperty(
+        '--tg-theme-button-text-color', 
+        themeParams.button_text_color || '#ffffff'
+      );
+      
+      // Устанавливаем производные переменные
+      document.documentElement.style.setProperty(
+        '--tg-bg-color',
+        `var(--tg-theme-bg-color, #ffffff)`
+      );
+      document.documentElement.style.setProperty(
+        '--tg-text-color',
+        `var(--tg-theme-text-color, #000000)`
+      );
+      document.documentElement.style.setProperty(
+        '--tg-hint-color',
+        `var(--tg-theme-hint-color, #888888)`
+      );
+      document.documentElement.style.setProperty(
+        '--tg-link-color',
+        `var(--tg-theme-button-color, #0088cc)`
+      );
+      document.documentElement.style.setProperty(
+        '--tg-border-color',
+        `var(--tg-theme-hint-color, #e0e0e0)`
+      );
+      document.documentElement.style.setProperty(
+        '--tg-card-bg',
+        `var(--tg-theme-bg-color, #ffffff)`
+      );
+      document.documentElement.style.setProperty(
+        '--tg-active-bg',
+        `rgba(${hexToRgb(themeParams.button_color || '#0088cc')}, 0.1)`
+      );
+      
+      // Добавляем атрибут для CSS селекторов
+      document.documentElement.setAttribute('data-tg-theme', 'loaded');
+      
+      setThemeApplied(true);
+      console.log('[THEME] Telegram theme applied');
+    } catch (error) {
+      console.error('[THEME] Failed to apply Telegram theme:', error);
+      applyDefaultTheme();
+    }
+  };
+
+  // 🔧 Функция для применения темы по умолчанию
+  const applyDefaultTheme = (): void => {
+    // Проверяем системную тему
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (isDarkMode) {
+      // Темная тема для не-Telegram окружений
+      document.documentElement.style.setProperty('--tg-bg-color', '#0f0f0f');
+      document.documentElement.style.setProperty('--tg-text-color', '#ffffff');
+      document.documentElement.style.setProperty('--tg-hint-color', '#aaaaaa');
+      document.documentElement.style.setProperty('--tg-link-color', '#5db0ff');
+      document.documentElement.style.setProperty('--tg-border-color', '#333333');
+      document.documentElement.style.setProperty('--tg-card-bg', '#1c1c1c');
+      document.documentElement.style.setProperty('--tg-active-bg', 'rgba(93, 176, 255, 0.1)');
+    } else {
+      // Светлая тема по умолчанию
+      document.documentElement.style.setProperty('--tg-bg-color', '#ffffff');
+      document.documentElement.style.setProperty('--tg-text-color', '#000000');
+      document.documentElement.style.setProperty('--tg-hint-color', '#888888');
+      document.documentElement.style.setProperty('--tg-link-color', '#0088cc');
+      document.documentElement.style.setProperty('--tg-border-color', '#e0e0e0');
+      document.documentElement.style.setProperty('--tg-card-bg', '#ffffff');
+      document.documentElement.style.setProperty('--tg-active-bg', '#f0f8ff');
+    }
+    
+    document.documentElement.removeAttribute('data-tg-theme');
+    setThemeApplied(true);
+    console.log('[THEME] Default theme applied');
+  };
+
+  // 🔧 Вспомогательная функция для преобразования hex в rgb
+  const hexToRgb = (hex: string): string => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result
+      ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`
+      : '0, 136, 204';
+  };
+
+  // 🔧 Функция для получения Telegram WebApp
   const getTelegramWebApp = (): TelegramWebApp | null => {
     if (typeof window === 'undefined') return null;
     
-    // Прямой доступ к Telegram WebApp
     const webApp = window.Telegram?.WebApp;
     
     if (webApp) {
       console.log('[TELEGRAM] WebApp found:', {
         platform: webApp.platform,
         version: webApp.version,
-        hasUser: !!webApp.initDataUnsafe?.user
+        colorScheme: webApp.colorScheme,
+        hasUser: !!webApp.initDataUnsafe?.user,
+        themeParams: webApp.themeParams
       });
-    } else {
-      console.log('[TELEGRAM] WebApp not found');
     }
     
     return webApp || null;
@@ -93,10 +203,10 @@ const App: React.FC = () => {
     const webApp = getTelegramWebApp();
     
     if (!webApp) {
+      console.log('[TELEGRAM] No WebApp found');
       return null;
     }
     
-    // Получаем пользователя из initDataUnsafe
     if (webApp.initDataUnsafe?.user) {
       const user = webApp.initDataUnsafe.user;
       console.log('[TELEGRAM] User found:', user);
@@ -107,16 +217,15 @@ const App: React.FC = () => {
       };
     }
     
+    console.log('[TELEGRAM] No user data found');
     return null;
   };
 
   // 🔧 Функция для создания постоянного development user_id
   const getDevelopmentUserId = (): string => {
-    // Пробуем получить из localStorage
     let devUserId = localStorage.getItem('flight_tracker_dev_user_id');
     
     if (!devUserId) {
-      // Создаем новый постоянный ID
       devUserId = 'dev_user_' + Math.random().toString(36).substr(2, 9);
       localStorage.setItem('flight_tracker_dev_user_id', devUserId);
       console.log('[DEVELOPMENT] Created new dev user_id:', devUserId);
@@ -127,26 +236,20 @@ const App: React.FC = () => {
     return devUserId;
   };
 
-  // 🔧 Инициализация Telegram WebApp и применение темы
+  // 🔧 Инициализация Telegram WebApp
   const initTelegramWebApp = (webApp: TelegramWebApp): void => {
     try {
-      // Применяем тему из Telegram
-      const themeParams = webApp.themeParams || {};
-      document.documentElement.style.setProperty('--tg-bg-color', themeParams.bg_color || '#ffffff');
-      document.documentElement.style.setProperty('--tg-text-color', themeParams.text_color || '#000000');
-      document.documentElement.style.setProperty('--tg-hint-color', themeParams.hint_color || '#999999');
-      document.documentElement.style.setProperty('--tg-link-color', themeParams.link_color || '#2481cc');
-
       // Инициализируем WebApp
       webApp.ready();
       webApp.expand();
       
-      console.log('[TELEGRAM] WebApp initialized with theme');
+      // Применяем тему Telegram
+      applyTelegramTheme(webApp);
+      
+      console.log('[TELEGRAM] WebApp initialized');
     } catch (error) {
       console.error('[TELEGRAM] Failed to initialize:', error);
-      // Fallback тема
-      document.documentElement.style.setProperty('--tg-bg-color', '#ffffff');
-      document.documentElement.style.setProperty('--tg-text-color', '#000000');
+      applyDefaultTheme();
     }
   };
 
@@ -169,7 +272,7 @@ const App: React.FC = () => {
           telegramDetected = true;
           setIsTelegram(true);
           
-          // Инициализируем Telegram WebApp с темой
+          // Инициализируем Telegram WebApp
           initTelegramWebApp(webApp);
           
           // Получаем данные пользователя
@@ -192,16 +295,13 @@ const App: React.FC = () => {
             console.log('[INIT] Using anonymous Telegram user:', currentUserId);
           }
         } else {
-          // Development mode — светлая тема по умолчанию
+          // Development mode
           console.log('[INIT] Development mode detected');
           telegramDetected = false;
           setIsTelegram(false);
           
-          // Устанавливаем светлую тему для локальной разработки
-          document.documentElement.style.setProperty('--tg-bg-color', '#ffffff');
-          document.documentElement.style.setProperty('--tg-text-color', '#000000');
-          document.documentElement.style.setProperty('--tg-hint-color', '#999999');
-          document.documentElement.style.setProperty('--tg-link-color', '#2481cc');
+          // Применяем тему по умолчанию
+          applyDefaultTheme();
           
           currentUserId = getDevelopmentUserId();
           currentUserName = 'Разработчик';
@@ -244,8 +344,7 @@ const App: React.FC = () => {
       } catch (err) {
         console.error('[CRITICAL] App initialization crashed:', err);
         // Fallback тема и данные
-        document.documentElement.style.setProperty('--tg-bg-color', '#ffffff');
-        document.documentElement.style.setProperty('--tg-text-color', '#000000');
+        applyDefaultTheme();
         setUserName('Гость');
         setUserId('error_user');
         setFlights([]);
@@ -301,7 +400,13 @@ const App: React.FC = () => {
   if (loading) {
     return (
       <div className={styles.app} style={{ textAlign: 'center', padding: '40px' }}>
-        <p>Загрузка данных...</p>
+        <div style={{ 
+          fontSize: '16px', 
+          color: 'var(--tg-text-color, #000)',
+          animation: 'pulse 1.5s infinite'
+        }}>
+          Загрузка данных...
+        </div>
       </div>
     );
   }
@@ -312,35 +417,16 @@ const App: React.FC = () => {
       <p className={styles.greeting}>
         Привет, <strong>{userName}</strong>!
       </p>
-      <p style={{ fontSize: '12px', color: 'var(--tg-hint-color)', marginTop: '-8px' }}>
-        Ваш user_id: {userId}
-      </p>
-      
-      {/* Информация о режиме */}
-      <div style={{ 
-        fontSize: '10px', 
-        color: isTelegram ? 'var(--tg-link-color)' : 'orange', 
-        marginTop: '5px',
-        padding: '5px',
-        backgroundColor: 'var(--tg-bg-color)',
-        borderRadius: '4px',
-        border: `1px solid ${isTelegram ? 'var(--tg-link-color)' : 'orange'}`,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '5px'
-      }}>
-        <span>{isTelegram ? '✅' : '🛠️'}</span>
-        <span>
-          {isTelegram ? `Telegram Mini App Mode` : 'Development Mode'}
-        </span>
-      </div>
-      
+
+      {/* УДАЛЕН БЛОК С ОТЛАДОЧНОЙ ИНФОРМАЦИЕЙ */}
+      {/* Блок с ID пользователя был здесь, теперь удален */}
+
       <div className={styles.tabs}>
         <button
           onClick={() => setActiveTab('add')}
           className={`${styles.tabButton} ${activeTab === 'add' ? styles.active : ''}`}
         >
-          ➕ Добавить
+          ➕ Добавить перелет
         </button>
         <button
           onClick={() => setActiveTab('history')}
@@ -349,7 +435,7 @@ const App: React.FC = () => {
           📚 История
         </button>
       </div>
-      
+
       {activeTab === 'add' && (
         <AddFlightForm
           flights={flights}
@@ -359,7 +445,6 @@ const App: React.FC = () => {
           onAdd={(newFlight) => {
             const updatedFlights = [...flights, newFlight];
             setFlights(updatedFlights);
-            
             if (newFlight.airline && !airlines.includes(newFlight.airline)) {
               setAirlines([...airlines, newFlight.airline]);
             }
@@ -372,13 +457,24 @@ const App: React.FC = () => {
           }}
         />
       )}
-      
+
       {activeTab === 'history' && (
         <HistoryView 
           flights={flights} 
           onDelete={(id) => setFlights(flights.filter(f => f.id !== id))} 
         />
       )}
+      
+      {/* CSS для анимации загрузки */}
+      <style>
+        {`
+          @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+          }
+        `}
+      </style>
     </div>
   );
 };
