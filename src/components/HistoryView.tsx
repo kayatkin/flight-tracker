@@ -20,6 +20,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeDestination, setActiveDestination] = useState<string | null>(null);
   const [chartDestination, setChartDestination] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const grouped = useMemo(() => {
     const groups: Record<string, Flight[]> = {};
@@ -77,16 +78,45 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm('Удалить этот билет?')) {
-      onDelete(id);
+    
+    // Проверяем, поддерживает ли устройство плавные анимации
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+    
+    if (prefersReducedMotion) {
+      // Без анимации для пользователей с настройкой уменьшения движения
+      if (window.confirm('Удалить этот билет?')) {
+        onDelete(id);
+      }
+      return;
     }
+    
+    // С анимацией
+    setDeletingId(id);
+    
+    // Ждем окончания анимации и показываем подтверждение
+    setTimeout(() => {
+      if (window.confirm('Удалить этот билет?')) {
+        // Удаляем после подтверждения
+        onDelete(id);
+      } else {
+        // Отменяем анимацию если пользователь отказался
+        setDeletingId(null);
+      }
+    }, 350); // Немного меньше чем длительность анимации
   };
 
   const renderFullFlightCard = (flight: Flight, isBest: boolean) => {
+    const isDeleting = deletingId === flight.id;
+    
     return (
       <div
         key={flight.id}
-        className={`${styles.fullCard} ${isBest ? styles.best : styles.normal}`}
+        className={`${styles.fullCard} ${isBest ? styles.best : styles.normal} ${
+          isDeleting ? styles.deleting : ''
+        }`}
+        style={isDeleting ? { pointerEvents: 'none' } : undefined}
       >
         {isBest && <div className={styles.bestTag}>✅ Самый выгодный</div>}
 
@@ -123,16 +153,19 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
         </div>
 
         <div className={styles.meta}>
-          👥 {flight.passengers} пассажир(ов) • Найдено: {formatDateToDMY(flight.dateFound)}
+          <span className={styles.metaText}>
+            👥 {flight.passengers} пассажир(ов) • Найдено: {formatDateToDMY(flight.dateFound)}
+          </span>
+          <button
+            onClick={(e) => handleDelete(flight.id, e)}
+            className={styles.deleteButton}
+            title="Удалить билет"
+            disabled={isDeleting}
+            style={isDeleting ? { opacity: 0.5, cursor: 'default' } : undefined}
+          >
+            {isDeleting ? '⌛' : '🗑️'}
+          </button>
         </div>
-
-        <button
-          onClick={(e) => handleDelete(flight.id, e)}
-          className={styles.deleteButton}
-          title="Удалить билет"
-        >
-          🗑️
-        </button>
       </div>
     );
   };
@@ -169,7 +202,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
             const flightList = grouped[destination];
             const bestFlight = getBestFlight(flightList);
             const otherFlights = flightList
-              .filter(f => f.id !== bestFlight.id)
+              .filter(f => f.id !== bestFlight.id && f.id !== deletingId) // Не показываем удаляемые
               .sort((a, b) => a.totalPrice / a.passengers - b.totalPrice / b.passengers);
 
             const isActive = activeDestination === destination;
@@ -181,10 +214,11 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
                 className={`${styles.card} ${isActive ? styles.active : ''}`}
               >
                 <div className={styles.cardHeader}>
-                  {/* ➕ Одна строка: город, количество, иконка */}
                   <div className={styles.cardTitleWithMeta}>
                     <span>📍 {destination}</span>
-                    <span className={styles.ticketCount}>({flightList.length})</span>
+                    <span className={styles.ticketCount}>
+                      ({flightList.length - (deletingId && flightList.some(f => f.id === deletingId) ? 1 : 0)})
+                    </span>
                     <button
                       className={styles.chartButton}
                       onClick={(e) => {
@@ -210,7 +244,10 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
 
                 {isActive && (
                   <div className={styles.cardContent}>
-                    <div>{renderFullFlightCard(bestFlight, true)}</div>
+                    {/* Показываем лучший билет если он не удаляется */}
+                    {bestFlight.id !== deletingId && (
+                      <div>{renderFullFlightCard(bestFlight, true)}</div>
+                    )}
                     {otherFlights.length > 0 && (
                       <>
                         <div className={styles.otherFlightsTitle}>Другие предложения:</div>
