@@ -1,3 +1,5 @@
+/* src/components/ShareFlightModal.module.css */
+
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -14,161 +16,363 @@
 
 .modalContent {
   background: var(--tg-card-bg, #ffffff);
-  border-radius: 12px;
-  padding: 24px;
-  max-width: 500px;
+  border-radius: 16px;
+  padding: 28px;
+  max-width: 520px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
   border: 1px solid var(--tg-border-color, #e0e0e0);
+  animation: modalAppear 0.3s ease;
+}
+
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .modalContent h3 {
-  margin: 0 0 20px 0;
+  margin: 0 0 16px 0;
   color: var(--tg-text-color, #000);
+  text-align: center;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+/* Стили для подсказки */
+.hintBox {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-left: 4px solid var(--tg-link-color, #667eea);
+  padding: 16px;
+  border-radius: 10px;
+  margin-bottom: 24px;
   text-align: center;
 }
 
+.hintBox p {
+  margin: 0;
+  color: var(--tg-text-color, #333);
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.hintSubtext {
+  font-size: 14px !important;
+  color: var(--tg-hint-color, #666) !important;
+  margin-top: 6px !important;
+  opacity: 0.9;
+}
+
 .formGroup {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .formGroup label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   color: var(--tg-text-color, #333);
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 15px;
 }
 
 .radioGroup {
   display: flex;
-  gap: 20px;
+  flex-direction: column;
+  gap: 12px;
   margin-top: 8px;
 }
 
-.radioGroup label {
+.radioLabel {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   font-weight: normal;
   cursor: pointer;
+  padding: 12px;
+  border-radius: 10px;
+  border: 2px solid var(--tg-border-color, #e0e0e0);
+  background: var(--tg-card-bg, #fff);
+  transition: all 0.2s ease;
+}
+
+.radioLabel:hover {
+  border-color: var(--tg-link-color, #0088cc);
+  background: var(--tg-active-bg, #f0f8ff);
+}
+
+.radioInput {
+  margin-right: 8px;
+  transform: scale(1.2);
+}
+
+.radioDescription {
+  font-size: 13px;
+  color: var(--tg-hint-color, #666);
+  margin-left: 24px;
+  line-height: 1.4;
 }
 
 .select {
   width: 100%;
-  padding: 10px;
-  border: 1px solid var(--tg-border-color, #ddd);
-  border-radius: 6px;
+  padding: 12px;
+  border: 2px solid var(--tg-border-color, #ddd);
+  border-radius: 8px;
   background: var(--tg-card-bg, #fff);
   color: var(--tg-text-color, #000);
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 500;
+  transition: border-color 0.2s;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--tg-link-color, #0088cc);
+}
+
+.selectHint {
+  font-size: 13px;
+  color: var(--tg-hint-color, #666);
+  margin-top: 6px;
+  font-style: italic;
 }
 
 .buttonGroup {
   display: flex;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 28px;
 }
 
 .cancelButton, .createButton, .deactivateButton, .closeButton {
   flex: 1;
-  padding: 12px;
+  padding: 14px;
   border: none;
-  border-radius: 6px;
-  font-weight: 500;
+  border-radius: 10px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .cancelButton {
   background: var(--tg-border-color, #f0f0f0);
   color: var(--tg-text-color, #666);
+  border: 2px solid transparent;
+}
+
+.cancelButton:hover {
+  background: #e0e0e0;
+  transform: translateY(-2px);
 }
 
 .createButton {
-  background: var(--tg-link-color, #0088cc);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  border: 2px solid transparent;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.createButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
 }
 
 .createButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 .deactivateButton {
-  background: #ff4444;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
   color: white;
+  border: 2px solid transparent;
+}
+
+.deactivateButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
 }
 
 .closeButton {
-  background: #00a86b;
+  background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
   color: white;
+  border: 2px solid transparent;
+}
+
+.closeButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 176, 155, 0.3);
 }
 
 .error {
-  background: #ffebee;
-  color: #c62828;
-  padding: 10px;
-  border-radius: 6px;
-  margin: 15px 0;
+  background: linear-gradient(135deg, #ff6b6b 0%, #c44569 100%);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 20px 0;
   font-size: 14px;
+  text-align: center;
+  font-weight: 500;
+  border: none;
 }
 
 .successMessage {
-  background: #e8f5e9;
-  color: #2e7d32;
-  padding: 12px;
-  border-radius: 6px;
+  background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+  color: white;
+  padding: 14px;
+  border-radius: 10px;
   text-align: center;
-  margin-bottom: 20px;
-  font-weight: 500;
+  margin-bottom: 24px;
+  font-weight: 600;
+  font-size: 16px;
+  border: none;
 }
 
 .shareInfo {
-  background: var(--tg-active-bg, #f0f8ff);
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+  background: var(--tg-active-bg, #f8f9ff);
+  padding: 18px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  border: 1px solid var(--tg-border-color, #e0e0e0);
 }
 
 .infoRow {
-  margin-bottom: 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
   color: var(--tg-text-color, #333);
+  line-height: 1.4;
+}
+
+.infoRow:last-child {
+  margin-bottom: 0;
+}
+
+.infoIcon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .infoRow strong {
   color: var(--tg-text-color, #000);
-  margin-right: 8px;
+  margin-right: 6px;
 }
 
 .urlContainer {
-  display: flex;
-  gap: 10px;
-  margin: 20px 0;
+  margin: 24px 0;
+}
+
+.urlLabel {
+  font-size: 14px;
+  color: var(--tg-hint-color, #666);
+  margin-bottom: 8px;
+  font-weight: 500;
 }
 
 .urlInput {
-  flex: 1;
-  padding: 10px;
-  border: 1px solid var(--tg-border-color, #ddd);
-  border-radius: 6px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--tg-border-color, #ddd);
+  border-radius: 10px;
   background: var(--tg-bg-color, #f9f9f9);
-  color: var(--tg-text-color, #666);
-  font-size: 12px;
+  color: var(--tg-text-color, #333);
+  font-size: 14px;
+  font-family: monospace;
   word-break: break-all;
+  margin-bottom: 12px;
+  cursor: text;
+}
+
+.urlInput:focus {
+  outline: none;
+  border-color: var(--tg-link-color, #0088cc);
 }
 
 .copyButton {
-  padding: 10px 15px;
-  background: var(--tg-link-color, #0088cc);
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
-  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s ease;
 }
 
 .copyButton:hover {
-  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.finalHint {
+  background: rgba(255, 193, 7, 0.1);
+  border-left: 4px solid #ffc107;
+  padding: 14px;
+  border-radius: 10px;
+  margin: 20px 0;
+}
+
+.finalHint p {
+  margin: 6px 0;
+  color: var(--tg-text-color, #333);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.finalHint p:first-child {
+  margin-top: 0;
+}
+
+.finalHint p:last-child {
+  margin-bottom: 0;
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 480px) {
+  .modalContent {
+    padding: 20px;
+    border-radius: 14px;
+  }
+  
+  .modalContent h3 {
+    font-size: 20px;
+  }
+  
+  .buttonGroup {
+    flex-direction: column;
+  }
+  
+  .radioGroup {
+    gap: 8px;
+  }
+  
+  .radioLabel {
+    padding: 10px;
+  }
+  
+  .hintBox {
+    padding: 14px;
+  }
 }

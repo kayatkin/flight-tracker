@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { Flight } from '../types';
 import styles from './HistoryView.module.css';
 import PriceChartModal from './PriceChartModal';
+import JoinSessionForm from './JoinSessionForm';
 
 // Утилита: YYYY-MM-DD → DD-MM-YYYY
 const formatDateToDMY = (isoDate: string): string => {
@@ -14,7 +15,8 @@ const formatDateToDMY = (isoDate: string): string => {
 interface HistoryViewProps {
   flights: Flight[];
   onDelete: (id: string) => void;
-  onShare?: () => void; // Новая функция для открытия модального окна "Поделиться"
+  onShare?: () => void; // Функция для открытия модального окна "Поделиться"
+  onJoin?: (token: string) => void; // Функция для присоединения к истории
   isGuest?: boolean; // Флаг гостевого режима
   guestPermissions?: 'view' | 'edit'; // Права гостя
 }
@@ -23,6 +25,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
   flights, 
   onDelete, 
   onShare,
+  onJoin,
   isGuest = false,
   guestPermissions = 'view'
 }) => {
@@ -30,6 +33,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
   const [activeDestination, setActiveDestination] = useState<string | null>(null);
   const [chartDestination, setChartDestination] = useState<string | null>(null);
   const [showEmptyState, setShowEmptyState] = useState<boolean>(false);
+  const [showJoinForm, setShowJoinForm] = useState<boolean>(false);
 
   // Используем useMemo для оптимизации группировки
   const grouped = useMemo(() => {
@@ -97,6 +101,13 @@ const HistoryView: React.FC<HistoryViewProps> = ({
     
     if (window.confirm('Удалить этот билет?')) {
       onDelete(id);
+    }
+  };
+
+  const handleJoin = (token: string) => {
+    if (onJoin) {
+      onJoin(token);
+      setShowJoinForm(false);
     }
   };
 
@@ -188,19 +199,43 @@ const HistoryView: React.FC<HistoryViewProps> = ({
 
   return (
     <div className={styles.container}>
-      {/* Кнопка "Поделиться историей" (только для владельцев) */}
-      {!isGuest && onShare && (
-        <div className={styles.shareContainer}>
-          <button
-            onClick={onShare}
-            className={styles.shareButton}
-            title="Поделиться историей перелетов"
-          >
-            📤 Поделиться историей
-          </button>
-          <p className={styles.shareHint}>
-            Создайте ссылку, чтобы поделиться историей с друзьями
+      {/* Кнопки действий для владельцев */}
+      {!isGuest && (
+        <div className={styles.actionButtonsContainer}>
+          <div className={styles.buttonGroup}>
+            {onShare && (
+              <button
+                onClick={onShare}
+                className={styles.shareButton}
+                title="Поделиться историей перелетов"
+              >
+                📤 Поделиться
+              </button>
+            )}
+            <button
+              onClick={() => setShowJoinForm(!showJoinForm)}
+              className={styles.joinHistoryButton}
+              title="Присоединиться к чужой истории"
+            >
+              🔗 Присоединиться
+            </button>
+          </div>
+          <p className={styles.actionHint}>
+            {showJoinForm 
+              ? "Введите токен доступа для просмотра чужой истории" 
+              : "Управляйте доступом к вашей истории перелетов"
+            }
           </p>
+        </div>
+      )}
+
+      {/* Форма присоединения к истории */}
+      {showJoinForm && !isGuest && onJoin && (
+        <div className={styles.joinFormWrapper}>
+          <JoinSessionForm
+            onJoin={handleJoin}
+            onCancel={() => setShowJoinForm(false)}
+          />
         </div>
       )}
 

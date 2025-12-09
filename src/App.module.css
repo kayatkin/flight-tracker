@@ -70,6 +70,32 @@
   color: var(--tg-link-color);
 }
 
+/* УДАЛЕНО: Стили для кнопки присоединения - теперь она в HistoryView */
+/*
+.joinContainer {
+  margin: 15px 0;
+  text-align: center;
+}
+
+.joinButton {
+  background: var(--tg-link-color, #0088cc);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.joinButton:hover {
+  opacity: 0.9;
+}
+*/
+
 .tabs {
   display: flex;
   gap: 12px;
@@ -103,6 +129,16 @@
   border-color: transparent;
   font-weight: 600;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tabButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tabButton:disabled:hover {
+  background-color: var(--tg-card-bg);
+  border-color: transparent;
 }
 
 /* Адаптивность для мобильных устройств */

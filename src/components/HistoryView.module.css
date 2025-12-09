@@ -5,6 +5,99 @@
   padding-bottom: 20px;
 }
 
+/* Контейнер для кнопок действий */
+.actionButtonsContainer {
+  margin-bottom: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  color: white;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.shareButton, .joinHistoryButton {
+  padding: 14px 28px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 180px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.shareButton {
+  background: rgba(255, 255, 255, 0.9);
+  color: #667eea;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.shareButton:hover {
+  background: white;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+}
+
+.joinHistoryButton {
+  background: rgba(76, 175, 80, 0.9);
+  color: white;
+  border: 2px solid rgba(76, 175, 80, 0.3);
+}
+
+.joinHistoryButton:hover {
+  background: #4CAF50;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(76, 175, 80, 0.3);
+}
+
+.actionHint {
+  margin-top: 8px;
+  font-size: 14px;
+  opacity: 0.95;
+  color: rgba(255, 255, 255, 0.95);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* Контейнер для формы присоединения */
+.joinFormWrapper {
+  margin-bottom: 20px;
+  animation: slideDown 0.4s ease;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Удаляем старый shareContainer */
+.shareContainer {
+  display: none;
+}
+
 .searchContainer {
   position: relative;
   margin-bottom: 20px;
@@ -275,11 +368,157 @@
   font-size: 14px;
 }
 
-/* Адаптивность */
-@media (max-width: 480px) {
+/* Индикатор гостевого режима */
+.guestIndicator {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  border-radius: 14px;
+  margin-bottom: 20px;
+  color: white;
+  box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+}
+
+.guestIcon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.guestInfo {
+  flex: 1;
+}
+
+.guestTitle {
+  font-weight: 600;
+  font-size: 16px;
+  opacity: 0.95;
+  margin-bottom: 4px;
+}
+
+.guestPermissions {
+  font-size: 14px;
+  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.guestBadge {
+  background: rgba(255, 255, 255, 0.25);
+  padding: 3px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+  margin-left: 8px;
+  font-weight: 600;
+}
+
+/* Дополнительные стили для пустого состояния */
+.guestHint {
+  margin-top: 20px;
+  padding: 18px;
+  background: var(--tg-active-bg, #f0f8ff);
+  border-radius: 12px;
+  border-left: 5px solid var(--tg-link-color, #0088cc);
+  box-shadow: 0 2px 8px rgba(0, 136, 204, 0.1);
+}
+
+.guestHint p {
+  margin: 10px 0;
+  color: var(--tg-text-color, #333);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Счетчик билетов */
+.flightCount {
+  margin-top: 10px;
+  font-size: 15px;
+  color: var(--tg-hint-color, #666);
+  text-align: center;
+  padding: 8px;
+  background: var(--tg-active-bg, #f8f9fa);
+  border-radius: 10px;
+}
+
+.flightCount strong {
+  color: var(--tg-text-color, #000);
+  font-size: 18px;
+}
+
+/* Улучшенные стили для карточек */
+.bestFlightNote {
+  background: rgba(76, 175, 80, 0.15);
+  color: #2e7d32;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  margin-bottom: 15px;
+  border-left: 4px solid #4CAF50;
+  font-weight: 500;
+}
+
+/* Стили для неактивных кнопок */
+.deleteButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+}
+
+.deleteButton:disabled:hover {
+  background: var(--tg-border-color, #e0e0e0) !important;
+  transform: none !important;
+}
+
+.chartButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+}
+
+.chartButton:disabled:hover {
+  background: transparent !important;
+  opacity: 0.5 !important;
+}
+
+/* Медиа-запросы для мобильных устройств */
+@media (max-width: 768px) {
   .container {
     padding: 0 8px;
     padding-bottom: 16px;
+  }
+  
+  .actionButtonsContainer {
+    padding: 16px;
+    border-radius: 14px;
+  }
+  
+  .buttonGroup {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .shareButton, .joinHistoryButton {
+    width: 100%;
+    max-width: 300px;
+    min-width: unset;
+    padding: 12px 20px;
+  }
+  
+  .actionHint {
+    font-size: 13px;
+    padding: 0 8px;
+  }
+  
+  .guestIndicator {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+    padding: 14px;
+  }
+  
+  .guestIcon {
+    font-size: 24px;
   }
   
   .filters {
@@ -315,159 +554,25 @@
   }
 }
 
-/* ДОБАВИТЬ ЭТИ СТИЛИ В HistoryView.module.css */
-
-/* Контейнер для кнопки "Поделиться" */
-.shareContainer {
-  margin-bottom: 20px;
-  text-align: center;
-  padding: 15px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
-  color: white;
-}
-
-.shareButton {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin: 0 auto;
-}
-
-.shareButton:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-}
-
-.shareHint {
-  margin-top: 8px;
-  font-size: 13px;
-  opacity: 0.9;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-/* Индикатор гостевого режима */
-.guestIndicator {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  border-radius: 10px;
-  margin-bottom: 20px;
-  color: white;
-}
-
-.guestIcon {
-  font-size: 24px;
-  flex-shrink: 0;
-}
-
-.guestInfo {
-  flex: 1;
-}
-
-.guestTitle {
-  font-weight: 600;
-  font-size: 14px;
-  opacity: 0.9;
-}
-
-.guestPermissions {
-  font-size: 13px;
-  margin-top: 2px;
-  opacity: 0.9;
-}
-
-.guestBadge {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  margin-left: 8px;
-}
-
-/* Дополнительные стили для пустого состояния */
-.guestHint {
-  margin-top: 20px;
-  padding: 15px;
-  background: var(--tg-active-bg, #f0f8ff);
-  border-radius: 8px;
-  border-left: 4px solid var(--tg-link-color, #0088cc);
-}
-
-.guestHint p {
-  margin: 8px 0;
-  color: var(--tg-text-color, #333);
-  font-size: 14px;
-}
-
-/* Счетчик билетов */
-.flightCount {
-  margin-top: 8px;
-  font-size: 14px;
-  color: var(--tg-hint-color, #666);
-  text-align: center;
-}
-
-.flightCount strong {
-  color: var(--tg-text-color, #000);
-}
-
-/* Улучшенные стили для карточек */
-.bestFlightNote {
-  background: rgba(76, 175, 80, 0.1);
-  color: #2e7d32;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 13px;
-  margin-bottom: 12px;
-  border-left: 3px solid #4CAF50;
-}
-
-/* Стили для неактивных кнопок */
-.deleteButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed !important;
-}
-
-.deleteButton:disabled:hover {
-  background: var(--tg-border-color, #e0e0e0) !important;
-}
-
-.chartButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed !important;
-}
-
-.chartButton:disabled:hover {
-  background: transparent !important;
-}
-
-/* Медиа-запросы для мобильных устройств */
 @media (max-width: 480px) {
-  .shareButton {
+  .actionButtonsContainer {
+    padding: 14px;
+  }
+  
+  .shareButton, .joinHistoryButton {
     padding: 10px 16px;
     font-size: 14px;
   }
   
   .guestIndicator {
-    flex-direction: column;
-    text-align: center;
-    gap: 8px;
+    padding: 12px;
   }
   
-  .guestIcon {
-    font-size: 20px;
+  .guestTitle {
+    font-size: 14px;
+  }
+  
+  .guestPermissions {
+    font-size: 13px;
   }
 }

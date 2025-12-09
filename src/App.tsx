@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { Flight } from './types';
 import AddFlightForm from './components/AddFlightForm';
 import HistoryView from './components/HistoryView';
-import JoinSessionForm from './components/JoinSessionForm';
 import GuestModeIndicator from './components/GuestModeIndicator';
 import ShareFlightModal from './components/ShareFlightModal';
 import styles from './App.module.css';
@@ -73,7 +72,6 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isTelegram, setIsTelegram] = useState<boolean>(false);
   const [themeApplied, setThemeApplied] = useState<boolean>(false);
-  const [showJoinForm, setShowJoinForm] = useState<boolean>(false);
   const [isCheckingToken, setIsCheckingToken] = useState<boolean>(true);
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
 
@@ -597,7 +595,7 @@ const App: React.FC = () => {
     setFlights(flights.filter(f => f.id !== id));
   };
   
-  // Обработчик присоединения по токену
+  // Обработчик присоединения по токену (передается в HistoryView)
   const handleJoinSession = async (token: string) => {
     try {
       setLoading(true);
@@ -614,7 +612,6 @@ const App: React.FC = () => {
         setAirlines(ownerData.airlines);
         setOriginCities(ownerData.originCities);
         setDestinationCities(ownerData.destinationCities);
-        setShowJoinForm(false);
         
         // Обновляем URL с токеном
         const newUrl = `${window.location.origin}${window.location.pathname}?token=${token}`;
@@ -673,25 +670,8 @@ const App: React.FC = () => {
         Привет, <strong>{userName}</strong>!
       </p>
 
-      {/* Кнопка "Присоединиться" для владельцев */}
-      {!appUser?.isGuest && (
-        <div className={styles.joinContainer}>
-          <button
-            onClick={() => setShowJoinForm(true)}
-            className={styles.joinButton}
-          >
-            🔗 Присоединиться к истории
-          </button>
-        </div>
-      )}
-
-      {/* Форма присоединения */}
-      {showJoinForm && (
-        <JoinSessionForm
-          onJoin={handleJoinSession}
-          onCancel={() => setShowJoinForm(false)}
-        />
-      )}
+      {/* УДАЛЕН БЛОК: Кнопка "Присоединиться к истории" - теперь она в HistoryView */}
+      {/* УДАЛЕН БЛОК: Форма присоединения - теперь она в HistoryView */}
 
       {/* Модальное окно для создания ссылки */}
       {showShareModal && appUser && !appUser.isGuest && (
@@ -733,6 +713,7 @@ const App: React.FC = () => {
           flights={flights} 
           onDelete={handleDeleteFlight}
           onShare={() => setShowShareModal(true)}
+          onJoin={handleJoinSession} // Передаем функцию для присоединения
           isGuest={appUser?.isGuest || false}
           guestPermissions={appUser?.isGuest ? appUser.permissions : undefined}
         />

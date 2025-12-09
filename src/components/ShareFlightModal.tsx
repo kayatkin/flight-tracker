@@ -1,5 +1,5 @@
 // src/components/ShareFlightModal.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import styles from './ShareFlightModal.module.css';
 
@@ -84,44 +84,63 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
       <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
         <h3>📤 Поделиться историей перелетов</h3>
         
+        {/* ДОБАВЛЕНА ПОДСКАЗКА */}
+        <div className={styles.hintBox}>
+          <p>Создайте ссылку, чтобы поделиться историей с друзьями</p>
+          <p className={styles.hintSubtext}>
+            Вы можете дать права только на просмотр или разрешить редактирование
+          </p>
+        </div>
+        
         {!generatedToken ? (
           <>
             <div className={styles.formGroup}>
               <label>Права доступа:</label>
               <div className={styles.radioGroup}>
-                <label>
+                <label className={styles.radioLabel}>
                   <input
                     type="radio"
                     value="view"
                     checked={permissions === 'view'}
                     onChange={(e) => setPermissions(e.target.value as 'view' | 'edit')}
+                    className={styles.radioInput}
                   />
-                  Только просмотр
+                  👁️ Только просмотр
+                  <span className={styles.radioDescription}>
+                    Гость сможет только просматривать вашу историю
+                  </span>
                 </label>
-                <label>
+                <label className={styles.radioLabel}>
                   <input
                     type="radio"
                     value="edit"
                     checked={permissions === 'edit'}
                     onChange={(e) => setPermissions(e.target.value as 'view' | 'edit')}
+                    className={styles.radioInput}
                   />
-                  Просмотр и редактирование
+                  ✏️ Просмотр и редактирование
+                  <span className={styles.radioDescription}>
+                    Гость сможет добавлять и удалять перелеты
+                  </span>
                 </label>
               </div>
             </div>
 
             <div className={styles.formGroup}>
-              <label>Срок действия (дней):</label>
+              <label>Срок действия ссылки:</label>
               <select
                 value={expiryDays}
                 onChange={(e) => setExpiryDays(Number(e.target.value))}
                 className={styles.select}
               >
                 <option value={1}>1 день</option>
-                <option value={7}>7 дней</option>
+                <option value={7}>7 дней (по умолчанию)</option>
                 <option value={30}>30 дней</option>
-                <option value={365}>Без ограничений (1 год)</option>
+                <option value={365}>1 год (без ограничений)</option>
               </select>
+              <p className={styles.selectHint}>
+                По истечении этого срока ссылка станет недействительной
+              </p>
             </div>
 
             {error && <div className={styles.error}>{error}</div>}
@@ -147,23 +166,42 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
             
             <div className={styles.shareInfo}>
               <div className={styles.infoRow}>
-                <strong>Права:</strong> {permissions === 'view' ? 'Только просмотр' : 'Полный доступ'}
+                <span className={styles.infoIcon}>🔒</span>
+                <div>
+                  <strong>Права доступа:</strong> {permissions === 'view' ? 'Только просмотр' : 'Просмотр и редактирование'}
+                </div>
               </div>
               <div className={styles.infoRow}>
-                <strong>Действует до:</strong> {new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000).toLocaleDateString()}
+                <span className={styles.infoIcon}>📅</span>
+                <div>
+                  <strong>Срок действия:</strong> до {new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000).toLocaleDateString()}
+                </div>
+              </div>
+              <div className={styles.infoRow}>
+                <span className={styles.infoIcon}>📋</span>
+                <div>
+                  <strong>Инструкция:</strong> Отправьте эту ссылку тому, с кем хотите поделиться историей
+                </div>
               </div>
             </div>
 
             <div className={styles.urlContainer}>
+              <div className={styles.urlLabel}>Ссылка для доступа:</div>
               <input
                 type="text"
                 value={shareUrl}
                 readOnly
                 className={styles.urlInput}
+                onClick={(e) => (e.target as HTMLInputElement).select()}
               />
               <button onClick={copyToClipboard} className={styles.copyButton}>
-                📋 Копировать
+                📋 Копировать ссылку
               </button>
+            </div>
+
+            <div className={styles.finalHint}>
+              <p>⚠️ <strong>Важно:</strong> Эта ссылка предоставляет доступ к вашей истории перелетов.</p>
+              <p>Делитесь ей только с теми, кому доверяете.</p>
             </div>
 
             <div className={styles.buttonGroup}>
