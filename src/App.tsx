@@ -714,6 +714,7 @@ const App: React.FC = () => {
           onDelete={handleDeleteFlight}
           onShare={() => setShowShareModal(true)}
           onJoin={handleJoinSession} // Передаем функцию для присоединения
+          userId={appUser?.userId}
           isGuest={appUser?.isGuest || false}
           guestPermissions={appUser?.isGuest ? appUser.permissions : undefined}
         />

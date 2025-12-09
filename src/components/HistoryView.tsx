@@ -4,6 +4,7 @@ import { Flight } from '../types';
 import styles from './HistoryView.module.css';
 import PriceChartModal from './PriceChartModal';
 import JoinSessionForm from './JoinSessionForm';
+import SharedSessionsList from './SharedSessionsList';
 
 // Утилита: YYYY-MM-DD → DD-MM-YYYY
 const formatDateToDMY = (isoDate: string): string => {
@@ -17,6 +18,7 @@ interface HistoryViewProps {
   onDelete: (id: string) => void;
   onShare?: () => void; // Функция для открытия модального окна "Поделиться"
   onJoin?: (token: string) => void; // Функция для присоединения к истории
+  userId?: string; // ID пользователя для отображения его приглашений
   isGuest?: boolean; // Флаг гостевого режима
   guestPermissions?: 'view' | 'edit'; // Права гостя
 }
@@ -26,6 +28,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
   onDelete, 
   onShare,
   onJoin,
+  userId,
   isGuest = false,
   guestPermissions = 'view'
 }) => {
@@ -34,6 +37,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
   const [chartDestination, setChartDestination] = useState<string | null>(null);
   const [showEmptyState, setShowEmptyState] = useState<boolean>(false);
   const [showJoinForm, setShowJoinForm] = useState<boolean>(false);
+  const [showSessionsList, setShowSessionsList] = useState<boolean>(false);
 
   // Используем useMemo для оптимизации группировки
   const grouped = useMemo(() => {
@@ -219,6 +223,16 @@ const HistoryView: React.FC<HistoryViewProps> = ({
             >
               🔗 Присоединиться
             </button>
+            {/* НОВАЯ КНОПКА - Список выданных приглашений */}
+            {userId && (
+              <button
+                onClick={() => setShowSessionsList(true)}
+                className={styles.sessionsListButton}
+                title="Показать выданные приглашения"
+              >
+                📋 Приглашения
+              </button>
+            )}
           </div>
           <p className={styles.actionHint}>
             {showJoinForm 
@@ -237,6 +251,18 @@ const HistoryView: React.FC<HistoryViewProps> = ({
             onCancel={() => setShowJoinForm(false)}
           />
         </div>
+      )}
+
+      {/* Список выданных приглашений */}
+      {showSessionsList && userId && (
+        <SharedSessionsList
+          userId={userId}
+          onClose={() => setShowSessionsList(false)}
+          onSessionDeactivated={() => {
+            // Можно добавить callback если нужно обновить что-то
+            console.log('Приглашение отозвано');
+          }}
+        />
       )}
 
       {/* Индикатор гостевого режима */}
