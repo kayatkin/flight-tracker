@@ -10,17 +10,19 @@ export interface Flight {
   arrivalTime?: string;
   returnDepartureTime?: string;
   returnArrivalTime?: string;
-  isDirectThere: boolean;            // туда
-  isDirectBack: boolean;             // обратно (только для roundTrip)
-  layoverCityThere?: string;         // пересадка туда
-  layoverDurationThere?: number;     // длительность туда (мин)
-  layoverCityBack?: string;          // пересадка обратно
-  layoverDurationBack?: number;      // длительность обратно (мин)
+  isDirectThere: boolean;
+  isDirectBack: boolean;
+  layoverCityThere?: string;
+  layoverDurationThere?: number;
+  layoverCityBack?: string;
+  layoverDurationBack?: number;
   airline: string;
   passengers: 1 | 2 | 3 | 4;
   totalPrice: number;
   dateFound: string;
-  // ➕ Новые поля для сдвига даты прилёта
-  arrivalNextDay?: boolean;          // +1 день к прилёту туда
-  returnArrivalNextDay?: boolean;    // +1 день к прилёту обратно
+  arrivalNextDay?: boolean;
+  returnArrivalNextDay?: boolean;
+  // Новые поля для совместного доступа
+  owner_id?: string; // ID владельца
+  shared_with?: string[]; // Список пользователей с доступом
 }

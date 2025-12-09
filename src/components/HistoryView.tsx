@@ -14,13 +14,24 @@ const formatDateToDMY = (isoDate: string): string => {
 interface HistoryViewProps {
   flights: Flight[];
   onDelete: (id: string) => void;
+  onShare?: () => void; // Новая функция для открытия модального окна "Поделиться"
+  isGuest?: boolean; // Флаг гостевого режима
+  guestPermissions?: 'view' | 'edit'; // Права гостя
 }
 
-const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
+const HistoryView: React.FC<HistoryViewProps> = ({ 
+  flights, 
+  onDelete, 
+  onShare,
+  isGuest = false,
+  guestPermissions = 'view'
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeDestination, setActiveDestination] = useState<string | null>(null);
   const [chartDestination, setChartDestination] = useState<string | null>(null);
+  const [showEmptyState, setShowEmptyState] = useState<boolean>(false);
 
+  // Используем useMemo для оптимизации группировки
   const grouped = useMemo(() => {
     const groups: Record<string, Flight[]> = {};
     flights.forEach((flight) => {
@@ -77,12 +88,21 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    // Проверяем права доступа
+    if (isGuest && guestPermissions === 'view') {
+      alert('У вас нет прав для удаления билетов. Только просмотр.');
+      return;
+    }
+    
     if (window.confirm('Удалить этот билет?')) {
       onDelete(id);
     }
   };
 
   const renderFullFlightCard = (flight: Flight, isBest: boolean) => {
+    const canDelete = !isGuest || (isGuest && guestPermissions === 'edit');
+    
     return (
       <div
         key={flight.id}
@@ -125,11 +145,16 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
         <div className={styles.meta}>
           <span className={styles.metaText}>
             👥 {flight.passengers} пассажир(ов) • Найдено: {formatDateToDMY(flight.dateFound)}
+            {isGuest && <span style={{ marginLeft: '8px', fontSize: '12px', color: '#666' }}>
+              {guestPermissions === 'edit' ? '✏️ Редактирование' : '👁️ Только просмотр'}
+            </span>}
           </span>
           <button
             onClick={(e) => handleDelete(flight.id, e)}
             className={styles.deleteButton}
-            title="Удалить билет"
+            title={canDelete ? "Удалить билет" : "Нет прав для удаления"}
+            disabled={!canDelete}
+            style={!canDelete ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
           >
             🗑️
           </button>
@@ -138,17 +163,60 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
     );
   };
 
-  if (flights.length === 0) {
+  // Показываем состояние пустой истории через секунду после загрузки
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowEmptyState(true);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (flights.length === 0 && showEmptyState) {
     return (
       <div className={styles.emptyState}>
         <p>📭 Нет сохранённых билетов.</p>
         <p>Добавьте первый рейс во вкладке «➕ Добавить»!</p>
+        {isGuest && (
+          <div className={styles.guestHint}>
+            <p>Вы находитесь в режиме гостя с правами <strong>{guestPermissions === 'edit' ? 'редактирования' : 'просмотра'}</strong>.</p>
+            <p>Чтобы создать свою историю, перейдите по основной ссылке приложения.</p>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
     <div className={styles.container}>
+      {/* Кнопка "Поделиться историей" (только для владельцев) */}
+      {!isGuest && onShare && (
+        <div className={styles.shareContainer}>
+          <button
+            onClick={onShare}
+            className={styles.shareButton}
+            title="Поделиться историей перелетов"
+          >
+            📤 Поделиться историей
+          </button>
+          <p className={styles.shareHint}>
+            Создайте ссылку, чтобы поделиться историей с друзьями
+          </p>
+        </div>
+      )}
+
+      {/* Индикатор гостевого режима */}
+      {isGuest && (
+        <div className={styles.guestIndicator}>
+          <div className={styles.guestIcon}>👤</div>
+          <div className={styles.guestInfo}>
+            <div className={styles.guestTitle}>Режим гостя</div>
+            <div className={styles.guestPermissions}>
+              Права доступа: <strong>{guestPermissions === 'edit' ? '✏️ Просмотр и редактирование' : '👁️ Только просмотр'}</strong>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className={styles.searchContainer}>
         <input
           type="text"
@@ -156,11 +224,17 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className={styles.searchInput}
+          disabled={flights.length === 0}
         />
         <span className={styles.searchIcon}>📍</span>
+        {flights.length > 0 && (
+          <div className={styles.flightCount}>
+            Всего билетов: <strong>{flights.length}</strong>
+          </div>
+        )}
       </div>
 
-      {filteredDestinations.length === 0 && searchTerm ? (
+      {filteredDestinations.length === 0 && searchTerm && flights.length > 0 ? (
         <div className={styles.noResults}>
           Ничего не найдено по запросу «{searchTerm}»
         </div>
@@ -180,11 +254,17 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
                 key={destination}
                 onClick={() => setActiveDestination(isActive ? null : destination)}
                 className={`${styles.card} ${isActive ? styles.active : ''}`}
+                style={isGuest ? { borderLeft: `4px solid ${guestPermissions === 'edit' ? '#4CAF50' : '#FF9800'}` } : {}}
               >
                 <div className={styles.cardHeader}>
                   <div className={styles.cardTitleWithMeta}>
                     <span>📍 {destination}</span>
                     <span className={styles.ticketCount}>({flightList.length})</span>
+                    {isGuest && (
+                      <span className={styles.guestBadge}>
+                        {guestPermissions === 'edit' ? '✏️' : '👁️'}
+                      </span>
+                    )}
                     <button
                       className={styles.chartButton}
                       onClick={(e) => {
@@ -192,6 +272,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
                         setChartDestination(destination);
                       }}
                       title="График сезонности цен"
+                      disabled={flightList.length < 2}
+                      style={flightList.length < 2 ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                     >
                       📈
                     </button>
@@ -210,10 +292,15 @@ const HistoryView: React.FC<HistoryViewProps> = ({ flights, onDelete }) => {
 
                 {isActive && (
                   <div className={styles.cardContent}>
+                    <div className={styles.bestFlightNote}>
+                      ⭐ Лучшее предложение по цене за человека
+                    </div>
                     <div>{renderFullFlightCard(bestFlight, true)}</div>
                     {otherFlights.length > 0 && (
                       <>
-                        <div className={styles.otherFlightsTitle}>Другие предложения:</div>
+                        <div className={styles.otherFlightsTitle}>
+                          Другие предложения ({otherFlights.length}):
+                        </div>
                         {otherFlights.map((flight) => renderFullFlightCard(flight, false))}
                       </>
                     )}
