@@ -1,26 +1,20 @@
-// src/App.tsx - ПЕРВЫЙ ЭТАП РЕФАКТОРИНГА
-import React, { useEffect, useState } from 'react';
+// src/App.tsx - ВТОРОЙ ЭТАП РЕФАКТОРИНГА
+import React, { useEffect, useState, useCallback } from 'react';
 import { Flight } from './types';
 import AddFlightForm from './components/AddFlightForm';
 import HistoryView from './components/HistoryView';
 import GuestModeIndicator from './components/GuestModeIndicator';
 import ShareFlightModal from './components/ShareFlightModal';
 import styles from './App.module.css';
-import { GuestUser, AppUser } from './types/shared';
+import { AppUser } from './types/shared';
 
-// ИМПОРТИРУЕМ ВЫНЕСЕННЫЕ ФУНКЦИИ
+// ИМПОРТИРУЕМ СЕРВИСЫ
 import { 
-  getTelegramWebApp, 
-  getTelegramUser, 
-  getDevelopmentUserId, 
-  initTelegramWebApp,
-  applyDefaultTheme,
-} from './utils';
-
-// ИМПОРТИРУЕМ СЕРВИС ДАННЫХ
+  initializeApp, 
+  getFallbackInitResult,
+  initGuestMode 
+} from './services/appInitService';
 import { 
-  validateToken, 
-  loadUserData, 
   saveOwnerData, 
   saveGuestData 
 } from './services/dataService';
@@ -42,124 +36,25 @@ const App: React.FC = () => {
   useEffect(() => {
     const initApp = async () => {
       try {
-        console.log('[INIT] Starting app initialization...');
+        const initResult = await initializeApp();
         
-        // Ждем немного для загрузки Telegram WebApp
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Проверяем токен в URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get('token');
-        
-        if (token) {
-          console.log('[INIT] Token found in URL, checking...');
-          const guestUser = await validateToken(token);
-          
-          if (guestUser) {
-            console.log('[INIT] Valid guest user:', guestUser);
-            setAppUser(guestUser);
-            
-            // Загружаем данные владельца
-            const ownerData = await loadUserData(guestUser.ownerId);
-            setUserId(guestUser.ownerId);
-            setUserName(`Гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`);
-            setFlights(ownerData.flights);
-            setAirlines(ownerData.airlines);
-            setOriginCities(ownerData.originCities);
-            setDestinationCities(ownerData.destinationCities);
-            applyDefaultTheme();
-            setIsCheckingToken(false);
-            setLoading(false);
-            return;
-          } else {
-            console.log('[INIT] Invalid or expired token');
-            // Удаляем невалидный токен из URL
-            window.history.replaceState({}, '', window.location.pathname);
-          }
-        }
-
-        // Оригинальная инициализация для владельца
-        const webApp = getTelegramWebApp();
-        let currentUserId: string;
-        let currentUserName: string;
-        let telegramDetected = false;
-        
-        if (webApp) {
-          console.log('[INIT] Telegram WebApp detected!');
-          telegramDetected = true;
-          
-          // Инициализируем Telegram WebApp
-          initTelegramWebApp(webApp);
-          
-          // Получаем данные пользователя
-          const telegramUser = getTelegramUser();
-          
-          if (telegramUser) {
-            currentUserId = telegramUser.id;
-            currentUserName = telegramUser.firstName;
-            console.log('[INIT] Using Telegram user:', { 
-              id: currentUserId, 
-              name: currentUserName 
-            });
-            
-            // Добавляем префикс для идентификации
-            currentUserId = 'tg_' + currentUserId;
-          } else {
-            // Если в Telegram, но нет данных пользователя
-            currentUserId = 'telegram_anon_' + Math.random().toString(36).substr(2, 8);
-            currentUserName = 'Аноним';
-            console.log('[INIT] Using anonymous Telegram user:', currentUserId);
-          }
-        } else {
-          // Development mode
-          console.log('[INIT] Development mode detected');
-          telegramDetected = false;
-          
-          // Применяем тему по умолчанию
-          applyDefaultTheme();
-          
-          currentUserId = getDevelopmentUserId();
-          currentUserName = 'Разработчик';
-          console.log('[INIT] Using development user:', { 
-            id: currentUserId, 
-            name: currentUserName 
-          });
-        }
-        
-        setUserId(currentUserId);
-        setUserName(currentUserName);
-        
-        // Устанавливаем appUser как владельца
-        setAppUser({
-          userId: currentUserId,
-          name: currentUserName,
-          isGuest: false,
-          isTelegram: telegramDetected
-        });
-        
-        // Загружаем данные пользователя
-        const userData = await loadUserData(currentUserId);
-        setFlights(userData.flights);
-        setAirlines(userData.airlines);
-        setOriginCities(userData.originCities);
-        setDestinationCities(userData.destinationCities);
-        
+        setUserName(initResult.userName);
+        setUserId(initResult.userId);
+        setAppUser(initResult.appUser);
+        setFlights(initResult.flights);
+        setAirlines(initResult.airlines);
+        setOriginCities(initResult.originCities);
+        setDestinationCities(initResult.destinationCities);
       } catch (err) {
-        console.error('[CRITICAL] App initialization crashed:', err);
-        // Fallback тема и данные
-        applyDefaultTheme();
-        setUserName('Гость');
-        setUserId('error_user');
-        setFlights([]);
-        setAirlines([]);
-        setOriginCities([]);
-        setDestinationCities([]);
-        setAppUser({
-          userId: 'error_user',
-          name: 'Гость',
-          isGuest: false,
-          isTelegram: false
-        });
+        const fallbackResult = getFallbackInitResult(err);
+        
+        setUserName(fallbackResult.userName);
+        setUserId(fallbackResult.userId);
+        setAppUser(fallbackResult.appUser);
+        setFlights(fallbackResult.flights);
+        setAirlines(fallbackResult.airlines);
+        setOriginCities(fallbackResult.originCities);
+        setDestinationCities(fallbackResult.destinationCities);
       } finally {
         setLoading(false);
         setIsCheckingToken(false);
@@ -182,13 +77,11 @@ const App: React.FC = () => {
           permissions: appUser.isGuest ? appUser.permissions : 'owner'
         });
         
-        // Если это гость с правами редактирования
         if (appUser.isGuest && appUser.permissions === 'edit') {
           await saveGuestData(appUser.ownerId, flights);
           return;
         }
         
-        // Оригинальное сохранение для владельца
         if (!appUser.isGuest) {
           await saveOwnerData(userId, flights, airlines, originCities, destinationCities);
         }
@@ -202,38 +95,37 @@ const App: React.FC = () => {
   }, [flights, airlines, originCities, destinationCities, loading, userId, appUser]);
   
   // Обработчик добавления перелета
-  const handleAddFlight = (newFlight: Flight) => {
+  const handleAddFlight = useCallback((newFlight: Flight) => {
     const updatedFlights = [...flights, newFlight];
     setFlights(updatedFlights);
     
     // Обновляем авто-заполнения
     if (newFlight.airline && !airlines.includes(newFlight.airline)) {
-      setAirlines([...airlines, newFlight.airline]);
+      setAirlines(prev => [...prev, newFlight.airline]);
     }
     if (newFlight.origin && !originCities.includes(newFlight.origin)) {
-      setOriginCities([...originCities, newFlight.origin]);
+      setOriginCities(prev => [...prev, newFlight.origin]);
     }
     if (newFlight.destination && !destinationCities.includes(newFlight.destination)) {
-      setDestinationCities([...destinationCities, newFlight.destination]);
+      setDestinationCities(prev => [...prev, newFlight.destination]);
     }
-  };
+  }, [flights, airlines, originCities, destinationCities]);
   
   // Обработчик удаления перелета
-  const handleDeleteFlight = (id: string) => {
-    setFlights(flights.filter(f => f.id !== id));
-  };
+  const handleDeleteFlight = useCallback((id: string) => {
+    setFlights(prev => prev.filter(f => f.id !== id));
+  }, []);
   
-  // Обработчик присоединения по токену (передается в HistoryView)
-  const handleJoinSession = async (token: string) => {
+  // Обработчик присоединения по токену
+  const handleJoinSession = useCallback(async (token: string) => {
     try {
       setLoading(true);
-      const guestUser = await validateToken(token);
+      const guestResult = await initGuestMode(token);
       
-      if (guestUser) {
-        setAppUser(guestUser);
+      if (guestResult) {
+        const { guestUser, ownerData } = guestResult;
         
-        // Загружаем данные владельца
-        const ownerData = await loadUserData(guestUser.ownerId);
+        setAppUser(guestUser);
         setUserId(guestUser.ownerId);
         setUserName(`Гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`);
         setFlights(ownerData.flights);
@@ -255,18 +147,17 @@ const App: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
   
   // Обработчик создания ссылки для общего доступа
-  const handleShareCreated = (token: string) => {
+  const handleShareCreated = useCallback((token: string) => {
     console.log('Share created with token:', token);
-    // Можно показать уведомление или обновить интерфейс
-  };
+  }, []);
   
   // Обработчик выхода из гостевого режима
-  const handleLeaveGuestMode = () => {
+  const handleLeaveGuestMode = useCallback(() => {
     window.location.href = window.location.origin + window.location.pathname;
-  };
+  }, []);
   
   if (loading || isCheckingToken) {
     return (
