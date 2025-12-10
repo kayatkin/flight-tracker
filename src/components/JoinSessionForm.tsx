@@ -28,10 +28,30 @@ const JoinSessionForm: React.FC<JoinSessionFormProps> = ({ onJoin, onCancel }) =
   };
 
   const extractTokenFromUrl = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlToken = urlParams.get('token');
-    if (urlToken) {
-      setToken(urlToken);
+    const inputValue = token.trim();
+    
+    if (!inputValue) {
+      setError('Сначала вставьте URL с токеном в поле выше');
+      return;
+    }
+
+    // Пробуем извлечь токен из URL
+    const tokenRegex = /(?:[?&]token=|\btoken=)([^&]+)/i;
+    const match = inputValue.match(tokenRegex);
+    
+    if (match && match[1]) {
+      const extractedToken = match[1];
+      setToken(extractedToken);
+      setError(''); // Очищаем ошибку при успешном извлечении
+    } else {
+      // Проверяем, если это уже выглядит как токен
+      const isLikelyToken = /^[a-zA-Z0-9_-]+$/.test(inputValue) && inputValue.length >= 10;
+      
+      if (isLikelyToken) {
+        setError('Это уже похоже на токен. Если это URL, проверьте формат.');
+      } else {
+        setError('Не удалось найти токен. Формат: ...?token=ВАШ_ТОКЕН');
+      }
     }
   };
 
@@ -50,8 +70,11 @@ const JoinSessionForm: React.FC<JoinSessionFormProps> = ({ onJoin, onCancel }) =
             type="text"
             id="token"
             value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="Введите токен из ссылки..."
+            onChange={(e) => {
+              setToken(e.target.value);
+              setError(''); // Очищаем ошибку при изменении
+            }}
+            placeholder="Введите токен или ссылку с токеном..."
             className={styles.input}
           />
           <button 
