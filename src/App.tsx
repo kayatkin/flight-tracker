@@ -1,4 +1,4 @@
-// src/App.tsx - УДАЛЯЕМ ВЫНЕСЕННЫЕ ФУНКЦИИ
+// src/App.tsx - ПЕРВЫЙ ЭТАП РЕФАКТОРИНГА
 import React, { useEffect, useState } from 'react';
 import { Flight } from './types';
 import AddFlightForm from './components/AddFlightForm';
@@ -6,7 +6,6 @@ import HistoryView from './components/HistoryView';
 import GuestModeIndicator from './components/GuestModeIndicator';
 import ShareFlightModal from './components/ShareFlightModal';
 import styles from './App.module.css';
-import { supabase } from './lib/supabaseClient';
 import { GuestUser, AppUser } from './types/shared';
 
 // ИМПОРТИРУЕМ ВЫНЕСЕННЫЕ ФУНКЦИИ
@@ -18,6 +17,14 @@ import {
   applyDefaultTheme,
 } from './utils';
 
+// ИМПОРТИРУЕМ СЕРВИС ДАННЫХ
+import { 
+  validateToken, 
+  loadUserData, 
+  saveOwnerData, 
+  saveGuestData 
+} from './services/dataService';
+
 const App: React.FC = () => {
   const [userName, setUserName] = useState<string>('Гость');
   const [userId, setUserId] = useState<string>('');
@@ -28,114 +35,8 @@ const App: React.FC = () => {
   const [originCities, setOriginCities] = useState<string[]>([]);
   const [destinationCities, setDestinationCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  //const [isTelegram, setIsTelegram] = useState<boolean>(false);
-  //const [themeApplied, setThemeApplied] = useState<boolean>(false);
   const [isCheckingToken, setIsCheckingToken] = useState<boolean>(true);
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
-
-  // 🔧 Функция для валидации токена совместного доступа
-  const validateToken = async (token: string): Promise<GuestUser | null> => {
-    try {
-      console.log('[TOKEN] Validating token:', token);
-      
-      const { data: session, error } = await supabase
-        .from('shared_sessions')
-        .select('*')
-        .eq('token', token)
-        .eq('is_active', true)
-        .gt('expires_at', new Date().toISOString())
-        .maybeSingle();
-
-      if (error) {
-        console.error('[TOKEN] Validation error:', error);
-        return null;
-      }
-
-      if (!session) {
-        console.log('[TOKEN] No active session found for token');
-        return null;
-      }
-
-      console.log('[TOKEN] Session found:', {
-        owner_id: session.owner_id,
-        permissions: session.permissions,
-        expires_at: session.expires_at
-      });
-
-      // Получаем имя владельца из его данных
-      const { data: ownerData } = await supabase
-        .from('flights')
-        .select('*')
-        .eq('user_id', session.owner_id)
-        .maybeSingle();
-
-      let ownerName = 'Владельца';
-      if (ownerData) {
-        // Пытаемся извлечь имя из Telegram данных или используем ID
-        const webApp = getTelegramWebApp();
-        if (webApp?.initDataUnsafe?.user?.first_name) {
-          ownerName = webApp.initDataUnsafe.user.first_name;
-        } else {
-          ownerName = `Пользователь ${session.owner_id.substring(0, 8)}`;
-        }
-      }
-
-      return {
-        userId: `guest_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-        name: 'Гость',
-        isGuest: true,
-        sessionToken: token,
-        permissions: session.permissions,
-        ownerId: session.owner_id,
-        ownerName: ownerName
-      };
-    } catch (err) {
-      console.error('[TOKEN] Validation crashed:', err);
-      return null;
-    }
-  };
-
-  // 🔧 Функция для загрузки данных пользователя/владельца
-  const loadUserData = async (targetUserId: string): Promise<{
-    flights: Flight[];
-    airlines: string[];
-    originCities: string[];
-    destinationCities: string[];
-  }> => {
-    try {
-      console.log('[LOAD] Loading data for user_id:', targetUserId);
-      
-      const { data, error } = await supabase
-        .from('flights')
-        .select('*')
-        .eq('user_id', targetUserId)
-        .maybeSingle();
-      
-      if (error && error.code !== 'PGRST116') {
-        console.error('[LOAD] Error:', error);
-        return { flights: [], airlines: [], originCities: [], destinationCities: [] };
-      }
-      
-      if (data) {
-        console.log('[LOAD] Data loaded:', {
-          flights: data.flights?.length || 0,
-          airlines: data.airlines?.length || 0
-        });
-        return {
-          flights: data.flights || [],
-          airlines: data.airlines || [],
-          originCities: data.origin_cities || [],
-          destinationCities: data.destination_cities || []
-        };
-      } else {
-        console.log('[LOAD] No data found for this user');
-        return { flights: [], airlines: [], originCities: [], destinationCities: [] };
-      }
-    } catch (err) {
-      console.error('[LOAD] Load crashed:', err);
-      return { flights: [], airlines: [], originCities: [], destinationCities: [] };
-    }
-  };
 
   // Инициализация приложения
   useEffect(() => {
@@ -166,7 +67,6 @@ const App: React.FC = () => {
             setAirlines(ownerData.airlines);
             setOriginCities(ownerData.originCities);
             setDestinationCities(ownerData.destinationCities);
-            //setIsTelegram(false);
             applyDefaultTheme();
             setIsCheckingToken(false);
             setLoading(false);
@@ -187,7 +87,6 @@ const App: React.FC = () => {
         if (webApp) {
           console.log('[INIT] Telegram WebApp detected!');
           telegramDetected = true;
-          //setIsTelegram(true);
           
           // Инициализируем Telegram WebApp
           initTelegramWebApp(webApp);
@@ -215,7 +114,6 @@ const App: React.FC = () => {
           // Development mode
           console.log('[INIT] Development mode detected');
           telegramDetected = false;
-          //setIsTelegram(false);
           
           // Применяем тему по умолчанию
           applyDefaultTheme();
@@ -286,57 +184,13 @@ const App: React.FC = () => {
         
         // Если это гость с правами редактирования
         if (appUser.isGuest && appUser.permissions === 'edit') {
-          console.log('[SAVE] Guest edit mode, updating owner data');
-          
-          // Получаем текущие данные владельца
-          const { data: currentData } = await supabase
-            .from('flights')
-            .select('*')
-            .eq('user_id', appUser.ownerId)
-            .maybeSingle();
-          
-          if (currentData) {
-            // Обновляем только рейсы
-            const { error } = await supabase
-              .from('flights')
-              .update({
-                flights: flights,
-                updated_at: new Date().toISOString(),
-              })
-              .eq('user_id', appUser.ownerId);
-            
-            if (error) {
-              console.error('[SAVE] Guest update error:', error);
-            } else {
-              console.log('[SAVE] Guest data saved to owner');
-            }
-          }
+          await saveGuestData(appUser.ownerId, flights);
           return;
         }
         
         // Оригинальное сохранение для владельца
         if (!appUser.isGuest) {
-          console.log('[SAVE] Owner save mode');
-          const { error } = await supabase.from('flights').upsert(
-            {
-              user_id: userId,
-              flights: flights,
-              airlines: airlines,
-              origin_cities: originCities,
-              destination_cities: destinationCities,
-              updated_at: new Date().toISOString(),
-            },
-            { 
-              onConflict: 'user_id',
-              ignoreDuplicates: false 
-            }
-          );
-          
-          if (error) {
-            console.error('[SAVE] Owner save error:', error);
-          } else {
-            console.log('[SAVE] Owner data saved successfully');
-          }
+          await saveOwnerData(userId, flights, airlines, originCities, destinationCities);
         }
       } catch (err) {
         console.error('[CRITICAL] Save to Supabase crashed:', err);
@@ -444,9 +298,6 @@ const App: React.FC = () => {
         Привет, <strong>{userName}</strong>!
       </p>
 
-      {/* УДАЛЕН БЛОК: Кнопка "Присоединиться к истории" - теперь она в HistoryView */}
-      {/* УДАЛЕН БЛОК: Форма присоединения - теперь она в HistoryView */}
-
       {/* Модальное окно для создания ссылки */}
       {showShareModal && appUser && !appUser.isGuest && (
         <ShareFlightModal
@@ -479,7 +330,7 @@ const App: React.FC = () => {
           originCities={originCities}
           destinationCities={destinationCities}
           onAdd={handleAddFlight}
-          onNavigateToHistory={() => setActiveTab('history')} // ← ДОБАВЛЕННЫЙ ПРОПС
+          onNavigateToHistory={() => setActiveTab('history')}
         />
       )}
 
@@ -488,7 +339,7 @@ const App: React.FC = () => {
           flights={flights} 
           onDelete={handleDeleteFlight}
           onShare={() => setShowShareModal(true)}
-          onJoin={handleJoinSession} // Передаем функцию для присоединения
+          onJoin={handleJoinSession}
           userId={appUser?.userId}
           isGuest={appUser?.isGuest || false}
           guestPermissions={appUser?.isGuest ? appUser.permissions : undefined}
