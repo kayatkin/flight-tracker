@@ -1,4 +1,4 @@
-// src/App.tsx
+// src/App.tsx - УДАЛЯЕМ ВЫНЕСЕННЫЕ ФУНКЦИИ
 import React, { useEffect, useState } from 'react';
 import { Flight } from './types';
 import AddFlightForm from './components/AddFlightForm';
@@ -9,56 +9,14 @@ import styles from './App.module.css';
 import { supabase } from './lib/supabaseClient';
 import { GuestUser, AppUser } from './types/shared';
 
-// Типы для Telegram WebApp
-interface TelegramUser {
-  id: number;
-  first_name?: string;
-  last_name?: string;
-  username?: string;
-  language_code?: string;
-  is_premium?: boolean;
-}
-
-interface TelegramWebApp {
-  initData: string;
-  initDataUnsafe: {
-    user?: TelegramUser;
-    query_id?: string;
-    auth_date?: string;
-    hash?: string;
-  };
-  version: string;
-  platform: string;
-  colorScheme: string;
-  themeParams: {
-    bg_color: string;
-    text_color: string;
-    hint_color: string;
-    link_color: string;
-    button_color: string;
-    button_text_color: string;
-  };
-  isExpanded: boolean;
-  viewportHeight: number;
-  viewportStableHeight: number;
-  MainButton: any;
-  BackButton: any;
-  SettingsButton: any;
-  HapticFeedback: any;
-  ready: () => void;
-  expand: () => void;
-  close: () => void;
-  onEvent: (eventType: string, eventHandler: Function) => void;
-  offEvent: (eventType: string, eventHandler: Function) => void;
-}
-
-declare global {
-  interface Window {
-    Telegram?: {
-      WebApp: TelegramWebApp;
-    };
-  }
-}
+// ИМПОРТИРУЕМ ВЫНЕСЕННЫЕ ФУНКЦИИ
+import { 
+  getTelegramWebApp, 
+  getTelegramUser, 
+  getDevelopmentUserId, 
+  initTelegramWebApp,
+  applyDefaultTheme,
+} from './utils';
 
 const App: React.FC = () => {
   const [userName, setUserName] = useState<string>('Гость');
@@ -70,194 +28,10 @@ const App: React.FC = () => {
   const [originCities, setOriginCities] = useState<string[]>([]);
   const [destinationCities, setDestinationCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isTelegram, setIsTelegram] = useState<boolean>(false);
-  const [themeApplied, setThemeApplied] = useState<boolean>(false);
+  //const [isTelegram, setIsTelegram] = useState<boolean>(false);
+  //const [themeApplied, setThemeApplied] = useState<boolean>(false);
   const [isCheckingToken, setIsCheckingToken] = useState<boolean>(true);
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
-
-  // 🔧 Функция для применения тем Telegram
-  const applyTelegramTheme = (webApp: TelegramWebApp): void => {
-    try {
-      const themeParams = webApp.themeParams || {};
-      
-      // Устанавливаем все стандартные переменные Telegram
-      document.documentElement.style.setProperty(
-        '--tg-theme-bg-color', 
-        themeParams.bg_color || '#ffffff'
-      );
-      document.documentElement.style.setProperty(
-        '--tg-theme-text-color', 
-        themeParams.text_color || '#000000'
-      );
-      document.documentElement.style.setProperty(
-        '--tg-theme-hint-color', 
-        themeParams.hint_color || '#999999'
-      );
-      document.documentElement.style.setProperty(
-        '--tg-theme-link-color', 
-        themeParams.link_color || '#2481cc'
-      );
-      document.documentElement.style.setProperty(
-        '--tg-theme-button-color', 
-        themeParams.button_color || '#2481cc'
-      );
-      document.documentElement.style.setProperty(
-        '--tg-theme-button-text-color', 
-        themeParams.button_text_color || '#ffffff'
-      );
-      
-      // Устанавливаем производные переменные
-      document.documentElement.style.setProperty(
-        '--tg-bg-color',
-        `var(--tg-theme-bg-color, #ffffff)`
-      );
-      document.documentElement.style.setProperty(
-        '--tg-text-color',
-        `var(--tg-theme-text-color, #000000)`
-      );
-      document.documentElement.style.setProperty(
-        '--tg-hint-color',
-        `var(--tg-theme-hint-color, #888888)`
-      );
-      document.documentElement.style.setProperty(
-        '--tg-link-color',
-        `var(--tg-theme-button-color, #0088cc)`
-      );
-      document.documentElement.style.setProperty(
-        '--tg-border-color',
-        `var(--tg-theme-hint-color, #e0e0e0)`
-      );
-      document.documentElement.style.setProperty(
-        '--tg-card-bg',
-        `var(--tg-theme-bg-color, #ffffff)`
-      );
-      document.documentElement.style.setProperty(
-        '--tg-active-bg',
-        `rgba(${hexToRgb(themeParams.button_color || '#0088cc')}, 0.1)`
-      );
-      
-      // Добавляем атрибут для CSS селекторов
-      document.documentElement.setAttribute('data-tg-theme', 'loaded');
-      
-      setThemeApplied(true);
-      console.log('[THEME] Telegram theme applied');
-    } catch (error) {
-      console.error('[THEME] Failed to apply Telegram theme:', error);
-      applyDefaultTheme();
-    }
-  };
-
-  // 🔧 Функция для применения темы по умолчанию
-  const applyDefaultTheme = (): void => {
-    // Проверяем системную тему
-    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (isDarkMode) {
-      // Темная тема для не-Telegram окружений
-      document.documentElement.style.setProperty('--tg-bg-color', '#0f0f0f');
-      document.documentElement.style.setProperty('--tg-text-color', '#ffffff');
-      document.documentElement.style.setProperty('--tg-hint-color', '#aaaaaa');
-      document.documentElement.style.setProperty('--tg-link-color', '#5db0ff');
-      document.documentElement.style.setProperty('--tg-border-color', '#333333');
-      document.documentElement.style.setProperty('--tg-card-bg', '#1c1c1c');
-      document.documentElement.style.setProperty('--tg-active-bg', 'rgba(93, 176, 255, 0.1)');
-    } else {
-      // Светлая тема по умолчанию
-      document.documentElement.style.setProperty('--tg-bg-color', '#ffffff');
-      document.documentElement.style.setProperty('--tg-text-color', '#000000');
-      document.documentElement.style.setProperty('--tg-hint-color', '#888888');
-      document.documentElement.style.setProperty('--tg-link-color', '#0088cc');
-      document.documentElement.style.setProperty('--tg-border-color', '#e0e0e0');
-      document.documentElement.style.setProperty('--tg-card-bg', '#ffffff');
-      document.documentElement.style.setProperty('--tg-active-bg', '#f0f8ff');
-    }
-    
-    document.documentElement.removeAttribute('data-tg-theme');
-    setThemeApplied(true);
-    console.log('[THEME] Default theme applied');
-  };
-
-  // 🔧 Вспомогательная функция для преобразования hex в rgb
-  const hexToRgb = (hex: string): string => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-      ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`
-      : '0, 136, 204';
-  };
-
-  // 🔧 Функция для получения Telegram WebApp
-  const getTelegramWebApp = (): TelegramWebApp | null => {
-    if (typeof window === 'undefined') return null;
-    
-    const webApp = window.Telegram?.WebApp;
-    
-    if (webApp) {
-      console.log('[TELEGRAM] WebApp found:', {
-        platform: webApp.platform,
-        version: webApp.version,
-        colorScheme: webApp.colorScheme,
-        hasUser: !!webApp.initDataUnsafe?.user,
-        themeParams: webApp.themeParams
-      });
-    }
-    
-    return webApp || null;
-  };
-
-  // 🔧 Функция для получения данных пользователя
-  const getTelegramUser = (): {id: string, firstName: string} | null => {
-    const webApp = getTelegramWebApp();
-    
-    if (!webApp) {
-      console.log('[TELEGRAM] No WebApp found');
-      return null;
-    }
-    
-    if (webApp.initDataUnsafe?.user) {
-      const user = webApp.initDataUnsafe.user;
-      console.log('[TELEGRAM] User found:', user);
-      
-      return {
-        id: user.id.toString(),
-        firstName: user.first_name || user.username || 'Пользователь'
-      };
-    }
-    
-    console.log('[TELEGRAM] No user data found');
-    return null;
-  };
-
-  // 🔧 Функция для создания постоянного development user_id
-  const getDevelopmentUserId = (): string => {
-    let devUserId = localStorage.getItem('flight_tracker_dev_user_id');
-    
-    if (!devUserId) {
-      devUserId = 'dev_user_' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('flight_tracker_dev_user_id', devUserId);
-      console.log('[DEVELOPMENT] Created new dev user_id:', devUserId);
-    } else {
-      console.log('[DEVELOPMENT] Using existing dev user_id:', devUserId);
-    }
-    
-    return devUserId;
-  };
-
-  // 🔧 Инициализация Telegram WebApp
-  const initTelegramWebApp = (webApp: TelegramWebApp): void => {
-    try {
-      // Инициализируем WebApp
-      webApp.ready();
-      webApp.expand();
-      
-      // Применяем тему Telegram
-      applyTelegramTheme(webApp);
-      
-      console.log('[TELEGRAM] WebApp initialized');
-    } catch (error) {
-      console.error('[TELEGRAM] Failed to initialize:', error);
-      applyDefaultTheme();
-    }
-  };
 
   // 🔧 Функция для валидации токена совместного доступа
   const validateToken = async (token: string): Promise<GuestUser | null> => {
@@ -392,7 +166,7 @@ const App: React.FC = () => {
             setAirlines(ownerData.airlines);
             setOriginCities(ownerData.originCities);
             setDestinationCities(ownerData.destinationCities);
-            setIsTelegram(false);
+            //setIsTelegram(false);
             applyDefaultTheme();
             setIsCheckingToken(false);
             setLoading(false);
@@ -413,7 +187,7 @@ const App: React.FC = () => {
         if (webApp) {
           console.log('[INIT] Telegram WebApp detected!');
           telegramDetected = true;
-          setIsTelegram(true);
+          //setIsTelegram(true);
           
           // Инициализируем Telegram WebApp
           initTelegramWebApp(webApp);
@@ -441,7 +215,7 @@ const App: React.FC = () => {
           // Development mode
           console.log('[INIT] Development mode detected');
           telegramDetected = false;
-          setIsTelegram(false);
+          //setIsTelegram(false);
           
           // Применяем тему по умолчанию
           applyDefaultTheme();
