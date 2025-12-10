@@ -9,6 +9,7 @@ interface AddFlightFormProps {
   originCities: string[];           // ← добавлено
   destinationCities: string[];      // ← добавлено
   onAdd: (flight: Flight) => void;
+  onNavigateToHistory?: () => void;
 }
 
 const AddFlightForm: React.FC<AddFlightFormProps> = ({ 
@@ -16,7 +17,8 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
   airlines, 
   originCities, 
   destinationCities, 
-  onAdd 
+  onAdd,
+  onNavigateToHistory 
 }) => {
   const today = new Date().toISOString().split('T')[0];
 
@@ -225,6 +227,14 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
     setOriginSuggestions([]);
     setDestinationSuggestions([]);
     setTimeout(() => setAnalysis(null), 5000);
+
+    // НОВОЕ: Переход на вкладку "История" через 1 секунду
+    setTimeout(() => {
+      setAnalysis(null);
+      if (onNavigateToHistory) {
+        onNavigateToHistory();
+      }
+    }, 1000);
   };
 
   return (

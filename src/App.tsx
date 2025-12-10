@@ -705,6 +705,7 @@ const App: React.FC = () => {
           originCities={originCities}
           destinationCities={destinationCities}
           onAdd={handleAddFlight}
+          onNavigateToHistory={() => setActiveTab('history')} // ← ДОБАВЛЕННЫЙ ПРОПС
         />
       )}
 
