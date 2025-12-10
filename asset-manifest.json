@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/flight-tracker/static/css/main.80c3fa59.css",
-    "main.js": "/flight-tracker/static/js/main.f0c2a4ac.js",
+    "main.js": "/flight-tracker/static/js/main.fda6d15a.js",
     "static/js/453.36af1330.chunk.js": "/flight-tracker/static/js/453.36af1330.chunk.js",
     "index.html": "/flight-tracker/index.html",
     "main.80c3fa59.css.map": "/flight-tracker/static/css/main.80c3fa59.css.map",
-    "main.f0c2a4ac.js.map": "/flight-tracker/static/js/main.f0c2a4ac.js.map",
+    "main.fda6d15a.js.map": "/flight-tracker/static/js/main.fda6d15a.js.map",
     "453.36af1330.chunk.js.map": "/flight-tracker/static/js/453.36af1330.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.80c3fa59.css",
-    "static/js/main.f0c2a4ac.js"
+    "static/js/main.fda6d15a.js"
   ]
 }
