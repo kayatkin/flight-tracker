@@ -38,6 +38,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
   const [showEmptyState, setShowEmptyState] = useState<boolean>(false);
   const [showJoinForm, setShowJoinForm] = useState<boolean>(false);
   const [showSessionsList, setShowSessionsList] = useState<boolean>(false);
+  const [accessExpanded, setAccessExpanded] = useState<boolean>(false); // Состояние аккордеона
 
   // Используем useMemo для оптимизации группировки
   const grouped = useMemo(() => {
@@ -112,6 +113,24 @@ const HistoryView: React.FC<HistoryViewProps> = ({
     if (onJoin) {
       onJoin(token);
       setShowJoinForm(false);
+    }
+  };
+
+  const handleJoinClick = () => {
+    setShowJoinForm(!showJoinForm);
+    setShowSessionsList(false);
+    // Автоматически раскрываем аккордеон если он был закрыт
+    if (!accessExpanded) {
+      setAccessExpanded(true);
+    }
+  };
+
+  const handleSessionsListClick = () => {
+    setShowSessionsList(!showSessionsList);
+    setShowJoinForm(false);
+    // Автоматически раскрываем аккордеон если он был закрыт
+    if (!accessExpanded) {
+      setAccessExpanded(true);
     }
   };
 
@@ -203,66 +222,94 @@ const HistoryView: React.FC<HistoryViewProps> = ({
 
   return (
     <div className={styles.container}>
-      {/* Кнопки действий для владельцев */}
+      {/* Аккордеон управления доступом для владельцев */}
       {!isGuest && (
-        <div className={styles.actionButtonsContainer}>
-          <div className={styles.buttonGroup}>
-            {onShare && (
-              <button
-                onClick={onShare}
-                className={styles.shareButton}
-                title="Поделиться историей перелетов"
-              >
-                📤 Поделиться
-              </button>
-            )}
-            <button
-              onClick={() => setShowJoinForm(!showJoinForm)}
-              className={styles.joinHistoryButton}
-              title="Присоединиться к чужой истории"
-            >
-              🔗 Присоединиться
-            </button>
-            {/* НОВАЯ КНОПКА - Список выданных приглашений */}
-            {userId && (
-              <button
-                onClick={() => setShowSessionsList(true)}
-                className={styles.sessionsListButton}
-                title="Показать выданные приглашения"
-              >
-                📋 Приглашения
-              </button>
+        <div className={styles.accessManagementContainer}>
+          {/* Заголовок аккордеона */}
+          <div 
+            className={`${styles.accessHeader} ${accessExpanded ? styles.accessHeaderExpanded : ''}`}
+            onClick={() => setAccessExpanded(!accessExpanded)}
+          >
+            <div className={styles.accessHeaderContent}>
+              <span className={styles.accessIcon}>🔐</span>
+              <span className={styles.accessTitle}>Управляйте доступом к вашей истории перелетов</span>
+              <span className={styles.accessArrow}>{accessExpanded ? '▼' : '▶'}</span>
+            </div>
+            {!accessExpanded && (
+              <div className={styles.accessHint}>
+                Нажмите чтобы развернуть
+              </div>
             )}
           </div>
-          <p className={styles.actionHint}>
-            {showJoinForm 
-              ? "Введите токен доступа для просмотра чужой истории" 
-              : "Управляйте доступом к вашей истории перелетов"
-            }
-          </p>
+          
+          {/* Содержимое аккордеона (показывается при развернутом состоянии) */}
+          {accessExpanded && (
+            <div className={styles.accessContent}>
+              <div className={styles.accessButtonsGroup}>
+                {/* Кнопка Поделиться */}
+                {onShare && (
+                  <button
+                    onClick={onShare}
+                    className={styles.shareButton}
+                    title="Поделиться историей перелетов"
+                  >
+                    📤 Поделиться
+                  </button>
+                )}
+                
+                {/* Кнопка Присоединиться */}
+                <button
+                  onClick={handleJoinClick}
+                  className={styles.joinHistoryButton}
+                  title="Присоединиться к чужой истории"
+                >
+                  🔗 {showJoinForm ? 'Закрыть форму' : 'Присоединиться'}
+                </button>
+                
+                {/* Кнопка Приглашения */}
+                {userId && (
+                  <button
+                    onClick={handleSessionsListClick}
+                    className={styles.sessionsListButton}
+                    title="Показать выданные приглашения"
+                  >
+                    📋 {showSessionsList ? 'Скрыть приглашения' : 'Приглашения'}
+                  </button>
+                )}
+              </div>
+              
+              {/* Форма присоединения к истории */}
+              {showJoinForm && onJoin && (
+                <div className={styles.joinFormWrapper}>
+                  <JoinSessionForm
+                    onJoin={handleJoin}
+                    onCancel={() => setShowJoinForm(false)}
+                  />
+                </div>
+              )}
+              
+              {/* Список выданных приглашений */}
+              {showSessionsList && userId && (
+                <div className={styles.sessionsListWrapper}>
+                  <SharedSessionsList
+                    userId={userId}
+                    onClose={() => setShowSessionsList(false)}
+                    onSessionDeactivated={() => {
+                      console.log('Приглашение отозвано');
+                    }}
+                  />
+                </div>
+              )}
+              
+              {/* Подсказка внизу аккордеона */}
+              <div className={styles.accessFooter}>
+                <span className={styles.accessFooterHint}>
+                  💡 Создавайте приглашения, присоединяйтесь к другим и управляйте доступом
+                </span>
+              </div>
+            </div>
+          )}
         </div>
-      )}
-
-      {/* Форма присоединения к истории */}
-      {showJoinForm && !isGuest && onJoin && (
-        <div className={styles.joinFormWrapper}>
-          <JoinSessionForm
-            onJoin={handleJoin}
-            onCancel={() => setShowJoinForm(false)}
-          />
-        </div>
-      )}
-
-      {/* Список выданных приглашений */}
-      {showSessionsList && userId && (
-        <SharedSessionsList
-          userId={userId}
-          onClose={() => setShowSessionsList(false)}
-          onSessionDeactivated={() => {
-            // Можно добавить callback если нужно обновить что-то
-            console.log('Приглашение отозвано');
-          }}
-        />
       )}
 
       {/* Индикатор гостевого режима */}

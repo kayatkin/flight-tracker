@@ -5,81 +5,85 @@
   padding-bottom: 20px;
 }
 
-/* Контейнер для кнопок действий */
-.actionButtonsContainer {
+/* ====================== */
+/* АККОРДЕОН УПРАВЛЕНИЯ ДОСТУПОМ */
+/* ====================== */
+
+.accessManagementContainer {
   margin-bottom: 20px;
-  padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 16px;
-  color: white;
-  text-align: center;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.buttonGroup {
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-}
-
-.shareButton, .joinHistoryButton {
-  padding: 14px 28px;
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--tg-border-color, #e0e0e0);
+  background: var(--tg-card-bg, #ffffff);
   transition: all 0.3s ease;
+}
+
+.accessManagementContainer:hover {
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
+}
+
+/* Заголовок аккордеона */
+.accessHeader {
+  padding: 20px 24px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transition: all 0.3s ease;
+  position: relative;
+  user-select: none;
+}
+
+.accessHeader:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4295 100%);
+}
+
+.accessHeaderExpanded {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.accessHeaderContent {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  min-width: 180px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  gap: 14px;
+  font-weight: 600;
+  font-size: 16px;
 }
 
-.shareButton {
-  background: rgba(255, 255, 255, 0.9);
-  color: #667eea;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+.accessIcon {
+  font-size: 22px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
 }
 
-.shareButton:hover {
-  background: white;
-  transform: translateY(-3px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
-}
-
-.joinHistoryButton {
-  background: rgba(76, 175, 80, 0.9);
-  color: white;
-  border: 2px solid rgba(76, 175, 80, 0.3);
-}
-
-.joinHistoryButton:hover {
-  background: #4CAF50;
-  transform: translateY(-3px);
-  box-shadow: 0 6px 12px rgba(76, 175, 80, 0.3);
-}
-
-.actionHint {
-  margin-top: 8px;
-  font-size: 14px;
-  opacity: 0.95;
-  color: rgba(255, 255, 255, 0.95);
-  font-style: italic;
+.accessTitle {
+  flex: 1;
+  font-size: 16px;
   line-height: 1.4;
 }
 
-/* Контейнер для формы присоединения */
-.joinFormWrapper {
-  margin-bottom: 20px;
-  animation: slideDown 0.4s ease;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.accessArrow {
+  font-size: 14px;
+  transition: transform 0.3s ease;
+  width: 22px;
+  text-align: center;
+  opacity: 0.9;
+}
+
+.accessHint {
+  font-size: 13px;
+  opacity: 0.85;
+  margin-top: 8px;
+  font-weight: normal;
+  font-style: italic;
+  padding-left: 36px; /* align with icon */
+}
+
+/* Содержимое аккордеона */
+.accessContent {
+  padding: 24px;
+  background: var(--tg-card-bg, #ffffff);
+  animation: slideDown 0.3s ease;
 }
 
 @keyframes slideDown {
@@ -93,10 +97,119 @@
   }
 }
 
-/* Удаляем старый shareContainer */
-.shareContainer {
+/* Группа кнопок внутри аккордеона */
+.accessButtonsGroup {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+/* Кнопки внутри аккордеона */
+.shareButton, .joinHistoryButton, .sessionsListButton {
+  padding: 16px 28px;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 200px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  flex: 1;
+}
+
+.shareButton {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 247, 250, 0.95) 100%);
+  color: #667eea;
+  border: 2px solid rgba(102, 126, 234, 0.25);
+}
+
+.shareButton:hover {
+  background: white;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
+  border-color: rgba(102, 126, 234, 0.4);
+}
+
+.joinHistoryButton {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.95) 0%, rgba(56, 142, 60, 0.95) 100%);
+  color: white;
+  border: 2px solid rgba(76, 175, 80, 0.25);
+}
+
+.joinHistoryButton:hover {
+  background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(76, 175, 80, 0.25);
+  border-color: rgba(76, 175, 80, 0.4);
+}
+
+.sessionsListButton {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.95) 0%, rgba(245, 166, 35, 0.95) 100%);
+  color: #333;
+  border: 2px solid rgba(255, 193, 7, 0.25);
+}
+
+.sessionsListButton:hover {
+  background: linear-gradient(135deg, #ffc107 0%, #f5a623 100%);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(255, 193, 7, 0.25);
+  border-color: rgba(255, 193, 7, 0.4);
+}
+
+/* Футер аккордеона */
+.accessFooter {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--tg-border-color, #e0e0e0);
+  text-align: center;
+}
+
+.accessFooterHint {
+  font-size: 14px;
+  color: var(--tg-hint-color, #666);
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  line-height: 1.5;
+}
+
+/* Удаляем старый контейнер кнопок */
+.actionButtonsContainer {
   display: none;
 }
+
+.actionHint {
+  display: none;
+}
+
+/* Контейнер для формы присоединения внутри аккордеона */
+.joinFormWrapper {
+  margin: 20px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Контейнер для списка приглашений */
+.sessionsListWrapper {
+  margin: 20px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ====================== */
+/* ПОИСК И ОСНОВНОЙ КОНТЕНТ */
+/* ====================== */
 
 .searchContainer {
   position: relative;
@@ -480,34 +593,51 @@
   opacity: 0.5 !important;
 }
 
-/* Медиа-запросы для мобильных устройств */
+/* ====================== */
+/* МОБИЛЬНАЯ АДАПТАЦИЯ */
+/* ====================== */
+
 @media (max-width: 768px) {
   .container {
     padding: 0 8px;
     padding-bottom: 16px;
   }
   
-  .actionButtonsContainer {
-    padding: 16px;
-    border-radius: 14px;
+  /* Аккордеон на мобильных */
+  .accessHeader {
+    padding: 18px 20px;
   }
   
-  .buttonGroup {
-    flex-direction: column;
-    align-items: center;
+  .accessHeaderContent {
+    font-size: 15px;
     gap: 12px;
   }
   
-  .shareButton, .joinHistoryButton {
-    width: 100%;
-    max-width: 300px;
-    min-width: unset;
-    padding: 12px 20px;
+  .accessTitle {
+    font-size: 15px;
   }
   
-  .actionHint {
+  .accessContent {
+    padding: 20px;
+  }
+  
+  .accessButtonsGroup {
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  
+  .shareButton, .joinHistoryButton, .sessionsListButton {
+    width: 100%;
+    min-width: unset;
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+  
+  .accessFooterHint {
     font-size: 13px;
-    padding: 0 8px;
+    flex-direction: column;
+    gap: 6px;
   }
   
   .guestIndicator {
@@ -559,9 +689,42 @@
     padding: 14px;
   }
   
-  .shareButton, .joinHistoryButton {
-    padding: 10px 16px;
+  .accessHeader {
+    padding: 16px;
+  }
+  
+  .accessHeaderContent {
     font-size: 14px;
+    gap: 10px;
+  }
+  
+  .accessTitle {
+    font-size: 14px;
+  }
+  
+  .accessIcon {
+    font-size: 20px;
+  }
+  
+  .accessHint {
+    font-size: 12px;
+    padding-left: 30px;
+    margin-top: 6px;
+  }
+  
+  .accessContent {
+    padding: 16px;
+  }
+  
+  .shareButton, .joinHistoryButton, .sessionsListButton {
+    padding: 12px 16px;
+    font-size: 14px;
+    border-radius: 12px;
+  }
+  
+  .accessFooter {
+    margin-top: 20px;
+    padding-top: 16px;
   }
   
   .guestIndicator {
@@ -601,16 +764,4 @@
   background: #ffc107;
   transform: translateY(-3px);
   box-shadow: 0 6px 12px rgba(255, 193, 7, 0.25);
-}
-
-/* Для мобильных */
-@media (max-width: 768px) {
-  .buttonGroup {
-    flex-direction: column;
-  }
-  
-  .shareButton, .joinHistoryButton, .sessionsListButton {
-    width: 100%;
-    max-width: 300px;
-  }
 }
