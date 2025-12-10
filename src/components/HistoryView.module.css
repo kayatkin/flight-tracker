@@ -218,7 +218,7 @@
 
 .searchInput {
   width: 100%;
-  padding: 12px 16px 12px 40px;
+  padding: 12px 16px;
   border: 1px solid var(--tg-theme-hint-color, #ccc);
   border-radius: 12px;
   font-size: 16px;
@@ -233,13 +233,13 @@
   border-color: var(--tg-theme-button-color, #0088cc);
 }
 
-.searchIcon {
+/*.searchIcon {
   position: absolute;
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--tg-theme-hint-color, #888);
-}
+}*/
 
 .emptyState {
   text-align: center;

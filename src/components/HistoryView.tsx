@@ -334,7 +334,6 @@ const HistoryView: React.FC<HistoryViewProps> = ({
           className={styles.searchInput}
           disabled={flights.length === 0}
         />
-        <span className={styles.searchIcon}>📍</span>
         {flights.length > 0 && (
           <div className={styles.flightCount}>
             Всего билетов: <strong>{flights.length}</strong>
