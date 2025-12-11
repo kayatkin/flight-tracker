@@ -1,4 +1,6 @@
-// src/types/shared.ts
+// src/types/shared.ts - ИСПРАВЛЕННАЯ ВЕРСИЯ
+import { TelegramUser } from '../telegram.d';
+
 export interface SharedSession {
   id: string;
   owner_id: string;
@@ -17,11 +19,28 @@ export interface GuestUser {
   permissions: 'view' | 'edit';
   ownerId: string;
   ownerName: string;
+  telegramUser?: TelegramUser;
 }
 
-export type AppUser = {
+export interface OwnerUser {
   userId: string;
   name: string;
   isGuest: false;
   isTelegram: boolean;
-} | GuestUser;
+  telegramUser?: TelegramUser;
+}
+
+export type AppUser = OwnerUser | GuestUser;
+
+export interface TokenValidationResult {
+  isValid: boolean;
+  guestUser?: GuestUser;
+  error?: string;
+}
+
+export interface CreateSessionParams {
+  ownerId: string;
+  permissions: 'view' | 'edit';
+  expiresInHours: number;
+  note?: string;
+}
