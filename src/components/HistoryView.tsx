@@ -328,7 +328,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
       <div className={styles.searchContainer}>
         <input
           type="text"
-          placeholder="🔍 Поиск по городу..."
+          placeholder="Поиск по городу..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className={styles.searchInput}
