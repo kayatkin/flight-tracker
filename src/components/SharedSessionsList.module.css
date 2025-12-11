@@ -184,10 +184,18 @@
     border: 1px solid rgba(76, 175, 80, 0.2);
   }
   
-  .sessionCard:has(.permissionBadge:contains("Только просмотр")) .permissionBadge {
+  /* Стили для бейджа с правами просмотра */
+  .permissionBadge[data-permission="view"] {
     background: rgba(33, 150, 243, 0.1);
     color: #1976d2;
     border-color: rgba(33, 150, 243, 0.2);
+  }
+
+  /* Стили для бейджа с правами редактирования (опционально) */
+  .permissionBadge[data-permission="edit"] {
+    background: rgba(76, 175, 80, 0.1);
+    color: #2e7d32;
+    border-color: rgba(76, 175, 80, 0.2);
   }
   
   .status {

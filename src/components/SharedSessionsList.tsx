@@ -162,6 +162,7 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
                     <div className={styles.sessionHeader}>
                       <div className={styles.sessionInfo}>
                         <div className={styles.permissionBadge}>
+                          data-permission={session.permissions}
                           {session.permissions === 'view' ? '👁️ Только просмотр' : '✏️ Редактирование'}
                         </div>
                         <div className={`${styles.status} ${status.className}`}>
