@@ -1,0 +1,46 @@
+/* src/components/PriceAnalysis.module.css */
+.analysis {
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+    margin: 16px 0;
+    border: 1px solid transparent;
+  }
+  
+  .analysisGood {
+    background-color: rgba(76, 175, 80, 0.1);
+    border-color: #4caf50;
+    color: #2e7d32;
+  }
+  
+  .analysisNeutral {
+    background-color: rgba(255, 152, 0, 0.1);
+    border-color: #ff9800;
+    color: #e65100;
+  }
+  
+  .analysisBad {
+    background-color: rgba(244, 67, 54, 0.1);
+    border-color: #f44336;
+    color: #c62828;
+  }
+  
+  .message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 16px;
+  }
+  
+  .icon {
+    font-size: 18px;
+  }
+  
+  .diff {
+    font-size: 14px;
+    margin-top: 4px;
+    opacity: 0.9;
+    font-weight: normal;
+  }

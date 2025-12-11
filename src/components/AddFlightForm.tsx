@@ -1,13 +1,23 @@
-// src/components/AddFlightForm.tsx
-import React, { useState, useEffect } from 'react';
+// src/components/AddFlightForm.tsx - ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ ВЕРСИЯ
+import React, { useState, useCallback, useMemo } from 'react';
 import { Flight } from '../types';
+import { useAutocomplete } from '../hooks/useAutocomplete';
+import { useFlightForm } from '../hooks/useFlightForm';
+import { validateFlightForm, validateRoundTripDates } from '../utils/validation';
+import { analyzeFlightPrice } from '../utils/flightAnalysis';
+import AutocompleteInput from './AutocompleteInput';
+import PriceAnalysis from './PriceAnalysis';
 import styles from './AddFlightForm.module.css';
+
+// Константы
+const SUGGESTION_LIMIT = 5;
+const AUTOCOMPLETE_DELAY = 150;
 
 interface AddFlightFormProps {
   flights: Flight[];
   airlines: string[];
-  originCities: string[];           // ← добавлено
-  destinationCities: string[];      // ← добавлено
+  originCities: string[];
+  destinationCities: string[];
   onAdd: (flight: Flight) => void;
   onNavigateToHistory?: () => void;
 }
@@ -20,130 +30,80 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
   onAdd,
   onNavigateToHistory 
 }) => {
-  const today = new Date().toISOString().split('T')[0];
+  const { formData, updateFormData, createFlightObject } = useFlightForm();
+  const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeFlightPrice> | null>(null);
 
-  const [formData, setFormData] = useState({
-    origin: '',
-    destination: '',
-    type: 'oneWay' as 'oneWay' | 'roundTrip',
-    departureDate: today,
-    returnDate: '',
-    departureTime: '',
-    arrivalTime: '',
-    returnDepartureTime: '',
-    returnArrivalTime: '',
-    isDirectThere: true,
-    isDirectBack: true,
-    layoverCityThere: '',
-    layoverDurationThere: 60,
-    layoverCityBack: '',
-    layoverDurationBack: 60,
-    airline: '',
-    passengers: 1 as 1 | 2 | 3 | 4,
-    totalPrice: '',
-    arrivalNextDay: false,
-    returnArrivalNextDay: false,
+  // Фиксируем сегодняшнюю дату при монтировании компонента
+  const today = useMemo(() => new Date().toISOString().split('T')[0], []);
+
+  // Используем кастомный хук для автодополнения
+  const airlineAutocomplete = useAutocomplete(formData.airline, airlines, {
+    delay: AUTOCOMPLETE_DELAY,
+    maxSuggestions: SUGGESTION_LIMIT,
   });
 
-  // Состояния для подсказок
-  const [airlineSuggestions, setAirlineSuggestions] = useState<string[]>([]);
-  const [originSuggestions, setOriginSuggestions] = useState<string[]>([]);
-  const [destinationSuggestions, setDestinationSuggestions] = useState<string[]>([]);
-  
-  const [analysis, setAnalysis] = useState<{
-    type: 'good' | 'neutral' | 'bad';
-    message: string;
-    diff?: number;
-  } | null>(null);
+  const originAutocomplete = useAutocomplete(formData.origin, originCities, {
+    delay: AUTOCOMPLETE_DELAY,
+    maxSuggestions: SUGGESTION_LIMIT,
+  });
 
-  // Обновление подсказок авиакомпаний
-  useEffect(() => {
-    if (formData.airline) {
-      const term = formData.airline.toLowerCase();
-      const matches = airlines
-        .filter(airline => airline.toLowerCase().startsWith(term))
-        .slice(0, 5);
-      setAirlineSuggestions(matches);
-    } else {
-      setAirlineSuggestions([]);
-    }
-  }, [formData.airline, airlines]);
+  const destinationAutocomplete = useAutocomplete(formData.destination, destinationCities, {
+    delay: AUTOCOMPLETE_DELAY,
+    maxSuggestions: SUGGESTION_LIMIT,
+  });
 
-  // Обновление подсказок города вылета
-  useEffect(() => {
-    if (formData.origin) {
-      const term = formData.origin.toLowerCase();
-      const matches = originCities
-        .filter(city => city.toLowerCase().startsWith(term))
-        .slice(0, 5);
-      setOriginSuggestions(matches);
-    } else {
-      setOriginSuggestions([]);
-    }
-  }, [formData.origin, originCities]);
+  // Обработчики выбора из автодополнения
+  const handleAirlineSelect = useCallback((selected: string) => {
+    updateFormData({ airline: selected });
+    airlineAutocomplete.closeSuggestions(); // Закрываем подсказки авиакомпаний
+  }, [updateFormData, airlineAutocomplete]);
 
-  // Обновление подсказок города назначения
-  useEffect(() => {
-    if (formData.destination) {
-      const term = formData.destination.toLowerCase();
-      const matches = destinationCities
-        .filter(city => city.toLowerCase().startsWith(term))
-        .slice(0, 5);
-      setDestinationSuggestions(matches);
-    } else {
-      setDestinationSuggestions([]);
-    }
-  }, [formData.destination, destinationCities]);
+  const handleOriginSelect = useCallback((selected: string) => {
+    updateFormData({ origin: selected });
+    originAutocomplete.closeSuggestions(); // Закрываем подсказки города вылета
+  }, [updateFormData, originAutocomplete]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleDestinationSelect = useCallback((selected: string) => {
+    updateFormData({ destination: selected });
+    destinationAutocomplete.closeSuggestions(); // Закрываем подсказки города назначения
+  }, [updateFormData, destinationAutocomplete]);
+
+  // Обработчики изменений
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
 
     if (name === 'totalPrice') {
       const numericValue = value.replace(/\D/g, '');
-      setFormData((prev) => ({ ...prev, totalPrice: numericValue }));
+      updateFormData({ totalPrice: numericValue });
       return;
     }
 
-    setFormData((prev) => ({ ...prev, [name]: type === 'number' ? Number(value) : value }));
-  };
+    updateFormData({ 
+      [name]: type === 'number' ? Number(value) : value 
+    });
+  }, [updateFormData]);
 
-  const handleAirlineChange = (value: string) => {
-    setFormData(prev => ({ ...prev, airline: value }));
-  };
-
-  const handleOriginChange = (value: string) => {
-    setFormData(prev => ({ ...prev, origin: value }));
-  };
-
-  const handleDestinationChange = (value: string) => {
-    setFormData(prev => ({ ...prev, destination: value }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  // Основной обработчик формы
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.origin || !formData.destination) {
-      alert('Укажите города вылета и назначения');
+    // Валидация
+    const errors = validateFlightForm(formData);
+    if (errors.length > 0) {
+      alert(errors.join('\n'));
       return;
     }
-    if (!formData.departureDate) {
-      alert('Укажите дату вылета');
-      return;
-    }
+
     if (formData.type === 'roundTrip') {
-      if (!formData.returnDate) {
-        alert('Укажите дату возвращения');
-        return;
-      }
-
-      const departureDateTime = new Date(`${formData.departureDate}T${formData.departureTime || '00:00'}`);
-      const arrivalDateTime = new Date(`${formData.departureDate}T${formData.arrivalTime || '00:00'}`);
-      if (formData.arrivalNextDay) {
-        arrivalDateTime.setDate(arrivalDateTime.getDate() + 1);
-      }
-      const returnDepartureDateTime = new Date(`${formData.returnDate}T${formData.returnDepartureTime || '00:00'}`);
-
-      if (returnDepartureDateTime <= arrivalDateTime) {
+      const isValidDates = validateRoundTripDates(
+        formData.departureDate,
+        formData.arrivalTime,
+        formData.arrivalNextDay,
+        formData.returnDate,
+        formData.returnDepartureTime
+      );
+      
+      if (!isValidDates) {
         alert('Дата и время обратного вылета должны быть позже времени прилёта "туда"');
         return;
       }
@@ -155,153 +115,56 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
       return;
     }
 
-    const newFlight: Flight = {
-      id: Date.now().toString(),
-      origin: formData.origin.trim(),
-      destination: formData.destination.trim(),
-      type: formData.type,
-      departureDate: formData.departureDate,
-      returnDate: formData.type === 'roundTrip' ? formData.returnDate : undefined,
-      departureTime: formData.departureTime || undefined,
-      arrivalTime: formData.arrivalTime || undefined,
-      returnDepartureTime: formData.type === 'roundTrip' ? formData.returnDepartureTime : undefined,
-      returnArrivalTime: formData.type === 'roundTrip' ? formData.returnArrivalTime : undefined,
-      isDirectThere: formData.isDirectThere,
-      isDirectBack: formData.isDirectBack,
-      layoverCityThere: formData.isDirectThere ? undefined : formData.layoverCityThere.trim() || undefined,
-      layoverDurationThere: formData.isDirectThere ? undefined : formData.layoverDurationThere,
-      layoverCityBack: formData.type === 'roundTrip' && !formData.isDirectBack
-        ? formData.layoverCityBack.trim() || undefined
-        : undefined,
-      layoverDurationBack: formData.type === 'roundTrip' && !formData.isDirectBack
-        ? formData.layoverDurationBack
-        : undefined,
-      airline: formData.airline.trim(),
-      passengers: formData.passengers,
-      totalPrice: priceNum,
-      dateFound: new Date().toISOString().split('T')[0],
-      arrivalNextDay: formData.arrivalNextDay,
-      returnArrivalNextDay: formData.type === 'roundTrip' ? formData.returnArrivalNextDay : undefined,
-    };
+    // Создание объекта Flight
+    const newFlight = createFlightObject();
 
-    const comparableFlights = flights.filter((f) =>
-      f.origin === newFlight.origin &&
-      f.destination === newFlight.destination &&
-      f.passengers === newFlight.passengers &&
-      f.type === newFlight.type
-    );
+    // Анализ цены
+    const priceAnalysis = analyzeFlightPrice(newFlight, flights);
+    setAnalysis(priceAnalysis);
 
-    if (comparableFlights.length === 0) {
-      setAnalysis({
-        type: 'good',
-        message: 'Первое предложение по этому маршруту! Сохранено.',
-      });
-    } else {
-      const best = comparableFlights.reduce((a, b) => (a.totalPrice < b.totalPrice ? a : b));
-      const diff = newFlight.totalPrice - best.totalPrice;
-
-      if (diff < -500) {
-        setAnalysis({
-          type: 'good',
-          message: `Выгодно! Дешевле на ${Math.abs(diff)} ₽, чем лучший ранее.`,
-          diff,
-        });
-      } else if (Math.abs(diff) <= 500) {
-        setAnalysis({
-          type: 'neutral',
-          message: `Цена почти такая же (${diff >= 0 ? '+' : ''}${diff} ₽).`,
-          diff,
-        });
-      } else {
-        setAnalysis({
-          type: 'bad',
-          message: `Дороже на ${diff} ₽, чем лучший ранее. Не стоит.`,
-          diff,
-        });
-      }
-    }
-
+    // Вызов родительского обработчика
     onAdd(newFlight);
-    // Очистка всех подсказок
-    setAirlineSuggestions([]);
-    setOriginSuggestions([]);
-    setDestinationSuggestions([]);
-    setTimeout(() => setAnalysis(null), 5000);
-
-    // НОВОЕ: Переход на вкладку "История" через 1 секунду
+    
+    // Переход на историю через 1 секунду
     setTimeout(() => {
       setAnalysis(null);
       if (onNavigateToHistory) {
         onNavigateToHistory();
       }
     }, 1000);
-  };
+  }, [formData, createFlightObject, flights, onAdd, onNavigateToHistory]);
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
-      {/* Города */}
+      {/* Города с новым AutocompleteInput */}
       <div className={styles.section}>
         <h4 className={styles.sectionTitle}>📍 Маршрут</h4>
-        <div>
-          <label className={styles.label}>Город вылета</label>
-          <div className={styles.suggestionsContainer}>
-            <input
-              type="text"
-              value={formData.origin}
-              onChange={(e) => handleOriginChange(e.target.value)}
-              onBlur={() => setTimeout(() => setOriginSuggestions([]), 150)}
-              placeholder="Москва"
-              required
-              className={styles.input}
-            />
-            {originSuggestions.length > 0 && (
-              <div className={styles.suggestionsList}>
-                {originSuggestions.map((city, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => {
-                      handleOriginChange(city);
-                      setOriginSuggestions([]);
-                    }}
-                    className={styles.suggestionItem}
-                  >
-                    {city}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-        <div>
-          <label className={styles.label}>Город назначения</label>
-          <div className={styles.suggestionsContainer}>
-            <input
-              type="text"
-              value={formData.destination}
-              onChange={(e) => handleDestinationChange(e.target.value)}
-              onBlur={() => setTimeout(() => setDestinationSuggestions([]), 150)}
-              placeholder="Тбилиси"
-              required
-              className={styles.input}
-            />
-            {destinationSuggestions.length > 0 && (
-              <div className={styles.suggestionsList}>
-                {destinationSuggestions.map((city, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => {
-                      handleDestinationChange(city);
-                      setDestinationSuggestions([]);
-                    }}
-                    className={styles.suggestionItem}
-                  >
-                    {city}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        
+        <AutocompleteInput
+          value={formData.origin}
+          onChange={(value: string) => updateFormData({ origin: value })}
+          suggestions={originAutocomplete.suggestions}
+          isOpen={originAutocomplete.isOpen}
+          onSelectSuggestion={handleOriginSelect}
+          onCloseSuggestions={originAutocomplete.closeSuggestions}
+          placeholder="Москва"
+          label="Город вылета"
+          required
+          aria-label="Город вылета"
+        />
+
+        <AutocompleteInput
+          value={formData.destination}
+          onChange={(value: string) => updateFormData({ destination: value })}
+          suggestions={destinationAutocomplete.suggestions}
+          isOpen={destinationAutocomplete.isOpen}
+          onSelectSuggestion={handleDestinationSelect}
+          onCloseSuggestions={destinationAutocomplete.closeSuggestions}
+          placeholder="Тбилиси"
+          label="Город назначения"
+          required
+          aria-label="Город назначения"
+        />
       </div>
 
       {/* Тип рейса */}
@@ -313,8 +176,9 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
               type="radio"
               name="type"
               checked={formData.type === 'oneWay'}
-              onChange={() => setFormData((prev) => ({ ...prev, type: 'oneWay' }))}
+              onChange={() => updateFormData({ type: 'oneWay' })}
               className={styles.radioInput}
+              aria-label="Только туда"
             />
             Только туда
           </label>
@@ -323,8 +187,9 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
               type="radio"
               name="type"
               checked={formData.type === 'roundTrip'}
-              onChange={() => setFormData((prev) => ({ ...prev, type: 'roundTrip' }))}
+              onChange={() => updateFormData({ type: 'roundTrip' })}
               className={styles.radioInput}
+              aria-label="Туда и обратно"
             />
             Туда и обратно
           </label>
@@ -344,10 +209,11 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
             min={today}
             required
             className={styles.dateInput}
+            aria-label="Дата вылета"
           />
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <div style={{ flex: 1 }}>
+        <div className={styles.timeRow}>
+          <div className={styles.timeGroup}>
             <label className={styles.label}>Вылет (время)</label>
             <input
               type="time"
@@ -355,9 +221,10 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
               value={formData.departureTime}
               onChange={handleChange}
               className={styles.timeInput}
+              aria-label="Время вылета"
             />
           </div>
-          <div style={{ flex: 1 }}>
+          <div className={styles.timeGroup}>
             <label className={styles.label}>Прилёт (время)</label>
             <input
               type="time"
@@ -365,12 +232,14 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
               value={formData.arrivalTime}
               onChange={handleChange}
               className={styles.timeInput}
+              aria-label="Время прилета"
             />
             <label className={styles.checkboxLabel}>
               <input
                 type="checkbox"
                 checked={formData.arrivalNextDay}
-                onChange={(e) => setFormData(prev => ({ ...prev, arrivalNextDay: e.target.checked }))}
+                onChange={(e) => updateFormData({ arrivalNextDay: e.target.checked })}
+                aria-label="Прилёт на следующий день"
               />
               Прилёт на следующий день (+1)
             </label>
@@ -389,10 +258,11 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
                 min={formData.departureDate}
                 required
                 className={styles.dateInput}
+                aria-label="Дата возвращения"
               />
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <div style={{ flex: 1 }}>
+            <div className={styles.timeRow}>
+              <div className={styles.timeGroup}>
                 <label className={styles.label}>Обратный вылет</label>
                 <input
                   type="time"
@@ -400,9 +270,10 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
                   value={formData.returnDepartureTime || ''}
                   onChange={handleChange}
                   className={styles.timeInput}
+                  aria-label="Время обратного вылета"
                 />
               </div>
-              <div style={{ flex: 1 }}>
+              <div className={styles.timeGroup}>
                 <label className={styles.label}>Обратный прилёт</label>
                 <input
                   type="time"
@@ -410,12 +281,14 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
                   value={formData.returnArrivalTime || ''}
                   onChange={handleChange}
                   className={styles.timeInput}
+                  aria-label="Время обратного прилета"
                 />
                 <label className={styles.checkboxLabel}>
                   <input
                     type="checkbox"
                     checked={formData.returnArrivalNextDay}
-                    onChange={(e) => setFormData(prev => ({ ...prev, returnArrivalNextDay: e.target.checked }))}
+                    onChange={(e) => updateFormData({ returnArrivalNextDay: e.target.checked })}
+                    aria-label="Обратный прилёт на следующий день"
                   />
                   Прилёт на следующий день (+1)
                 </label>
@@ -433,7 +306,8 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
             <input
               type="checkbox"
               checked={formData.isDirectThere}
-              onChange={(e) => setFormData(prev => ({ ...prev, isDirectThere: e.target.checked }))}
+              onChange={(e) => updateFormData({ isDirectThere: e.target.checked })}
+              aria-label="Прямой рейс туда"
             />
             Прямой рейс туда
           </label>
@@ -444,9 +318,10 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
                 <input
                   type="text"
                   value={formData.layoverCityThere || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, layoverCityThere: e.target.value }))}
+                  onChange={(e) => updateFormData({ layoverCityThere: e.target.value })}
                   placeholder="Стамбул"
                   className={styles.layoverInput}
+                  aria-label="Город пересадки туда"
                 />
               </div>
               <div>
@@ -454,10 +329,13 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
                 <input
                   type="number"
                   value={formData.layoverDurationThere || 60}
-                  onChange={(e) => setFormData(prev => ({ ...prev, layoverDurationThere: Number(e.target.value) || 60 }))}
+                  onChange={(e) => updateFormData({ 
+                    layoverDurationThere: Number(e.target.value) || 60 
+                  })}
                   min="30"
                   max="1440"
                   className={styles.layoverInput}
+                  aria-label="Длительность пересадки туда в минутах"
                 />
               </div>
             </div>
@@ -470,7 +348,8 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
               <input
                 type="checkbox"
                 checked={formData.isDirectBack}
-                onChange={(e) => setFormData(prev => ({ ...prev, isDirectBack: e.target.checked }))}
+                onChange={(e) => updateFormData({ isDirectBack: e.target.checked })}
+                aria-label="Прямой рейс обратно"
               />
               Прямой рейс обратно
             </label>
@@ -481,9 +360,10 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
                   <input
                     type="text"
                     value={formData.layoverCityBack || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, layoverCityBack: e.target.value }))}
+                    onChange={(e) => updateFormData({ layoverCityBack: e.target.value })}
                     placeholder="Доха"
                     className={styles.layoverInput}
+                    aria-label="Город пересадки обратно"
                   />
                 </div>
                 <div>
@@ -491,10 +371,13 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
                   <input
                     type="number"
                     value={formData.layoverDurationBack || 60}
-                    onChange={(e) => setFormData(prev => ({ ...prev, layoverDurationBack: Number(e.target.value) || 60 }))}
+                    onChange={(e) => updateFormData({ 
+                      layoverDurationBack: Number(e.target.value) || 60 
+                    })}
                     min="30"
                     max="1440"
                     className={styles.layoverInput}
+                    aria-label="Длительность пересадки обратно в минутах"
                   />
                 </div>
               </div>
@@ -503,37 +386,21 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
         )}
       </div>
 
-      {/* Авиакомпания */}
+      {/* Авиакомпания с новым AutocompleteInput */}
       <div className={styles.section}>
         <h4 className={styles.sectionTitle}>✈️ Авиакомпания</h4>
-        <div className={styles.suggestionsContainer}>
-          <input
-            type="text"
-            value={formData.airline}
-            onChange={(e) => handleAirlineChange(e.target.value)}
-            onBlur={() => setTimeout(() => setAirlineSuggestions([]), 150)}
-            placeholder="Начните вводить..."
-            required
-            className={styles.input}
-            autoComplete="off"
-          />
-          {airlineSuggestions.length > 0 && (
-            <div className={styles.suggestionsList}>
-              {airlineSuggestions.map((airline, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => {
-                    handleAirlineChange(airline);
-                    setAirlineSuggestions([]);
-                  }}
-                  className={styles.suggestionItem}
-                >
-                  {airline}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <AutocompleteInput
+          value={formData.airline}
+          onChange={(value: string) => updateFormData({ airline: value })}
+          suggestions={airlineAutocomplete.suggestions}
+          isOpen={airlineAutocomplete.isOpen}
+          onSelectSuggestion={handleAirlineSelect}
+          onCloseSuggestions={airlineAutocomplete.closeSuggestions}
+          placeholder="Начните вводить..."
+          label="Авиакомпания"
+          required
+          aria-label="Авиакомпания"
+        />
       </div>
 
       {/* Пассажиры */}
@@ -544,6 +411,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
           value={formData.passengers}
           onChange={handleChange as any}
           className={styles.select}
+          aria-label="Количество пассажиров"
         >
           <option value={1}>1</option>
           <option value={2}>2</option>
@@ -563,28 +431,24 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
           placeholder="12500"
           inputMode="numeric"
           className={styles.input}
+          aria-label="Стоимость билета в рублях"
         />
       </div>
 
       {/* Анализ */}
       {analysis && (
-        <div className={
-          analysis.type === 'good'
-            ? styles.analysisGood
-            : analysis.type === 'neutral'
-              ? styles.analysisNeutral
-              : styles.analysisBad
-        }>
-          <div>{analysis.message}</div>
-          {analysis.diff !== undefined && (
-            <div style={{ fontSize: '14px', marginTop: '4px' }}>
-              Разница: {analysis.diff > 0 ? '+' : ''}{analysis.diff} ₽
-            </div>
-          )}
-        </div>
+        <PriceAnalysis
+          type={analysis.type}
+          message={analysis.message}
+          diff={analysis.diff}
+        />
       )}
 
-      <button type="submit" className={styles.submitButton}>
+      <button 
+        type="submit" 
+        className={styles.submitButton}
+        aria-label="Сохранить билет"
+      >
         💼 Сохранить билет
       </button>
     </form>

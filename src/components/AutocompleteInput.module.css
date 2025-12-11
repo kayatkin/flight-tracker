@@ -1,0 +1,156 @@
+/* src/components/AutocompleteInput.module.css */
+.container {
+    width: 100%;
+    margin-bottom: 12px;
+  }
+  
+  .label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: bold;
+    font-size: 14px;
+    color: var(--tg-theme-text-color, #333);
+  }
+  
+  .required {
+    color: #f44336;
+  }
+  
+  .inputWrapper {
+    position: relative;
+    width: 100%;
+  }
+  
+  .input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--tg-theme-hint-color, #ccc);
+    border-radius: 8px;
+    font-size: 16px;
+    box-sizing: border-box;
+    background-color: var(--tg-theme-secondary-bg-color, #fff);
+    color: var(--tg-theme-text-color, #000);
+    transition: border-color 0.2s;
+  }
+  
+  .input:focus {
+    outline: none;
+    border-color: var(--tg-theme-button-color, #0088cc);
+    box-shadow: 0 0 0 2px rgba(0, 136, 204, 0.1);
+  }
+  
+  .input:disabled {
+    background-color: var(--tg-theme-hint-color, #f5f5f5);
+    color: var(--tg-theme-text-color, #888);
+    cursor: not-allowed;
+  }
+  
+  .suggestionsList {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: var(--tg-theme-secondary-bg-color, #fff);
+    border: 1px solid var(--tg-theme-hint-color, #ccc);
+    border-radius: 6px;
+    margin-top: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .suggestionItem {
+    width: 100%;
+    padding: 10px 12px;
+    text-align: left;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--tg-theme-hint-color, #eee);
+    color: var(--tg-theme-text-color, #000);
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 14px;
+  }
+  
+  .suggestionItem:hover,
+  .suggestionItem:focus {
+    background-color: var(--tg-theme-bg-color, #f0f8ff);
+    outline: none;
+  }
+  
+  .suggestionItem:last-child {
+    border-bottom: none;
+  }
+  
+  .suggestionItem[aria-selected="true"] {
+    background-color: var(--tg-theme-button-color, #0088cc);
+    color: var(--tg-theme-button-text-color, #fff);
+  }
+  
+  /* Адаптивность */
+  @media (max-width: 480px) {
+    .input {
+      padding: 8px 10px;
+      font-size: 15px;
+    }
+    
+    .suggestionItem {
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+  }
+
+.noSuggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: var(--tg-theme-secondary-bg-color, #fff);
+  border: 1px solid var(--tg-theme-hint-color, #ccc);
+  border-radius: 6px;
+  margin-top: 4px;
+  padding: 12px;
+  text-align: center;
+  color: var(--tg-theme-hint-color, #888);
+  font-size: 14px;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Улучшаем визуальную обратную связь при фокусе */
+.input:focus {
+  outline: none;
+  border-color: var(--tg-theme-button-color, #0088cc);
+  box-shadow: 
+    0 0 0 2px rgba(0, 136, 204, 0.1),
+    0 2px 8px rgba(0, 136, 204, 0.15);
+}
+
+/* Анимация появления подсказок */
+.suggestionsList {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: var(--tg-theme-secondary-bg-color, #fff);
+  border: 1px solid var(--tg-theme-hint-color, #ccc);
+  border-radius: 6px;
+  margin-top: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

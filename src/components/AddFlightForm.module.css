@@ -244,3 +244,16 @@
     font-size: 16px;
   }
 }
+
+/* Добавить в существующий AddFlightForm.module.css */
+
+.timeRow {
+  display: flex;
+  gap: 8px;
+}
+
+.timeGroup {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
