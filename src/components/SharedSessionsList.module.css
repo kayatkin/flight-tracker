@@ -429,8 +429,6 @@
   padding: 20px 24px;
   border-top: 1px solid var(--tg-border-color, #e0e0e0);
   background: var(--tg-card-bg, #ffffff);
-  position: sticky;
-  bottom: 0;
 }
 
 .hint {
