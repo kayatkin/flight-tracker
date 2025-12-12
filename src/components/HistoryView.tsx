@@ -205,20 +205,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({
     return () => clearTimeout(timer);
   }, []);
 
-  if (flights.length === 0 && showEmptyState) {
-    return (
-      <div className={styles.emptyState}>
-        <p>📭 Нет сохранённых билетов.</p>
-        <p>Добавьте первый рейс во вкладке «➕ Добавить»!</p>
-        {isGuest && (
-          <div className={styles.guestHint}>
-            <p>Вы находитесь в режиме гостя с правами <strong>{guestPermissions === 'edit' ? 'редактирования' : 'просмотра'}</strong>.</p>
-            <p>Чтобы создать свою историю, перейдите по основной ссылке приложения.</p>
-          </div>
-        )}
-      </div>
-    );
-  }
+  // Если нет перелетов и показываем пустое состояние
+  const isEmptyState = flights.length === 0 && showEmptyState;
 
   return (
     <div className={styles.container}>
@@ -233,7 +221,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
             <div className={styles.accessHeaderContent}>
               <span className={styles.accessIcon}>🔐</span>
               <span className={styles.accessTitle}>
-                {flights.length === 0 
+                {isEmptyState 
                   ? 'Начните отслеживать перелеты и делитесь историей' 
                   : 'Управляйте доступом к вашей истории перелетов'
                 }
@@ -242,7 +230,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
             </div>
             {!accessExpanded && (
               <div className={styles.accessHint}>
-                {flights.length === 0 
+                {isEmptyState 
                   ? 'Создайте первую запись или присоединитесь к чужой истории' 
                   : 'Нажмите чтобы развернуть'
                 }
@@ -254,14 +242,15 @@ const HistoryView: React.FC<HistoryViewProps> = ({
           {accessExpanded && (
             <div className={styles.accessContent}>
               <div className={styles.accessButtonsGroup}>
-                {/* Кнопка Поделиться - показываем всегда */}
+                {/* Кнопка Поделиться */}
                 <button
                   onClick={() => {
-                    if (onShare && flights.length > 0) {
-                      onShare();
-                    } else if (flights.length === 0) {
-                      // Можно показать подсказку или активировать вкладку "Добавить"
-                      alert('Сначала добавьте хотя бы один перелет, чтобы поделиться историей');
+                    if (onShare) {
+                      if (flights.length > 0) {
+                        onShare();
+                      } else {
+                        alert('Сначала добавьте хотя бы один перелет, чтобы поделиться историей');
+                      }
                     }
                   }}
                   className={styles.shareButton}
@@ -271,7 +260,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
                   📤 {flights.length === 0 ? 'Добавьте перелет' : 'Поделиться'}
                 </button>
                 
-                {/* Кнопка Присоединиться - показываем всегда */}
+                {/* Кнопка Присоединиться */}
                 <button
                   onClick={handleJoinClick}
                   className={styles.joinHistoryButton}
@@ -280,7 +269,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
                   🔗 {showJoinForm ? 'Закрыть форму' : 'Присоединиться'}
                 </button>
                 
-                {/* Кнопка Приглашения - показываем если есть userId */}
+                {/* Кнопка Приглашения */}
                 {userId && (
                   <button
                     onClick={() => {
@@ -361,106 +350,120 @@ const HistoryView: React.FC<HistoryViewProps> = ({
         </div>
       )}
 
-      <div className={styles.searchContainer}>
-        <input
-          type="text"
-          placeholder="Поиск по городу..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className={styles.searchInput}
-          disabled={flights.length === 0}
-        />
-        {flights.length > 0 && (
-          <div className={styles.flightCount}>
-            Всего билетов: <strong>{flights.length}</strong>
+      {/* Основной контент - показываем только если есть перелеты */}
+      {flights.length > 0 ? (
+        <>
+          <div className={styles.searchContainer}>
+            <input
+              type="text"
+              placeholder="Поиск по городу..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={styles.searchInput}
+            />
+            <div className={styles.flightCount}>
+              Всего билетов: <strong>{flights.length}</strong>
+            </div>
           </div>
-        )}
-      </div>
 
-      {filteredDestinations.length === 0 && searchTerm && flights.length > 0 ? (
-        <div className={styles.noResults}>
-          Ничего не найдено по запросу «{searchTerm}»
-        </div>
-      ) : (
-        <div className={styles.cardList}>
-          {filteredDestinations.map((destination) => {
-            const flightList = grouped[destination];
-            const bestFlight = getBestFlight(flightList);
-            const otherFlights = flightList
-              .filter(f => f.id !== bestFlight.id)
-              .sort((a, b) => a.totalPrice / a.passengers - b.totalPrice / b.passengers);
+          {filteredDestinations.length === 0 && searchTerm ? (
+            <div className={styles.noResults}>
+              Ничего не найдено по запросу «{searchTerm}»
+            </div>
+          ) : (
+            <div className={styles.cardList}>
+              {filteredDestinations.map((destination) => {
+                const flightList = grouped[destination];
+                const bestFlight = getBestFlight(flightList);
+                const otherFlights = flightList
+                  .filter(f => f.id !== bestFlight.id)
+                  .sort((a, b) => a.totalPrice / a.passengers - b.totalPrice / b.passengers);
 
-            const isActive = activeDestination === destination;
+                const isActive = activeDestination === destination;
 
-            return (
-              <div
-                key={destination}
-                onClick={() => setActiveDestination(isActive ? null : destination)}
-                className={`${styles.card} ${isActive ? styles.active : ''}`}
-                style={isGuest ? { borderLeft: `4px solid ${guestPermissions === 'edit' ? '#4CAF50' : '#FF9800'}` } : {}}
-              >
-                <div className={styles.cardHeader}>
-                  <div className={styles.cardTitleWithMeta}>
-                    <span>📍 {destination}</span>
-                    <span className={styles.ticketCount}>({flightList.length})</span>
-                    {isGuest && (
-                      <span className={styles.guestBadge}>
-                        {guestPermissions === 'edit' ? '✏️' : '👁️'}
-                      </span>
-                    )}
-                    <button
-                      className={styles.chartButton}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setChartDestination(destination);
-                      }}
-                      title="График сезонности цен"
-                      disabled={flightList.length < 2}
-                      style={flightList.length < 2 ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
-                    >
-                      📈
-                    </button>
-                  </div>
+                return (
+                  <div
+                    key={destination}
+                    onClick={() => setActiveDestination(isActive ? null : destination)}
+                    className={`${styles.card} ${isActive ? styles.active : ''}`}
+                    style={isGuest ? { borderLeft: `4px solid ${guestPermissions === 'edit' ? '#4CAF50' : '#FF9800'}` } : {}}
+                  >
+                    <div className={styles.cardHeader}>
+                      <div className={styles.cardTitleWithMeta}>
+                        <span>📍 {destination}</span>
+                        <span className={styles.ticketCount}>({flightList.length})</span>
+                        {isGuest && (
+                          <span className={styles.guestBadge}>
+                            {guestPermissions === 'edit' ? '✏️' : '👁️'}
+                          </span>
+                        )}
+                        <button
+                          className={styles.chartButton}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setChartDestination(destination);
+                          }}
+                          title="График сезонности цен"
+                          disabled={flightList.length < 2}
+                          style={flightList.length < 2 ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                        >
+                          📈
+                        </button>
+                      </div>
 
-                  <div className={styles.cardPrice}>
-                    💰 {formatPrice(bestFlight.totalPrice / bestFlight.passengers)} на человека
-                  </div>
-                  <div className={styles.cardDate}>
-                    📅 {formatDateToDMY(bestFlight.departureDate)}
-                    {bestFlight.type === 'roundTrip' &&
-                      bestFlight.returnDate &&
-                      ` — ${formatDateToDMY(bestFlight.returnDate)}`}
-                  </div>
-                </div>
-
-                {isActive && (
-                  <div className={styles.cardContent}>
-                    <div className={styles.bestFlightNote}>
-                      ⭐ Лучшее предложение по цене за человека
+                      <div className={styles.cardPrice}>
+                        💰 {formatPrice(bestFlight.totalPrice / bestFlight.passengers)} на человека
+                      </div>
+                      <div className={styles.cardDate}>
+                        📅 {formatDateToDMY(bestFlight.departureDate)}
+                        {bestFlight.type === 'roundTrip' &&
+                          bestFlight.returnDate &&
+                          ` — ${formatDateToDMY(bestFlight.returnDate)}`}
+                      </div>
                     </div>
-                    <div>{renderFullFlightCard(bestFlight, true)}</div>
-                    {otherFlights.length > 0 && (
-                      <>
-                        <div className={styles.otherFlightsTitle}>
-                          Другие предложения ({otherFlights.length}):
+
+                    {isActive && (
+                      <div className={styles.cardContent}>
+                        <div className={styles.bestFlightNote}>
+                          ⭐ Лучшее предложение по цене за человека
                         </div>
-                        {otherFlights.map((flight) => renderFullFlightCard(flight, false))}
-                      </>
+                        <div>{renderFullFlightCard(bestFlight, true)}</div>
+                        {otherFlights.length > 0 && (
+                          <>
+                            <div className={styles.otherFlightsTitle}>
+                              Другие предложения ({otherFlights.length}):
+                            </div>
+                            {otherFlights.map((flight) => renderFullFlightCard(flight, false))}
+                          </>
+                        )}
+                      </div>
                     )}
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+                );
+              })}
+            </div>
+          )}
 
-      {chartDestination && (
-        <PriceChartModal
-          flights={grouped[chartDestination]}
-          destination={chartDestination}
-          onClose={() => setChartDestination(null)}
-        />
+          {chartDestination && (
+            <PriceChartModal
+              flights={grouped[chartDestination]}
+              destination={chartDestination}
+              onClose={() => setChartDestination(null)}
+            />
+          )}
+        </>
+      ) : (
+        /* Состояние пустой истории */
+        <div className={styles.emptyState}>
+          <p>📭 Нет сохранённых билетов.</p>
+          <p>Добавьте первый рейс во вкладке «➕ Добавить»!</p>
+          {isGuest && (
+            <div className={styles.guestHint}>
+              <p>Вы находитесь в режиме гостя с правами <strong>{guestPermissions === 'edit' ? 'редактирования' : 'просмотра'}</strong>.</p>
+              <p>Чтобы создать свою историю, перейдите по основной ссылке приложения.</p>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
