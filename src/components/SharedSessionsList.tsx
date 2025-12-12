@@ -1,4 +1,4 @@
-// Только исправляем ошибки TypeScript, но логику оставляем как есть
+// src/components/SharedSessionsList.tsx - УПРОЩЕННАЯ ВЕРСИЯ
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import styles from './SharedSessionsList.module.css';
@@ -10,7 +10,7 @@ interface SharedSessionsListProps {
   onSessionDeactivated: () => void;
 }
 
-type SessionFilter = 'all' | 'active';
+type SessionFilter = 'all' | 'active' | 'inactive';
 
 const SharedSessionsList: React.FC<SharedSessionsListProps> = ({ 
   userId, 
@@ -37,13 +37,12 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
 
       if (error) throw error;
       
-      // Гарантируем, что expires_at всегда есть (поскольку у нас вариант А)
       const formattedSessions: SharedSession[] = (data || []).map(session => ({
         id: session.id,
         owner_id: session.owner_id,
         token: session.token,
         permissions: session.permissions,
-        expires_at: session.expires_at || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Дефолтное значение если вдруг нет
+        expires_at: session.expires_at || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         created_at: session.created_at,
         is_active: session.is_active
       }));
@@ -84,7 +83,13 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
       case 'active':
         return sessions.filter(session => 
           session.is_active && 
-          new Date(session.expires_at!) > now // Используем ! так как expires_at всегда есть
+          new Date(session.expires_at!) > now
+        );
+      case 'inactive':
+        const now = new Date();
+        return sessions.filter(session => 
+          !session.is_active || 
+          new Date(session.expires_at!) <= now
         );
       case 'all':
       default:
@@ -135,7 +140,6 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
       return { text: 'Отозвано', className: styles.statusRevoked };
     }
     
-    // В варианте А expires_at всегда есть
     const expires = new Date(session.expires_at!);
     
     if (expires < now) {
@@ -193,44 +197,31 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
           </div>
         ) : (
           <>
-            {/* Кнопки фильтрации */}
-            <div className={styles.filterButtons}>
-              <button
+            {/* Кликабельные блоки статистики - теперь это переключатели фильтра */}
+            <div className={styles.statsContainer}>
+              <div 
+                className={`${styles.statItem} ${filter === 'all' ? styles.statItemActive : ''}`}
                 onClick={() => setFilter('all')}
-                className={`${styles.filterButton} ${filter === 'all' ? styles.filterButtonActive : ''}`}
-                data-count={stats.total}
+                title="Показать все приглашения"
               >
-                Все приглашения
-              </button>
-              <button
-                onClick={() => setFilter('active')}
-                className={`${styles.filterButton} ${filter === 'active' ? styles.filterButtonActive : ''}`}
-                data-count={stats.active}
-              >
-                Активные
-              </button>
-            </div>
-
-            {/* Информация о фильтре */}
-            {filter === 'active' && stats.inactive > 0 && (
-              <div className={styles.filterInfo}>
-                <div className={styles.filterHint}>
-                  <span>👁️ Скрыто {stats.inactive} приглашений (отозваны или истекли)</span>
-                </div>
-              </div>
-            )}
-
-            {/* Статистика */}
-            <div className={styles.stats}>
-              <div className={`${styles.statItem} ${filter === 'all' ? styles.statItemActive : ''}`}>
                 <span className={styles.statNumber}>{stats.total}</span>
                 <span className={styles.statLabel}>Всего</span>
               </div>
-              <div className={`${styles.statItem} ${filter === 'active' ? styles.statItemActive : ''}`}>
+              
+              <div 
+                className={`${styles.statItem} ${filter === 'active' ? styles.statItemActive : ''}`}
+                onClick={() => setFilter('active')}
+                title="Показать только активные"
+              >
                 <span className={styles.statNumber}>{stats.active}</span>
                 <span className={styles.statLabel}>Активные</span>
               </div>
-              <div className={styles.statItem}>
+              
+              <div 
+                className={`${styles.statItem} ${filter === 'inactive' ? styles.statItemActive : ''}`}
+                onClick={() => setFilter('inactive')}
+                title="Показать неактивные"
+              >
                 <span className={`${styles.statNumber} ${styles.statNumberInactive}`}>
                   {stats.inactive}
                 </span>
@@ -238,18 +229,27 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
               </div>
             </div>
 
+            {/* Информация о текущем фильтре */}
+            <div className={styles.filterInfo}>
+              <div className={styles.filterHint}>
+                <span>
+                  {filter === 'all' && `📋 Показаны все ${stats.total} приглашений`}
+                  {filter === 'active' && `✅ Показаны ${stats.active} активных приглашений`}
+                  {filter === 'inactive' && `👁️ Показаны ${stats.inactive} неактивных приглашений (отозваны или истекли)`}
+                </span>
+              </div>
+            </div>
+
             {/* Список приглашений */}
             {filteredSessions.length === 0 ? (
               <div className={styles.noResults}>
                 <p>📭 Нет приглашений по текущему фильтру</p>
-                {filter === 'active' && (
-                  <button 
-                    onClick={() => setFilter('all')}
-                    className={styles.showAllButton}
-                  >
-                    Показать все приглашения
-                  </button>
-                )}
+                <button 
+                  onClick={() => setFilter('all')}
+                  className={styles.showAllButton}
+                >
+                  Показать все приглашения
+                </button>
               </div>
             ) : (
               <div className={styles.sessionsList}>

@@ -1,4 +1,4 @@
-/* src/components/SharedSessionsList.module.css */
+/* src/components/SharedSessionsList.module.css - УПРОЩЕННАЯ ВЕРСИЯ */
 
 .modalOverlay {
   position: fixed;
@@ -114,131 +114,52 @@
 }
 
 /* ====================== */
-/* КНОПКИ ФИЛЬТРАЦИИ */
+/* КЛИКАБЕЛЬНЫЕ БЛОКИ СТАТИСТИКИ (ЗАМЕНА КНОПКАМ ФИЛЬТРАЦИИ) */
 /* ====================== */
 
-.filterButtons {
+.statsContainer {
   display: flex;
   gap: 12px;
   margin: 20px 24px 16px;
-  padding: 12px;
-  background: var(--tg-card-bg, #ffffff);
-  border-radius: 12px;
-  border: 1px solid var(--tg-border-color, #e0e0e0);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.filterButton {
-  flex: 1;
-  padding: 12px 16px;
-  border: none;
-  border-radius: 8px;
-  background: var(--tg-bg-color, #f8f9ff);
-  color: var(--tg-text-color, #333);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: center;
-  letter-spacing: 0.3px;
-  position: relative;
-}
-
-.filterButton:hover {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  color: var(--tg-link-color, #667eea);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.15);
-}
-
-.filterButtonActive {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  color: white !important;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.filterButtonActive:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
-}
-
-/* Индикатор количества в кнопках */
-.filterButton::after {
-  content: attr(data-count);
-  display: inline-block;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: bold;
-  margin-left: 6px;
-  min-width: 24px;
-  text-align: center;
-}
-
-.filterButton:not(.filterButtonActive)::after {
-  background: rgba(0, 0, 0, 0.08);
-  color: var(--tg-text-color, #333);
-}
-
-/* Информация о фильтре */
-.filterInfo {
-  margin: 0 24px 16px;
-}
-
-.filterHint {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%);
-  border-radius: 8px;
-  border-left: 4px solid #ffc107;
-  font-size: 13px;
-  color: var(--tg-text-color, #333);
-}
-
-.filterHint span {
-  flex: 1;
-}
-
-/* ====================== */
-/* СТАТИСТИКА */
-/* ====================== */
-
-.stats {
-  display: flex;
-  gap: 20px;
-  padding: 20px 24px;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  margin: 0 24px 20px;
-  border-radius: 12px;
 }
 
 .statItem {
   flex: 1;
-  text-align: center;
   padding: 16px;
   border-radius: 12px;
   background: var(--tg-card-bg, #ffffff);
-  border: 2px solid transparent;
+  border: 2px solid var(--tg-border-color, #e0e0e0);
+  text-align: center;
   transition: all 0.3s ease;
+  cursor: pointer;
+  user-select: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.statItem:hover {
+  border-color: var(--tg-link-color, #667eea);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
 }
 
 .statItemActive {
-  border: 2px solid var(--tg-link-color, #667eea);
-  background: rgba(102, 126, 234, 0.05);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+  border: 2px solid var(--tg-link-color, #667eea) !important;
+  background: rgba(102, 126, 234, 0.05) !important;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15) !important;
+}
+
+.statItemActive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.2) !important;
 }
 
 .statNumber {
   display: block;
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
   color: var(--tg-link-color, #667eea);
   line-height: 1;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   transition: all 0.3s ease;
 }
 
@@ -261,6 +182,32 @@
 .statItemActive .statLabel {
   color: var(--tg-link-color, #667eea);
   font-weight: 600;
+}
+
+/* УБИРАЕМ СТАРЫЕ КНОПКИ ФИЛЬТРАЦИИ */
+.filterButtons {
+  display: none;
+}
+
+/* Информация о фильтре */
+.filterInfo {
+  margin: 0 24px 16px;
+}
+
+.filterHint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-radius: 8px;
+  border-left: 4px solid var(--tg-link-color, #667eea);
+  font-size: 13px;
+  color: var(--tg-text-color, #333);
+}
+
+.filterHint span {
+  flex: 1;
 }
 
 /* ====================== */
@@ -521,7 +468,7 @@
   100% { opacity: 1; transform: scale(1); }
 }
 
-.filterButtonActive {
+.statItemActive {
   animation: filterSwitch 0.3s ease-out;
 }
 
@@ -530,26 +477,10 @@
 /* ====================== */
 
 @media (max-width: 768px) {
-  .filterButtons {
+  .statsContainer {
     flex-direction: column;
     margin: 16px;
-    gap: 6px;
-  }
-  
-  .filterButton {
-    padding: 14px 16px;
-    font-size: 15px;
-  }
-  
-  .filterInfo {
-    margin: 0 16px 12px;
-  }
-  
-  .stats {
-    flex-direction: column;
-    gap: 16px;
-    padding: 16px;
-    margin: 0 16px 16px;
+    gap: 10px;
   }
   
   .statItem {
@@ -557,11 +488,16 @@
     justify-content: space-between;
     align-items: center;
     padding: 12px 16px;
+    text-align: left;
   }
   
   .statNumber {
     font-size: 24px;
     margin-bottom: 0;
+  }
+  
+  .filterInfo {
+    margin: 0 16px 12px;
   }
   
   .noResults {
@@ -597,14 +533,20 @@
     font-size: 18px;
   }
   
-  .filterButtons {
+  .statsContainer {
     margin: 12px 16px;
-    padding: 10px;
   }
   
-  .filterButton {
-    padding: 12px 14px;
-    font-size: 14px;
+  .statItem {
+    padding: 10px 14px;
+  }
+  
+  .statNumber {
+    font-size: 22px;
+  }
+  
+  .statLabel {
+    font-size: 12px;
   }
   
   .filterHint {
