@@ -182,3 +182,42 @@ export const saveGuestData = async (
     throw err;
   }
 };
+
+// ДОПОЛНИТЕЛЬНАЯ ФУНКЦИЯ: Получение статистики по приглашениям
+export const getSharedSessionsStats = async (ownerId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('shared_sessions')
+      .select('*')
+      .eq('owner_id', ownerId);
+
+    if (error) throw error;
+
+    const now = new Date();
+    let stats = {
+      total: 0,
+      active: 0,
+      expired: 0,
+      revoked: 0
+    };
+
+    if (data) {
+      stats.total = data.length;
+      
+      data.forEach(session => {
+        if (!session.is_active) {
+          stats.revoked++;
+        } else if (new Date(session.expires_at) < now) {
+          stats.expired++;
+        } else {
+          stats.active++;
+        }
+      });
+    }
+
+    return stats;
+  } catch (err) {
+    console.error('Error getting session stats:', err);
+    return { total: 0, active: 0, expired: 0, revoked: 0 };
+  }
+};
