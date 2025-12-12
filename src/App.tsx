@@ -16,6 +16,7 @@ const App: React.FC = () => {
   const {
     // Состояния
     userName,
+    userId, // <-- Добавлено: получаем userId из хука
     appUser,
     flights,
     airlines,
@@ -108,7 +109,7 @@ const App: React.FC = () => {
           onDelete={handleDeleteFlight}
           onShare={() => setShowShareModal(true)}
           onJoin={handleJoinSession}
-          userId={appUser?.userId}
+          userId={appUser?.userId || userId} // <-- КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: используем userId из хука как fallback
           isGuest={appUser?.isGuest || false}
           guestPermissions={appUser?.isGuest ? appUser.permissions : undefined}
         />
