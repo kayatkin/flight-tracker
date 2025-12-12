@@ -1,4 +1,4 @@
-// src/components/SharedSessionsList.tsx - УПРОЩЕННАЯ ВЕРСИЯ
+// src/components/SharedSessionsList.tsx - ИСПРАВЛЕННАЯ ВЕРСИЯ
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import styles from './SharedSessionsList.module.css';
@@ -77,7 +77,7 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
 
   // Получение отфильтрованных приглашений
   const getFilteredSessions = () => {
-    const now = new Date();
+    const now = new Date(); // Одно объявление для всей функции
     
     switch (filter) {
       case 'active':
@@ -86,7 +86,6 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
           new Date(session.expires_at!) > now
         );
       case 'inactive':
-        const now = new Date();
         return sessions.filter(session => 
           !session.is_active || 
           new Date(session.expires_at!) <= now
