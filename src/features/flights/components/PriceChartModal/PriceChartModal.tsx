@@ -11,8 +11,8 @@ import {
   Legend,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import { Flight } from '../types';
-import { getSeasonalChartData, chartOptions } from '../utils/getSeasonalChartData';
+import { Flight } from '@shared/types';
+import { getSeasonalChartData, chartOptions } from '@shared/utils';
 import styles from './PriceChartModal.module.css';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);

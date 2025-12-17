@@ -1,12 +1,10 @@
 // src/components/AddFlightForm.tsx - ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ ВЕРСИЯ
 import React, { useState, useCallback, useMemo } from 'react';
-import { Flight } from '../types';
-import { useAutocomplete } from '../hooks/useAutocomplete';
-import { useFlightForm } from '../hooks/useFlightForm';
-import { validateFlightForm, validateRoundTripDates } from '../utils/validation';
-import { analyzeFlightPrice } from '../utils/flightAnalysis';
-import AutocompleteInput from './AutocompleteInput';
-import PriceAnalysis from './PriceAnalysis';
+import { Flight } from '@shared/types';
+import { useAutocomplete, useFlightForm } from '@shared/hooks';
+import { validateFlightForm, validateRoundTripDates, analyzeFlightPrice } from '@shared/utils';
+import { AutocompleteInput } from '@shared/ui';
+import { PriceAnalysis } from '@features/flights';
 import styles from './AddFlightForm.module.css';
 
 // Константы

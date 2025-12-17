@@ -1,10 +1,10 @@
 // src/components/HistoryView.tsx
 import React, { useState, useMemo } from 'react';
-import { Flight } from '../types';
+import { Flight } from '@shared/types';
 import styles from './HistoryView.module.css';
-import PriceChartModal from './PriceChartModal';
-import JoinSessionForm from './JoinSessionForm';
-import SharedSessionsList from './SharedSessionsList';
+import { PriceChartModal } from '@features/flights';
+import { JoinSessionForm } from '@features/sharing';
+import { SharedSessionsList } from '@features/sharing';
 
 // Утилита: YYYY-MM-DD → DD-MM-YYYY
 const formatDateToDMY = (isoDate: string): string => {

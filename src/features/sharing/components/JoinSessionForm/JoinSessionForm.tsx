@@ -1,4 +1,4 @@
-// src/components/JoinSessionForm.tsx
+// src/features/sharing/components/JoinSessionForm/JoinSessionForm.tsx
 import React, { useState } from 'react';
 import styles from './JoinSessionForm.module.css';
 

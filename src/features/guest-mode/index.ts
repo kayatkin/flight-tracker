@@ -1,1 +1,1 @@
-export { default as GuestModeIndicator } from './components';
+export { default as GuestModeIndicator } from './components/GuestModeIndicator';

@@ -1,4 +1,2 @@
-// src/types/index.ts
-export * from './types';
-export * from './shared';
-export * from './common';
+// Временный redirect для index
+export * from '../shared/types/index';

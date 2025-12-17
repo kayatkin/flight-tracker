@@ -1,6 +1,6 @@
 // src/components/ShareFlightModal.tsx
 import React, { useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '@shared/lib';
 import styles from './ShareFlightModal.module.css';
 
 interface ShareFlightModalProps {

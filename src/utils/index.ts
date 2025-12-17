@@ -1,3 +1,2 @@
-// src/utils/index.ts
-export * from './theme';
-export * from './telegram';
+// Временный redirect для index
+export * from '../shared/utils/index';

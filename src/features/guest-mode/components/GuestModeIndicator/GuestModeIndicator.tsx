@@ -1,4 +1,3 @@
-// src/components/GuestModeIndicator.tsx
 import React from 'react';
 import styles from './GuestModeIndicator.module.css';
 

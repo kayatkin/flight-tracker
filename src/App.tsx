@@ -1,9 +1,9 @@
 // src/App.tsx - ФИНАЛЬНАЯ ВЕРСИЯ ПОСЛЕ РЕФАКТОРИНГА
 import React, { useState } from 'react';
-import AddFlightForm from './components/AddFlightForm';
-import HistoryView from './components/HistoryView';
-import { GuestModeIndicator } from './features/guest-mode';
-import ShareFlightModal from './components/ShareFlightModal';
+import { AddFlightForm } from '@features/flights';
+import { HistoryView } from '@features/flights';
+import { GuestModeIndicator } from '@features/guest-mode';
+import { ShareFlightModal } from '@features/sharing';
 import styles from './App.module.css';
 
 // Кастомный хук
