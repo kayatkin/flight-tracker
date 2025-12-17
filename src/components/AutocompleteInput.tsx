@@ -31,7 +31,6 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
   'aria-label': ariaLabel,
   'aria-describedby': ariaDescribedBy,
 }) => {
-  const [isFocused, setIsFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -75,7 +74,6 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
 
   // Обработчик потери фокуса
   const handleBlur = () => {
-    setIsFocused(false);
     // Небольшая задержка перед закрытием, чтобы успел сработать onClick на подсказке
     setTimeout(() => {
       if (isOpen) {
@@ -99,7 +97,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          onFocus={() => setIsFocused(true)}
+          onFocus={() => {}} // Оставлено для consistency, но не выполняет действий
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}

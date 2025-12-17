@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import AddFlightForm from './components/AddFlightForm';
 import HistoryView from './components/HistoryView';
-import { GuestModeIndicator } from './features/guest-mode';
+import GuestModeIndicator from './components/GuestModeIndicator';
 import ShareFlightModal from './components/ShareFlightModal';
 import styles from './App.module.css';
 

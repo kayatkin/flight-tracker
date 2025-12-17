@@ -31,7 +31,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + expiryDays);
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('shared_sessions')
         .insert({
           owner_id: userId,
