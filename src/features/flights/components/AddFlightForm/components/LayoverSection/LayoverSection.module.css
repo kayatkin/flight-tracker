@@ -1,0 +1,104 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--tg-theme-hint-color, #e0e0e0);
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--tg-theme-text-color, #333);
+}
+
+.layoverGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px;
+  background-color: var(--tg-theme-bg-color, #fff);
+  border-radius: 6px;
+  border: 1px solid var(--tg-theme-hint-color, #eee);
+}
+
+.layoverGroup:not(:last-child) {
+  margin-bottom: 12px;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--tg-theme-text-color, #555);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--tg-theme-button-color, #0088cc);
+}
+
+.layoverFields {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.layoverField {
+  flex: 1;
+}
+
+.label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: bold;
+  font-size: 14px;
+  color: var(--tg-theme-text-color, #333);
+}
+
+.layoverInput {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--tg-theme-hint-color, #ccc);
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+  background-color: var(--tg-theme-secondary-bg-color, #fff);
+  color: var(--tg-theme-text-color, #000);
+  transition: border-color 0.2s;
+}
+
+.layoverInput:focus {
+  outline: none;
+  border-color: var(--tg-theme-button-color, #0088cc);
+}
+
+.layoverInput[type="number"] {
+  font-family: monospace;
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+  .section {
+    padding: 10px;
+    margin-bottom: 12px;
+  }
+  
+  .layoverFields {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .layoverInput {
+    padding: 8px;
+    font-size: 15px;
+  }
+}

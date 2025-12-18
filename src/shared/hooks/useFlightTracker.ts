@@ -1,4 +1,4 @@
-// src/hooks/useFlightTracker.ts
+// src\shared\hooks\useFlightTracker.ts
 import { useState, useCallback, useEffect } from 'react';
 import { Flight } from '../../shared/types';
 import { AppUser } from '../../shared/types';

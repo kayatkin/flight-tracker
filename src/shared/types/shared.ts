@@ -1,4 +1,4 @@
-// src/types/shared.ts - ИСПРАВЛЕННАЯ ВЕРСИЯ
+// src\shared\types\shared.ts
 import { TelegramUser } from './telegram.d';
 
 export interface SharedSession {

@@ -1,5 +1,5 @@
-// src/components/AutocompleteInput.tsx - ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ ВЕРСИЯ
-import React, { useState, useRef, useEffect } from 'react';
+// src\shared\ui\AutocompleteInput\AutocompleteInput.tsx
+import React, { useRef, useEffect } from 'react';
 import styles from './AutocompleteInput.module.css';
 
 interface AutocompleteInputProps {

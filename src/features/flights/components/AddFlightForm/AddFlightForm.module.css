@@ -1,5 +1,4 @@
-/* src/components/AddFlightForm.module.css */
-
+/* src\features\flights\components\AddFlightForm\AddFlightForm.module.css */
 .form {
   display: flex;
   flex-direction: column;
@@ -7,6 +6,8 @@
   padding: 12px;
 }
 
+/* УДАЛЯЕМ или КОММЕНТИРУЕМ старые стили секций */
+/*
 .section {
   display: flex;
   flex-direction: column;
@@ -23,6 +24,7 @@
   font-weight: bold;
   color: var(--tg-theme-text-color, #333);
 }
+*/
 
 .label {
   display: block;
@@ -72,6 +74,8 @@
   color: var(--tg-theme-text-color, #555);
 }
 
+/* УДАЛЯЕМ - теперь в FlightTypeSection.module.css */
+/*
 .radioGroup {
   display: flex;
   gap: 16px;
@@ -91,6 +95,7 @@
   height: 20px;
   accent-color: var(--tg-theme-button-color, #0088cc);
 }
+*/
 
 .layoverGroup {
   display: flex;
@@ -220,15 +225,22 @@
   opacity: 0.7;
 }
 
+.timeRow {
+  display: flex;
+  gap: 8px;
+}
+
+.timeGroup {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 /* Адаптивность */
 @media (max-width: 480px) {
   .form {
     padding: 8px;
     gap: 12px;
-  }
-  
-  .section {
-    padding: 10px;
   }
   
   .input,
@@ -243,17 +255,4 @@
     padding: 14px;
     font-size: 16px;
   }
-}
-
-/* Добавить в существующий AddFlightForm.module.css */
-
-.timeRow {
-  display: flex;
-  gap: 8px;
-}
-
-.timeGroup {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
 }

@@ -7,7 +7,7 @@ import { ShareFlightModal } from '@features/sharing';
 import styles from './App.module.css';
 
 // Кастомный хук
-import { useFlightTracker } from './hooks/useFlightTracker';
+import { useFlightTracker } from './hooks';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'add' | 'history'>('add');

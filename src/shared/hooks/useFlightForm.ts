@@ -1,8 +1,9 @@
-// src/hooks/useFlightForm.ts
+// src/shared/hooks/useFlightForm.ts
 import { useState, useCallback } from 'react';
 import { Flight } from '../../shared/types';
 
-interface FlightFormData {
+// ДОБАВЛЯЕМ export!
+export interface FlightFormData {
   origin: string;
   destination: string;
   type: 'oneWay' | 'roundTrip';

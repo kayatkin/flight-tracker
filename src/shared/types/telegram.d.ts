@@ -1,4 +1,4 @@
-// src/telegram.d.ts - ОПТИМИЗИРОВАННАЯ ВЕРСИЯ
+// src\shared\types\telegram.d.ts
 declare global {
   interface Window {
     Telegram?: {

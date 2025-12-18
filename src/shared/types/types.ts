@@ -1,4 +1,4 @@
-// src/types/types.ts - ОБНОВЛЕННАЯ ВЕРСИЯ
+// src\shared\types\types.ts
 
 // Основной интерфейс перелета
 export interface Flight {

@@ -1,0 +1,86 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--tg-theme-hint-color, #e0e0e0);
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--tg-theme-text-color, #333);
+}
+
+.selectContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  font-size: 14px;
+  color: var(--tg-theme-text-color, #333);
+}
+
+.select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--tg-theme-hint-color, #ccc);
+  border-radius: 8px;
+  font-size: 16px;
+  box-sizing: border-box;
+  background-color: var(--tg-theme-secondary-bg-color, #fff);
+  color: var(--tg-theme-text-color, #000);
+  transition: border-color 0.2s;
+  cursor: pointer;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--tg-theme-button-color, #0088cc);
+}
+
+.passengerIcons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 8px;
+  background-color: var(--tg-theme-bg-color, #fff);
+  border-radius: 6px;
+  border: 1px solid var(--tg-theme-hint-color, #eee);
+}
+
+.passengerIcon {
+  font-size: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Мобильная адаптация */
+@media (max-width: 480px) {
+  .section {
+    padding: 10px;
+    margin-bottom: 12px;
+  }
+  
+  .select {
+    padding: 8px 10px;
+    font-size: 15px;
+  }
+  
+  .passengerIcon {
+    font-size: 18px;
+  }
+}

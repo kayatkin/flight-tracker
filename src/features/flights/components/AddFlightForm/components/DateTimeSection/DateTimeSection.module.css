@@ -1,0 +1,106 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--tg-theme-hint-color, #e0e0e0);
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--tg-theme-text-color, #333);
+}
+
+.dateTimeGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dateField {
+  width: 100%;
+}
+
+.timeRow {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.timeField {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: bold;
+  font-size: 14px;
+  color: var(--tg-theme-text-color, #333);
+}
+
+.dateInput,
+.timeInput {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--tg-theme-hint-color, #ccc);
+  border-radius: 8px;
+  font-size: 16px;
+  box-sizing: border-box;
+  background-color: var(--tg-theme-secondary-bg-color, #fff);
+  color: var(--tg-theme-text-color, #000);
+  transition: border-color 0.2s;
+}
+
+.dateInput:focus,
+.timeInput:focus {
+  outline: none;
+  border-color: var(--tg-theme-button-color, #0088cc);
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  margin-top: 6px;
+  color: var(--tg-theme-text-color, #555);
+  cursor: pointer;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--tg-theme-button-color, #0088cc);
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+  .section {
+    padding: 10px;
+    margin-bottom: 12px;
+  }
+  
+  .timeRow {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .timeField {
+    width: 100%;
+  }
+  
+  .dateInput,
+  .timeInput {
+    padding: 8px 10px;
+    font-size: 15px;
+  }
+}

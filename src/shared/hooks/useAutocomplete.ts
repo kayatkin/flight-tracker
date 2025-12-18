@@ -1,4 +1,4 @@
-// src/hooks/useAutocomplete.ts - ДОПОЛНЕННАЯ ВЕРСИЯ
+// src\shared\hooks\useAutocomplete.ts
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface UseAutocompleteOptions {
