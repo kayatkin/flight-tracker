@@ -52,7 +52,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
       if (permissions === 'edit') {
         // Вариант 1: Прямая ссылка на WebApp (рекомендуется)
         // Формат: https://t.me/bot_username/app_name?startapp=параметры
-        url = `https://t.me/my_flight_tracker1_bot/flight_tracker?startapp=share_${token}`;
+        url = `https://t.me/my_flight_tracker1_bot?startapp=share_${token}`;
         urlDescription = 'Прямая ссылка на Telegram WebApp';
         
         // Вариант 2: Альтернативный формат (если первый не работает)

@@ -44,8 +44,9 @@ export const redirectToTelegramForEdit = (token: string): void => {
   // ========== КЛЮЧЕВОЕ ИЗМЕНЕНИЕ ==========
   // Формат для прямого открытия WebApp в Telegram
   // Telegram автоматически покажет кнопку "Open" при таком формате
-  const telegramUrl = `https://t.me/${BOT_USERNAME}/flight_tracker?startapp=share_${token}`;
+  const telegramUrl = `https://t.me/${BOT_USERNAME}?startapp=share_${token}`;
   
+  console.log('[TELEGRAM] Opening via Menu Button:', telegramUrl);
   console.log('[TELEGRAM] Opening WebApp directly:', telegramUrl);
   console.log('[TELEGRAM] Bot does not need to be running!');
   
