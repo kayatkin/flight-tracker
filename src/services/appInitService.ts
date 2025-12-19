@@ -8,8 +8,13 @@ import {
   initTelegramWebApp,
   applyDefaultTheme 
 } from '../utils';
-// В начале файла добавьте импорт
-import { isInTelegramWebApp, redirectToTelegramForEdit } from '../utils/telegramUtils';
+// Обновляем импорт для безсерверной версии
+import { 
+  isInTelegramWebApp, 
+  redirectToTelegramForEdit,
+  getTokenFromTelegramStartParam,
+  isInTelegramDirectWebApp 
+} from '../utils/telegramUtils';
 import { validateToken, loadUserData } from './dataService';
 
 export interface AppInitResult {
@@ -37,15 +42,36 @@ let isInitializing = false;
 let initializationPromise: Promise<AppInitResult> | null = null;
 // ==================== ДОБАВЬТЕ ЭТО ====================
 
-// Функция для получения токена из URL
+// Функция для получения токена из URL (обновленная)
 export const getTokenFromUrl = (): string | null => {
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('token');
+  
+  // ========== КЛЮЧЕВОЕ ИЗМЕНЕНИЕ ==========
+  // Сначала проверяем Telegram WebApp параметры
+  const telegramToken = getTokenFromTelegramStartParam();
+  if (telegramToken) {
+    console.log('[INIT] Found token from Telegram WebApp params:', telegramToken);
+    return telegramToken;
+  }
+  
+  // Затем проверяем обычный токен в URL
+  const regularToken = urlParams.get('token');
+  if (regularToken) {
+    console.log('[INIT] Found regular token from URL:', regularToken);
+    return regularToken;
+  }
+  
+  return null;
+  // ========== КЛЮЧЕВОЕ ИЗМЕНЕНИЕ ==========
 };
 
-// Функция для очистки токена из URL
+// Функция для очистки токена из URL (обновленная)
 export const clearTokenFromUrl = (): void => {
-  window.history.replaceState({}, '', window.location.pathname);
+  // Сохраняем hash часть если есть (для Telegram WebApp параметров)
+  const hash = window.location.hash;
+  
+  // Очищаем только query параметры, сохраняем hash
+  window.history.replaceState({}, '', window.location.pathname + hash);
 };
 
 // Функция для инициализации гостевого режима
@@ -60,21 +86,28 @@ export const initGuestMode = async (token: string): Promise<GuestInitResult | nu
       return null;
     }
     
-    // ========== ВАЖНОЕ ДОБАВЛЕНИЕ ==========
+    // ========== ОБНОВЛЕННАЯ ПРОВЕРКА ==========
     // Проверка: если права на редактирование, но не в Telegram WebApp
-    if (guestUser.permissions === 'edit' && !isInTelegramWebApp()) {
-      console.log('[INIT] Edit permission detected, redirecting to Telegram');
+    if (guestUser.permissions === 'edit') {
+      const inTelegramWebApp = isInTelegramWebApp() || isInTelegramDirectWebApp();
       
-      // Редиректим в Telegram
-      redirectToTelegramForEdit(token);
-      
-      // Очищаем токен из URL чтобы избежать цикла
-      clearTokenFromUrl();
-      
-      // Возвращаем null, чтобы прервать инициализацию
-      return null;
+      if (!inTelegramWebApp) {
+        console.log('[INIT] Edit permission detected, redirecting to Telegram WebApp');
+        console.log('[INIT] Bot does not need to be running for this link!');
+        
+        // Редиректим в Telegram (безсерверная версия)
+        redirectToTelegramForEdit(token);
+        
+        // Очищаем токен из URL чтобы избежать цикла
+        clearTokenFromUrl();
+        
+        // Возвращаем null, чтобы прервать инициализацию
+        return null;
+      } else {
+        console.log('[INIT] Edit permission in Telegram WebApp - allowing access');
+      }
     }
-    // ========== ВАЖНОЕ ДОБАВЛЕНИЕ ==========
+    // ========== ОБНОВЛЕННАЯ ПРОВЕРКА ==========
     
     const ownerData = await loadUserData(guestUser.ownerId);
     console.log('[INIT] Guest mode initialized successfully');
@@ -161,7 +194,7 @@ export const createAppUser = (
   };
 };
 
-// Основная функция инициализации приложения
+// Основная функция инициализации приложения (обновленная)
 export const initializeApp = async (): Promise<AppInitResult> => {
   // ==================== ДОБАВЬТЕ ЭТО ====================
   // Защита от повторной инициализации
@@ -174,6 +207,7 @@ export const initializeApp = async (): Promise<AppInitResult> => {
   // ==================== ДОБАВЬТЕ ЭТО ====================
   
   console.log('[INIT] Starting app initialization...');
+  console.log('[INIT] Serverless bot mode: Telegram links work without running bot');
   
   // ==================== ДОБАВЬТЕ ЭТО ====================
   // Создаем промис один раз
@@ -183,13 +217,24 @@ export const initializeApp = async (): Promise<AppInitResult> => {
     // Ждем немного для загрузки Telegram WebApp
     await new Promise(resolve => setTimeout(resolve, 100));
     
-    // Проверяем токен в URL
+    // Проверяем токен в URL (обновленная функция)
     const token = getTokenFromUrl();
     
     if (token) {
       const guestResult = await initGuestMode(token);
       if (guestResult) {
         const { guestUser, ownerData } = guestResult;
+        
+        // ========== ОПРЕДЕЛЯЕМ ТИП ДОСТУПА ==========
+        const isTelegramAccess = isInTelegramWebApp() || isInTelegramDirectWebApp();
+        const isEditPermission = guestUser.permissions === 'edit';
+        
+        console.log('[INIT] Guest access type:', {
+          isTelegram: isTelegramAccess,
+          isEdit: isEditPermission,
+          tokenSource: getTokenFromTelegramStartParam() ? 'Telegram WebApp' : 'Regular URL'
+        });
+        // ========== ОПРЕДЕЛЯЕМ ТИП ДОСТУПА ==========
         
         // ==================== ДОБАВЬТЕ ЭТО ====================
         isInitializing = false;
@@ -202,7 +247,7 @@ export const initializeApp = async (): Promise<AppInitResult> => {
             guestUser.ownerId,
             'Гость',
             true,
-            false,
+            isTelegramAccess, // Используем реальное значение
             guestUser
           ),
           flights: ownerData.flights,
@@ -264,5 +309,19 @@ export const getFallbackInitResult = (error: any): AppInitResult => {
 export const resetInitialization = (): void => {
   isInitializing = false;
   initializationPromise = null;
+};
+
+// Новая функция для отладки
+export const debugInitialization = (): void => {
+  console.log('[INIT DEBUG] Current state:', {
+    isInitializing,
+    hasToken: !!getTokenFromUrl(),
+    inTelegramWebApp: isInTelegramWebApp(),
+    inTelegramDirectWebApp: isInTelegramDirectWebApp(),
+    tokenFromTelegram: getTokenFromTelegramStartParam(),
+    url: window.location.href,
+    searchParams: window.location.search,
+    hash: window.location.hash
+  });
 };
 // ==================== ДОБАВЬТЕ ЭТО ====================

@@ -45,20 +45,30 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
 
       if (error) throw error;
 
-      // ========== ИСПРАВЛЕННАЯ ЛОГИКА ==========
+      // ========== КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: WebApp без запущенного бота ==========
       let url;
+      let urlDescription = '';
       
       if (permissions === 'edit') {
-        // Для редактирования - deep link в Telegram (ЧИСТАЯ ссылка без описания)
-        url = `https://t.me/my_flight_tracker1_bot?start=share_${token}`;
+        // Вариант 1: Прямая ссылка на WebApp (рекомендуется)
+        // Формат: https://t.me/bot_username/app_name?startapp=параметры
+        url = `https://t.me/my_flight_tracker1_bot/flight_tracker?startapp=share_${token}`;
+        urlDescription = 'Прямая ссылка на Telegram WebApp';
+        
+        // Вариант 2: Альтернативный формат (если первый не работает)
+        // url = `https://t.me/my_flight_tracker1_bot?start=share_${token}`;
+        // urlDescription = 'Ссылка откроет Telegram с кнопкой для WebApp';
       } else {
-        // Для просмотра - обычная веб-ссылка
+        // Для просмотра: обычная веб-ссылка
         url = `${window.location.origin}?token=${token}`;
+        urlDescription = 'Веб-ссылка для просмотра в браузере';
       }
       
       // Сохраняем чистую ссылку
       setShareUrl(url);
-      // ========== ИСПРАВЛЕННАЯ ЛОГИКА ==========
+      console.log(`🔗 Создана ссылка: ${url}`);
+      console.log(`📝 Описание: ${urlDescription}`);
+      // ========== КЛЮЧЕВОЕ ИЗМЕНЕНИЕ ==========
       
       setGeneratedToken(token);
       onShareCreated(token);
@@ -78,6 +88,10 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
   };
 
   const deactivateLink = async () => {
+    if (!window.confirm('Вы уверены, что хотите отозвать доступ? Это действие нельзя отменить.')) {
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('shared_sessions')
@@ -85,11 +99,22 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
         .eq('token', generatedToken);
 
       if (error) throw error;
-      alert('Доступ отозван');
+      alert('Доступ успешно отозван');
       onClose();
     } catch (err: any) {
       setError(err.message || 'Ошибка при отзыве доступа');
     }
+  };
+
+  // Форматирование даты для отображения
+  const formatExpiryDate = () => {
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + expiryDays);
+    return expiryDate.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   };
 
   return (
@@ -120,7 +145,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                   />
                   👁️ Только просмотр
                   <span className={styles.radioDescription}>
-                    Гость сможет только просматривать вашу историю
+                    Гость сможет только просматривать вашу историю в браузере
                   </span>
                 </label>
                 <label className={styles.radioLabel}>
@@ -133,7 +158,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                   />
                   ✏️ Просмотр и редактирование
                   <span className={styles.radioDescription}>
-                    Гость сможет добавлять и удалять перелеты
+                    Гость сможет редактировать историю через Telegram WebApp
                   </span>
                 </label>
               </div>
@@ -152,7 +177,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                 <option value={365}>1 год</option>
               </select>
               <p className={styles.selectHint}>
-                По истечении этого срока ссылка станет недействительной
+                Ссылка перестанет работать {formatExpiryDate()}
               </p>
             </div>
 
@@ -184,7 +209,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                   <strong>Права доступа:</strong> {permissions === 'view' ? 'Только просмотр' : 'Просмотр и редактирование'}
                   {permissions === 'edit' && (
                     <div style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>
-                      Ссылка для редактирования (откроется через Telegram)
+                      📱 Ссылка откроет мини-приложение в Telegram
                     </div>
                   )}
                 </div>
@@ -192,19 +217,26 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
               <div className={styles.infoRow}>
                 <span className={styles.infoIcon}>📅</span>
                 <div>
-                  <strong>Срок действия:</strong> до {new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000).toLocaleDateString()}
+                  <strong>Срок действия:</strong> до {formatExpiryDate()}
                 </div>
               </div>
               <div className={styles.infoRow}>
                 <span className={styles.infoIcon}>📋</span>
                 <div>
                   <strong>Инструкция:</strong> Отправьте эту ссылку тому, с кем хотите поделиться историей
+                  {permissions === 'edit' && (
+                    <div style={{ fontSize: '13px', color: '#0a58ca', marginTop: '4px' }}>
+                      Получателю нужно открыть ссылку в Telegram
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
             <div className={styles.urlContainer}>
-              <div className={styles.urlLabel}>Ссылка для доступа:</div>
+              <div className={styles.urlLabel}>
+                {permissions === 'edit' ? 'Ссылка для Telegram WebApp:' : 'Веб-ссылка:'}
+              </div>
               <input
                 type="text"
                 value={shareUrl}
@@ -216,6 +248,25 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                 📋 Копировать ссылку
               </button>
             </div>
+
+            {permissions === 'edit' && (
+              <div className={styles.telegramHint}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '18px' }}>ℹ️</span>
+                  <div>
+                    <strong>Как открыть ссылку:</strong>
+                    <ol style={{ margin: '8px 0 0 0', paddingLeft: '20px' }}>
+                      <li>Получатель открывает ссылку в Telegram</li>
+                      <li>Telegram автоматически покажет кнопку "Open"</li>
+                      <li>Нажимает кнопку → открывается мини-приложение</li>
+                    </ol>
+                  </div>
+                </div>
+                <p style={{ margin: '0', fontSize: '13px', color: '#666', fontStyle: 'italic' }}>
+                  Бот не должен быть постоянно запущен для работы ссылки
+                </p>
+              </div>
+            )}
 
             <div className={styles.finalHint}>
               <p>⚠️ <strong>Важно:</strong> Эта ссылка предоставляет доступ к вашей истории перелетов.</p>
