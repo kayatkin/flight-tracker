@@ -8,6 +8,8 @@ import {
   initTelegramWebApp,
   applyDefaultTheme 
 } from '../utils';
+// В начале файла добавьте импорт
+import { isInTelegramWebApp, redirectToTelegramForEdit } from '../utils/telegramUtils';
 import { validateToken, loadUserData } from './dataService';
 
 export interface AppInitResult {
@@ -57,6 +59,22 @@ export const initGuestMode = async (token: string): Promise<GuestInitResult | nu
       clearTokenFromUrl();
       return null;
     }
+    
+    // ========== ВАЖНОЕ ДОБАВЛЕНИЕ ==========
+    // Проверка: если права на редактирование, но не в Telegram WebApp
+    if (guestUser.permissions === 'edit' && !isInTelegramWebApp()) {
+      console.log('[INIT] Edit permission detected, redirecting to Telegram');
+      
+      // Редиректим в Telegram
+      redirectToTelegramForEdit(token);
+      
+      // Очищаем токен из URL чтобы избежать цикла
+      clearTokenFromUrl();
+      
+      // Возвращаем null, чтобы прервать инициализацию
+      return null;
+    }
+    // ========== ВАЖНОЕ ДОБАВЛЕНИЕ ==========
     
     const ownerData = await loadUserData(guestUser.ownerId);
     console.log('[INIT] Guest mode initialized successfully');

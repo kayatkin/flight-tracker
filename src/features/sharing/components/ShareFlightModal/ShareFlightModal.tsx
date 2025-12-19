@@ -45,11 +45,24 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
 
       if (error) throw error;
 
-      const url = `${window.location.origin}${window.location.pathname}?token=${token}`;
-      setGeneratedToken(token);
-      setShareUrl(url);
-      onShareCreated(token);
+      // ========== ИСПРАВЛЕННАЯ ЛОГИКА ==========
+      let url;
       
+      if (permissions === 'edit') {
+        // Для редактирования - deep link в Telegram (ЧИСТАЯ ссылка без описания)
+        url = `https://t.me/my_flight_tracker1_bot?start=share_${token}`;
+      } else {
+        // Для просмотра - обычная веб-ссылка
+        url = `${window.location.origin}?token=${token}`;
+      }
+      
+      // Сохраняем чистую ссылку
+      setShareUrl(url);
+      // ========== ИСПРАВЛЕННАЯ ЛОГИКА ==========
+      
+      setGeneratedToken(token);
+      onShareCreated(token);
+        
     } catch (err: any) {
       setError(err.message || 'Ошибка при создании ссылки');
       console.error('Error creating share link:', err);
@@ -136,7 +149,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                 <option value={1}>1 день</option>
                 <option value={7}>7 дней (по умолчанию)</option>
                 <option value={30}>30 дней</option>
-                <option value={365}>1 год (без ограничений)</option>
+                <option value={365}>1 год</option>
               </select>
               <p className={styles.selectHint}>
                 По истечении этого срока ссылка станет недействительной
@@ -169,6 +182,11 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                 <span className={styles.infoIcon}>🔒</span>
                 <div>
                   <strong>Права доступа:</strong> {permissions === 'view' ? 'Только просмотр' : 'Просмотр и редактирование'}
+                  {permissions === 'edit' && (
+                    <div style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>
+                      Ссылка для редактирования (откроется через Telegram)
+                    </div>
+                  )}
                 </div>
               </div>
               <div className={styles.infoRow}>
