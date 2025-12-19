@@ -30,6 +30,11 @@ export interface GuestInitResult {
   };
 }
 
+// ==================== ДОБАВЬТЕ ЭТО ====================
+let isInitializing = false;
+let initializationPromise: Promise<AppInitResult> | null = null;
+// ==================== ДОБАВЬТЕ ЭТО ====================
+
 // Функция для получения токена из URL
 export const getTokenFromUrl = (): string | null => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -140,50 +145,79 @@ export const createAppUser = (
 
 // Основная функция инициализации приложения
 export const initializeApp = async (): Promise<AppInitResult> => {
-  console.log('[INIT] Starting app initialization...');
-  
-  // Ждем немного для загрузки Telegram WebApp
-  await new Promise(resolve => setTimeout(resolve, 100));
-  
-  // Проверяем токен в URL
-  const token = getTokenFromUrl();
-  
-  if (token) {
-    const guestResult = await initGuestMode(token);
-    if (guestResult) {
-      const { guestUser, ownerData } = guestResult;
-      
-      return {
-        userName: `Гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`,
-        userId: guestUser.ownerId,
-        appUser: createAppUser(
-          guestUser.ownerId,
-          'Гость',
-          true,
-          false,
-          guestUser
-        ),
-        flights: ownerData.flights,
-        airlines: ownerData.airlines,
-        originCities: ownerData.originCities,
-        destinationCities: ownerData.destinationCities
-      };
-    }
+  // ==================== ДОБАВЬТЕ ЭТО ====================
+  // Защита от повторной инициализации
+  if (isInitializing && initializationPromise) {
+    console.log('[INIT] Already initializing, returning existing promise');
+    return initializationPromise;
   }
   
-  // Инициализация для владельца
-  const { currentUserId, currentUserName, telegramDetected } = initTelegramUser();
-  const userData = await loadUserData(currentUserId);
+  isInitializing = true;
+  // ==================== ДОБАВЬТЕ ЭТО ====================
   
-  return {
-    userName: currentUserName,
-    userId: currentUserId,
-    appUser: createAppUser(currentUserId, currentUserName, false, telegramDetected),
-    flights: userData.flights,
-    airlines: userData.airlines,
-    originCities: userData.originCities,
-    destinationCities: userData.destinationCities
-  };
+  console.log('[INIT] Starting app initialization...');
+  
+  // ==================== ДОБАВЬТЕ ЭТО ====================
+  // Создаем промис один раз
+  initializationPromise = (async () => {
+  // ==================== ДОБАВЬТЕ ЭТО ====================
+  
+    // Ждем немного для загрузки Telegram WebApp
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Проверяем токен в URL
+    const token = getTokenFromUrl();
+    
+    if (token) {
+      const guestResult = await initGuestMode(token);
+      if (guestResult) {
+        const { guestUser, ownerData } = guestResult;
+        
+        // ==================== ДОБАВЬТЕ ЭТО ====================
+        isInitializing = false;
+        // ==================== ДОБАВЬТЕ ЭТО ====================
+        
+        return {
+          userName: `Гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`,
+          userId: guestUser.ownerId,
+          appUser: createAppUser(
+            guestUser.ownerId,
+            'Гость',
+            true,
+            false,
+            guestUser
+          ),
+          flights: ownerData.flights,
+          airlines: ownerData.airlines,
+          originCities: ownerData.originCities,
+          destinationCities: ownerData.destinationCities
+        };
+      }
+    }
+    
+    // Инициализация для владельца
+    const { currentUserId, currentUserName, telegramDetected } = initTelegramUser();
+    const userData = await loadUserData(currentUserId);
+    
+    // ==================== ДОБАВЬТЕ ЭТО ====================
+    isInitializing = false;
+    // ==================== ДОБАВЬТЕ ЭТО ====================
+    
+    return {
+      userName: currentUserName,
+      userId: currentUserId,
+      appUser: createAppUser(currentUserId, currentUserName, false, telegramDetected),
+      flights: userData.flights,
+      airlines: userData.airlines,
+      originCities: userData.originCities,
+      destinationCities: userData.destinationCities
+    };
+    
+  // ==================== ДОБАВЬТЕ ЭТО ====================
+  })();
+  
+  return initializationPromise;
+  // ==================== ДОБАВЬТЕ ЭТО ====================
 };
 
 // Функция для обработки ошибок инициализации
@@ -206,3 +240,11 @@ export const getFallbackInitResult = (error: any): AppInitResult => {
     destinationCities: []
   };
 };
+
+// ==================== ДОБАВЬТЕ ЭТО ====================
+// Функция для сброса состояния инициализации (для тестов)
+export const resetInitialization = (): void => {
+  isInitializing = false;
+  initializationPromise = null;
+};
+// ==================== ДОБАВЬТЕ ЭТО ====================

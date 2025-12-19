@@ -1,5 +1,5 @@
 // src\shared\hooks\useAutocomplete.ts
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 
 interface UseAutocompleteOptions {
   delay?: number;
@@ -18,24 +18,19 @@ export const useAutocomplete = (
     filterFn = (item, query) => item.toLowerCase().includes(query.toLowerCase())
   } = options;
 
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Дебаунс запроса
   useEffect(() => {
-    // Очищаем предыдущий таймер
     if (timerRef.current) {
       clearTimeout(timerRef.current);
     }
 
-    // Устанавливаем новый таймер
     timerRef.current = setTimeout(() => {
       setDebouncedQuery(query);
     }, delay);
 
-    // Функция очистки
     return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
@@ -43,53 +38,39 @@ export const useAutocomplete = (
     };
   }, [query, delay]);
 
-  // Фильтрация предложений
-  useEffect(() => {
+  // Используем useMemo для фильтрации
+  const suggestions = useMemo(() => {
     if (debouncedQuery && source.length > 0) {
-      const filtered = source
+      return source
         .filter(item => filterFn(item, debouncedQuery))
         .slice(0, maxSuggestions);
-      
-      setSuggestions(filtered);
-      setIsOpen(filtered.length > 0);
-    } else {
-      setSuggestions([]);
-      setIsOpen(false);
     }
+    return [];
   }, [debouncedQuery, source, maxSuggestions, filterFn]);
+
+  const isOpen = useMemo(() => 
+    suggestions.length > 0, 
+    [suggestions]
+  );
 
   // Функция выбора подсказки
   const selectSuggestion = useCallback((selected: string) => {
-    // 1. Очищаем подсказки немедленно
-    setSuggestions([]);
-    setIsOpen(false);
-    
-    // 2. Очищаем таймер дебаунса (ВАЖНО!)
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
     
-    // 3. Сбрасываем debouncedQuery чтобы предотвратить повторную фильтрацию
     setDebouncedQuery(selected);
-    
-    // 4. Возвращаем выбранное значение
     return selected;
   }, []);
 
   // Функция закрытия подсказок
   const closeSuggestions = useCallback(() => {
-    // 1. Немедленно закрываем подсказки
-    setIsOpen(false);
-    setSuggestions([]);
-    
-    // 2. Очищаем таймер дебаунса
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
     
-    // 3. Сбрасываем debouncedQuery чтобы предотвратить повторную фильтрацию
     setDebouncedQuery('');
   }, []);
 
