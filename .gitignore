@@ -1,68 +1,267 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ========================
+# GITIGNORE ДЛЯ FLIGHT-TRACKER
+# ========================
 
-# dependencies
-/node_modules
-bot/node_modules/
-/.pnp
-.pnp.js
+# ========================
+# ОПЕРАЦИОННЫЕ СИСТЕМЫ
+# ========================
 
-# testing
-/coverage
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
 
-# production
-/build
-/dist
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
-# Supabase и другие чувствительные данные
+# Linux
+*~
+
+# ========================
+# IDE и РЕДАКТОРЫ
+# ========================
+
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/
+
+# IntelliJ
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Sublime Text
+*.sublime-*
+*.sublime-workspace
+
+# ========================
+# ПАКЕТНЫЕ МЕНЕДЖЕРЫ
+# ========================
+
+# npm
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# pnpm
+.pnpm-store/
+
+# ========================
+# СЕКРЕТЫ И КЛЮЧИ (ВАЖНО!)
+# ========================
+
+# Файлы окружения (НИКОГДА не коммитьте!)
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env.*.local
+.env.*
+!.env.example
+
+# Supabase
+supabase/.env
+supabase/config.toml
+supabase/seed.sql
+supabase-functions/
 supabase-key.txt
 supabase-token.txt
-*-key.txt
-*-token.txt
-secrets.json
-credentials.json
-service-account.json
 
-# Telegram бот токены
-bot-token.txt
-telegram-token.txt
-
-# Файлы окружения бота (критически важно!)
+# Telegram бот
 bot/.env
 bot/.env.*
 bot/config.json
 bot/secrets/
 bot/credentials/
+bot-token.txt
+telegram-token.txt
 
-# IDE файлы
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# Общие ключи и токены
+*.key
+*.token
+*.pem
+*.crt
+*.p12
+*-key.txt
+*-token.txt
+secrets.json
+credentials.json
+service-account.json
+firebase*.json
+google*.json
+aws*.json
 
-# Логи приложения
-logs/
+# Файлы с паролями
+*password*
+*secret*
+*credential*
+*private*
+*sensitive*
+
+# ========================
+# СБОРКИ И ДИСТРИБУТИВЫ
+# ========================
+
+# React/Vite/Next.js
+build/
+dist/
+.next/
+out/
+.cache/
+.turbo/
+storybook-static/
+
+# Create React App
+/build
+/coverage
+
+# TypeScript
+*.tsbuildinfo
+
+# ========================
+# ЛОГИ И ВРЕМЕННЫЕ ФАЙЛЫ
+# ========================
+
+# Логи
 *.log
-bot.log
-
-# Временные файлы
-temp/
-tmp/
-*.tmp
-*.temp
-
-# Системные файлы
-.DS_Store
-Thumbs.db
-
-# Файлы окружения (уже есть, но продублируем для надежности)
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.*.local
-
+logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+
+# Временные файлы
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# ========================
+# ТЕСТИРОВАНИЕ
+# ========================
+
+# Jest
+/jest-report/
+/coverage/
+.nyc_output/
+
+# Cypress
+cypress/videos/
+cypress/screenshots/
+
+# ========================
+# PnP (Plug'n'Play)
+# ========================
+
+.pnp.js
+.pnp.cjs
+.pnp.loader.mjs
+
+# ========================
+# РАЗНОЕ
+# ========================
+
+# Файлы зависимостей (если используются)
+.jest/
+.eslintcache
+.stylelintcache
+
+# Служебные файлы
+.cache-loader/
+.parcel-cache/
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Docusaurus
+.docz/
+.docusaurus/
+
+# ========================
+# КОНКРЕТНО ДЛЯ ПРОЕКТА
+# ========================
+
+# Flight Tracker специфичные файлы
+flight-data/
+uploads/
+downloads/
+exports/
+
+# Конфигурационные файлы с чувствительными данными
+config/production.json
+config/staging.json
+config/*.local.js
+config/*.local.ts
+
+# Бэкапы базы данных
+*.dump
+*.backup
+*.sqlite
+*.db
+
+# ========================
+# ДОКУМЕНТАЦИЯ
+# ========================
+
+# Сгенерированная документация
+/docs/api/
+/docs/build/
+
+# ========================
+# ИСКЛЮЧЕНИЯ (файлы которые нужно коммитить)
+# ========================
+
+# Пример файла окружения (должен быть в репозитории)
+!.env.example
+
+# Настройки IDE (опционально)
+!.vscode/settings.json.example
+!.vscode/extensions.json.example
+
+# Конфигурационные примеры
+!config/example.json
+!config/development.example.json
+
+# ========================
+# ВСЕ ПАПКИ НА КОРНЕВОМ УРОВНЕ
+# ========================
+
+# Исключаем все скрытые папки кроме .git и .github
+.*/
+!.git/
+!.github/
+
+# Исключаем все папки кроме нужных
+/*
+!src/
+!public/
+!bot/
+!supabase/
+!.github/
+!.gitignore
+!package.json
+!README.md
+!tsconfig.json
+!craco.config.js
+!next.config.js
+!vite.config.ts
