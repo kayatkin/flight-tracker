@@ -3,6 +3,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@shared/lib';
 import styles from './SharedSessionsList.module.css';
 import { SharedSession } from '@shared/types';
+import {
+  getInvitationsDisplayText,
+  getFilterLabel,
+  getFilterDescription,
+  type InvitationFilter,
+} from 'shared/lib/i18n/invitations';
+import { getDaysText } from '@shared/lib/i18n/pluralize';
 
 interface SharedSessionsListProps {
   userId: string;
@@ -10,9 +17,7 @@ interface SharedSessionsListProps {
   onSessionDeactivated: () => void;
 }
 
-type SessionFilter = 'all' | 'active' | 'inactive';
-
-// --- ВНЕ КОМПОНЕНТА: чистые утилиты ---
+// Утилита для форматирования даты
 const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
   return date.toLocaleDateString('ru-RU', {
@@ -24,6 +29,7 @@ const formatDate = (dateString: string): string => {
   });
 };
 
+// Получение информации о статусе
 const getStatusInfo = (session: SharedSession) => {
   const now = new Date();
   const expiresAt = session.expires_at ? new Date(session.expires_at) : null;
@@ -42,9 +48,15 @@ const getStatusInfo = (session: SharedSession) => {
   if (diffDays <= 1) {
     return { text: 'Истекает сегодня', className: styles.statusExpiring };
   } else if (diffDays <= 3) {
-    return { text: `Истекает через ${diffDays} дня`, className: styles.statusExpiring };
+    return { 
+      text: `Истекает через ${getDaysText(diffDays)}`, 
+      className: styles.statusExpiring 
+    };
   } else {
-    return { text: `Действует ${diffDays} дней`, className: styles.statusActive };
+    return { 
+      text: `Действует ${getDaysText(diffDays)}`, 
+      className: styles.statusActive 
+    };
   }
 };
 
@@ -56,20 +68,22 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
   const [sessions, setSessions] = useState<SharedSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const [filter, setFilter] = useState<SessionFilter>('active');
+  const [filter, setFilter] = useState<InvitationFilter>('active');
+  const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
+  // Загрузка сессий
   const loadSessions = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
 
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('shared_sessions')
         .select('*')
         .eq('owner_id', userId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
 
       const now = new Date();
       const defaultExpiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -79,7 +93,6 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
         owner_id: session.owner_id,
         token: session.token,
         permissions: session.permissions,
-        // Защита от null/undefined
         expires_at: session.expires_at ?? defaultExpiresAt,
         created_at: session.created_at,
         is_active: session.is_active,
@@ -99,9 +112,9 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
     loadSessions();
   }, [loadSessions]);
 
+  // Деактивация сессии
   const deactivateSession = useCallback(
     async (sessionId: string, token: string) => {
-      // ⚠️ Лучше заменить window.confirm на UI-модалку
       if (!window.confirm('Отозвать доступ по этой ссылке?')) return;
 
       try {
@@ -112,7 +125,6 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
 
         if (error) throw error;
 
-        // ✅ Используем ту же функцию из замыкания
         await loadSessions();
         onSessionDeactivated();
       } catch (err: unknown) {
@@ -124,7 +136,25 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
     [loadSessions, onSessionDeactivated]
   );
 
-  // --- Логика фильтрации ---
+  // Копирование токена
+  const copyToken = useCallback(async (token: string) => {
+    const url = `${window.location.origin}${window.location.pathname}?token=${token}`;
+    
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedToken(token);
+      
+      // Сбрасываем состояние через 2 секунды
+      setTimeout(() => {
+        setCopiedToken(null);
+      }, 2000);
+    } catch (err) {
+      console.error('Не удалось скопировать ссылку:', err);
+      setError('Не удалось скопировать ссылку');
+    }
+  }, []);
+
+  // Фильтрация сессий
   const now = new Date();
   const activeSessions = sessions.filter(
     (s) => s.is_active && s.expires_at && new Date(s.expires_at) > now
@@ -133,8 +163,9 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
     (s) => !s.is_active || (s.expires_at && new Date(s.expires_at) <= now)
   );
 
-  const stats = {
-    total: sessions.length,
+  // ИСПРАВЛЕНИЕ: Правильная типизация stats
+  const stats: Record<InvitationFilter, number> = {
+    all: sessions.length,
     active: activeSessions.length,
     inactive: inactiveSessions.length,
   };
@@ -150,32 +181,33 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
     }
   };
 
-  const copyToken = useCallback((token: string) => {
-    const url = `${window.location.origin}${window.location.pathname}?token=${token}`;
-    navigator.clipboard
-      .writeText(url)
-      .then(() => {
-        // ✅ Лучше показывать тост или состояние "скопировано"
-        alert('Ссылка скопирована!');
-      })
-      .catch((err) => {
-        console.error('Не удалось скопировать ссылку:', err);
-        setError('Не удалось скопировать ссылку');
-      });
-  }, []);
+  // Получение текста для отображения
+  const displayText = getInvitationsDisplayText(stats[filter], filter);
+  const filteredSessions = getFilteredSessions();
 
-  // --- Рендер ---
+  // Обработчик клавиатуры для фильтров
+  const handleFilterKeyDown = (
+    e: React.KeyboardEvent<HTMLButtonElement>,
+    filterKey: InvitationFilter
+  ) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setFilter(filterKey);
+    }
+  };
+
   if (loading) {
     return (
       <div className={styles.modalOverlay} onClick={onClose} role="dialog" aria-modal="true">
         <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-          <div className={styles.loading}>Загрузка приглашений...</div>
+          <div className={styles.loading}>
+            <div className={styles.loadingSpinner} />
+            <p>Загрузка приглашений...</p>
+          </div>
         </div>
       </div>
     );
   }
-
-  const filteredSessions = getFilteredSessions();
 
   return (
     <div className={styles.modalOverlay} onClick={onClose} role="dialog" aria-modal="true">
@@ -187,69 +219,107 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
             className={styles.closeButton}
             aria-label="Закрыть"
             title="Закрыть"
+            tabIndex={0}
           >
             ✕
           </button>
         </div>
 
-        {error && <div className={styles.error}>{error}</div>}
+        {error && (
+          <div className={styles.error} role="alert">
+            ⚠️ {error}
+          </div>
+        )}
+
+        {copiedToken && (
+          <div className={styles.success} role="status">
+            ✅ Ссылка скопирована в буфер обмена
+          </div>
+        )}
 
         {sessions.length === 0 ? (
           <div className={styles.emptyState}>
-            <p>📭 Нет активных приглашений</p>
+            <div className={styles.emptyIcon}>📭</div>
+            <h4>Нет активных приглашений</h4>
             <p>Создайте первое приглашение во вкладке «История»</p>
           </div>
         ) : (
           <>
-            {/* Статистика как переключатели */}
+            {/* Переключатели фильтров */}
             <div className={styles.statsContainer} role="tablist">
               {(['all', 'active', 'inactive'] as const).map((key) => (
-                <div
+                <button
                   key={key}
+                  type="button"
                   role="tab"
                   aria-selected={filter === key}
-                  className={`${styles.statItem} ${filter === key ? styles.statItemActive : ''}`}
+                  aria-controls="sessions-list"
+                  aria-label={getFilterDescription(stats[key], key)}
+                  className={`${styles.statItem} ${
+                    filter === key ? styles.statItemActive : ''
+                  }`}
                   onClick={() => setFilter(key)}
-                  tabIndex={0}
-                  onKeyPress={(e) => e.key === 'Enter' && setFilter(key)}
+                  onKeyDown={(e) => handleFilterKeyDown(e, key)}
+                  tabIndex={filter === key ? 0 : -1}
                 >
-                  <span className={styles.statNumber}>
-                    {key === 'all' ? stats.total : key === 'active' ? stats.active : stats.inactive}
-                  </span>
+                  <span className={styles.statNumber}>{stats[key]}</span>
                   <span className={styles.statLabel}>
-                    {key === 'all' ? 'Всего' : key === 'active' ? 'Активные' : 'Неактивные'}
+                    {getFilterLabel(stats[key], key)}
                   </span>
-                </div>
+                </button>
               ))}
             </div>
 
-            {/* Подсказка по фильтру */}
+            {/* Информация о фильтре */}
             <div className={styles.filterInfo}>
-              <div className={styles.filterHint}>
-                {filter === 'all' && `📋 Показаны все ${stats.total} приглашений`}
-                {filter === 'active' && `✅ Показаны ${stats.active} активных приглашений`}
-                {filter === 'inactive' &&
-                  `👁️ Показаны ${stats.inactive} неактивных приглашений (отозваны или истекли)`}
+              <div 
+                className={styles.filterHint}
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                {displayText.main}
+                {displayText.hint && (
+                  <span className={styles.filterSubHint}> {displayText.hint}</span>
+                )}
               </div>
             </div>
 
             {/* Список приглашений */}
             {filteredSessions.length === 0 ? (
               <div className={styles.noResults}>
-                <p>📭 Нет приглашений по текущему фильтру</p>
-                <button onClick={() => setFilter('all')} className={styles.showAllButton}>
+                <div className={styles.noResultsIcon}>🔍</div>
+                <p>Нет приглашений по текущему фильтру</p>
+                <button 
+                  onClick={() => setFilter('all')} 
+                  className={styles.showAllButton}
+                  aria-label="Перейти к просмотру всех приглашений"
+                >
                   Показать все приглашения
                 </button>
               </div>
             ) : (
-              <div className={styles.sessionsList} role="list">
+              <div 
+                className={styles.sessionsList} 
+                role="list"
+                id="sessions-list"
+                aria-label={`Список ${filter === 'all' ? 'всех' : filter} приглашений`}
+              >
                 {filteredSessions.map((session) => {
                   const status = getStatusInfo(session);
+                  const isTokenCopied = copiedToken === session.token;
+                  
                   return (
-                    <div key={session.id} className={styles.sessionCard} role="listitem">
+                    <div 
+                      key={session.id} 
+                      className={styles.sessionCard} 
+                      role="listitem"
+                      aria-labelledby={`session-${session.id}-title`}
+                    >
                       <div className={styles.sessionHeader}>
                         <div className={styles.sessionInfo}>
                           <div
+                            id={`session-${session.id}-title`}
                             className={styles.permissionBadge}
                             data-permission={session.permissions}
                             aria-label={
@@ -258,26 +328,42 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
                                 : 'Полный доступ с редактированием'
                             }
                           >
-                            {session.permissions === 'view' ? '👁️ Только просмотр' : '✏️ Редактирование'}
+                            {session.permissions === 'view' 
+                              ? '👁️ Только просмотр' 
+                              : '✏️ Редактирование'}
                           </div>
-                          <div className={`${styles.status} ${status.className}`}>{status.text}</div>
+                          <div 
+                            className={`${styles.status} ${status.className}`}
+                            role="status"
+                            aria-label={`Статус: ${status.text}`}
+                          >
+                            {status.text}
+                          </div>
                         </div>
                         <div className={styles.sessionActions}>
                           <button
                             onClick={() => copyToken(session.token)}
-                            className={styles.copyButton}
-                            title="Копировать ссылку"
+                            className={`${styles.copyButton} ${
+                              isTokenCopied ? styles.copyButtonActive : ''
+                            }`}
+                            aria-label={
+                              isTokenCopied 
+                                ? 'Ссылка скопирована' 
+                                : 'Копировать ссылку на приглашение'
+                            }
                             disabled={!session.is_active}
                             aria-disabled={!session.is_active}
+                            title={isTokenCopied ? 'Скопировано!' : 'Копировать ссылку'}
                           >
-                            📋
+                            {isTokenCopied ? '✓' : '📋'}
                           </button>
                           <button
                             onClick={() => deactivateSession(session.id, session.token)}
                             className={styles.revokeButton}
-                            title="Отозвать доступ"
+                            aria-label="Отозвать доступ по этому приглашению"
                             disabled={!session.is_active}
                             aria-disabled={!session.is_active}
+                            title={session.is_active ? 'Отозвать доступ' : 'Доступ уже отозван'}
                           >
                             🔒
                           </button>
@@ -294,8 +380,8 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
                           <span>{formatDate(session.expires_at!)}</span>
                         </div>
                         <div className={styles.detailRow}>
-                          <span className={styles.detailLabel}>Токен:</span>
-                          <span className={styles.tokenPreview}>
+                          <span className={styles.detailLabel}>Идентификатор:</span>
+                          <span className={styles.tokenPreview} title={session.token}>
                             {session.token.substring(0, 15)}...
                           </span>
                         </div>
@@ -310,7 +396,11 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
               <div className={styles.hint}>
                 💡 Нажмите 📋 чтобы скопировать ссылку, 🔒 чтобы отозвать доступ
               </div>
-              <button onClick={onClose} className={styles.closeButtonLarge}>
+              <button 
+                onClick={onClose} 
+                className={styles.closeButtonLarge}
+                aria-label="Закрыть окно приглашений"
+              >
                 Закрыть
               </button>
             </div>

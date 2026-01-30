@@ -71,6 +71,7 @@
   justify-content: center;
   width: 36px;
   height: 36px;
+  transition: all 0.2s ease;
 }
 
 .closeButton:hover {
@@ -78,22 +79,63 @@
   color: var(--tg-text-color, #000);
 }
 
+.closeButton:focus {
+  outline: 2px solid var(--tg-link-color, #667eea);
+  outline-offset: 2px;
+}
+
+/* ====================== */
+/* LOADING STATE */
+/* ====================== */
+
 .loading {
   padding: 40px;
   text-align: center;
   color: var(--tg-hint-color, #666);
   font-size: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
 }
 
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(102, 126, 234, 0.2);
+  border-top: 3px solid var(--tg-link-color, #667eea);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ====================== */
+/* MESSAGES */
+/* ====================== */
+
 .error {
-  background: linear-gradient(135deg, #ff6b6b 0%, #c44569 100%);
-  color: white;
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(196, 69, 105, 0.1) 100%);
+  color: #d32f2f;
   padding: 12px 16px;
   margin: 16px 24px;
   border-radius: 10px;
-  text-align: center;
+  border-left: 4px solid #f44336;
   font-weight: 500;
   animation: shake 0.5s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error::before {
+  content: '⚠️';
+  font-size: 16px;
 }
 
 @keyframes shake {
@@ -102,19 +144,65 @@
   75% { transform: translateX(5px); }
 }
 
+.success {
+  background: linear-gradient(135deg, rgba(46, 204, 113, 0.1) 0%, rgba(39, 174, 96, 0.1) 100%);
+  color: #27ae60;
+  padding: 12px 16px;
+  margin: 16px 24px;
+  border-radius: 10px;
+  border-left: 4px solid #2ecc71;
+  font-weight: 500;
+  animation: slideIn 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.success::before {
+  content: '✓';
+  font-size: 16px;
+  font-weight: bold;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .emptyState {
-  padding: 40px 24px;
+  padding: 60px 24px;
   text-align: center;
   color: var(--tg-hint-color, #666);
 }
 
+.emptyIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.6;
+  display: block;
+}
+
+.emptyState h4 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--tg-text-color, #333);
+}
+
 .emptyState p {
-  margin: 8px 0;
+  margin: 0;
   line-height: 1.5;
+  font-size: 14px;
 }
 
 /* ====================== */
-/* КЛИКАБЕЛЬНЫЕ БЛОКИ СТАТИСТИКИ (ЗАМЕНА КНОПКАМ ФИЛЬТРАЦИИ) */
+/* FILTER STATS TABS */
 /* ====================== */
 
 .statsContainer {
@@ -134,12 +222,18 @@
   cursor: pointer;
   user-select: none;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  outline: none;
 }
 
 .statItem:hover {
   border-color: var(--tg-link-color, #667eea);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+}
+
+.statItem:focus {
+  outline: 2px solid var(--tg-link-color, #667eea);
+  outline-offset: 2px;
 }
 
 .statItemActive {
@@ -168,11 +262,6 @@
   text-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
 }
 
-.statNumberInactive {
-  color: var(--tg-hint-color, #888) !important;
-  text-shadow: none !important;
-}
-
 .statLabel {
   font-size: 13px;
   color: var(--tg-hint-color, #666);
@@ -184,12 +273,10 @@
   font-weight: 600;
 }
 
-/* УБИРАЕМ СТАРЫЕ КНОПКИ ФИЛЬТРАЦИИ */
-.filterButtons {
-  display: none;
-}
+/* ====================== */
+/* FILTER INFO */
+/* ====================== */
 
-/* Информация о фильтре */
 .filterInfo {
   margin: 0 24px 16px;
 }
@@ -204,14 +291,22 @@
   border-left: 4px solid var(--tg-link-color, #667eea);
   font-size: 13px;
   color: var(--tg-text-color, #333);
+  min-height: 20px;
 }
 
 .filterHint span {
   flex: 1;
 }
 
+.filterSubHint {
+  color: var(--tg-hint-color, #666);
+  font-size: 0.9em;
+  margin-left: 4px;
+  font-weight: normal;
+}
+
 /* ====================== */
-/* СООБЩЕНИЯ О РЕЗУЛЬТАТАХ */
+/* NO RESULTS */
 /* ====================== */
 
 .noResults {
@@ -224,10 +319,18 @@
   border: 2px dashed var(--tg-border-color, #e0e0e0);
 }
 
+.noResultsIcon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+  display: block;
+}
+
 .noResults p {
   margin: 0 0 16px 0;
   font-size: 15px;
   font-weight: 500;
+  color: var(--tg-text-color, #333);
 }
 
 .showAllButton {
@@ -250,13 +353,13 @@
   box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
 }
 
-.showAllButton::before {
-  content: '👁️';
-  font-size: 16px;
+.showAllButton:focus {
+  outline: 2px solid white;
+  outline-offset: 2px;
 }
 
 /* ====================== */
-/* СТИЛИ ДЛЯ СПИСКА ПРИГЛАШЕНИЙ */
+/* SESSIONS LIST */
 /* ====================== */
 
 .sessionsList {
@@ -288,6 +391,7 @@
 
 .sessionInfo {
   flex: 1;
+  min-width: 0; /* Для правильного обрезания текста */
 }
 
 .permissionBadge {
@@ -300,6 +404,10 @@
   font-weight: 600;
   margin-bottom: 6px;
   border: 1px solid rgba(76, 175, 80, 0.2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* Стили для бейджа с правами просмотра */
@@ -323,6 +431,7 @@
   font-size: 12px;
   font-weight: 600;
   margin-left: 8px;
+  white-space: nowrap;
 }
 
 .statusActive {
@@ -348,6 +457,7 @@
 .sessionActions {
   display: flex;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .copyButton, .revokeButton {
@@ -363,11 +473,13 @@
   width: 32px;
   height: 32px;
   transition: all 0.2s ease;
+  outline: none;
 }
 
 .copyButton {
   color: var(--tg-link-color, #667eea);
   border: 1px solid rgba(102, 126, 234, 0.3);
+  background: rgba(102, 126, 234, 0.05);
 }
 
 .copyButton:hover:not(:disabled) {
@@ -375,14 +487,36 @@
   transform: scale(1.1);
 }
 
+.copyButton:focus {
+  outline: 2px solid var(--tg-link-color, #667eea);
+  outline-offset: 1px;
+}
+
+.copyButtonActive {
+  background: #2ecc71 !important;
+  color: white !important;
+  border-color: #27ae60 !important;
+  transform: scale(1.1) !important;
+}
+
+.copyButtonActive:hover {
+  background: #27ae60 !important;
+}
+
 .revokeButton {
   color: #f44336;
   border: 1px solid rgba(244, 67, 54, 0.3);
+  background: rgba(244, 67, 54, 0.05);
 }
 
 .revokeButton:hover:not(:disabled) {
   background: rgba(244, 67, 54, 0.1);
   transform: scale(1.1);
+}
+
+.revokeButton:focus {
+  outline: 2px solid #f44336;
+  outline-offset: 1px;
 }
 
 .copyButton:disabled, .revokeButton:disabled {
@@ -391,11 +525,16 @@
   transform: none !important;
 }
 
+.copyButton:disabled:hover, .revokeButton:disabled:hover {
+  background: none !important;
+}
+
 .sessionDetails {
   background: var(--tg-active-bg, #f8f9ff);
   padding: 12px;
   border-radius: 8px;
   border-left: 3px solid var(--tg-link-color, #667eea);
+  font-size: 13px;
 }
 
 .detailRow {
@@ -403,7 +542,6 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 6px;
-  font-size: 13px;
 }
 
 .detailRow:last-child {
@@ -414,15 +552,19 @@
   color: var(--tg-hint-color, #666);
   font-weight: 500;
   min-width: 80px;
+  flex-shrink: 0;
 }
 
 .tokenPreview {
-  font-family: monospace;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   color: var(--tg-text-color, #333);
   background: rgba(0, 0, 0, 0.05);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
 }
 
 .footer {
@@ -439,6 +581,7 @@
   font-size: 13px;
   margin-bottom: 12px;
   font-style: italic;
+  padding: 0 16px;
 }
 
 .closeButtonLarge {
@@ -452,6 +595,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  outline: none;
 }
 
 .closeButtonLarge:hover {
@@ -459,8 +603,13 @@
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
+.closeButtonLarge:focus {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
 /* ====================== */
-/* АНИМАЦИИ */
+/* ANIMATIONS */
 /* ====================== */
 
 @keyframes filterSwitch {
@@ -473,7 +622,15 @@
 }
 
 /* ====================== */
-/* АДАПТИВНОСТЬ */
+/* ACCESSIBILITY */
+/* ====================== */
+
+.statItem[role="tab"]:focus {
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+}
+
+/* ====================== */
+/* RESPONSIVE DESIGN */
 /* ====================== */
 
 @media (max-width: 768px) {
@@ -500,6 +657,11 @@
     margin: 0 16px 12px;
   }
   
+  .filterHint {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
   .noResults {
     margin: 16px;
     padding: 32px 16px;
@@ -516,12 +678,24 @@
   
   .sessionActions {
     align-self: flex-end;
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .tokenPreview {
+    max-width: 150px;
   }
 }
 
 @media (max-width: 480px) {
   .modalContent {
     max-height: 90vh;
+    margin: 10px;
+    padding: 0;
+  }
+  
+  .modalOverlay {
+    padding: 10px;
   }
   
   .header {
@@ -548,11 +722,6 @@
     font-size: 12px;
   }
   
-  .filterHint {
-    padding: 8px 12px;
-    font-size: 12px;
-  }
-  
   .noResults {
     margin: 12px 16px;
     padding: 24px 12px;
@@ -565,5 +734,73 @@
   .showAllButton {
     padding: 8px 20px;
     font-size: 13px;
+  }
+  
+  .sessionCard {
+    padding: 12px;
+  }
+  
+  .sessionDetails {
+    padding: 10px;
+  }
+  
+  .detailRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .detailLabel {
+    min-width: auto;
+  }
+  
+  .tokenPreview {
+    max-width: 100%;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .footer {
+    padding: 16px;
+  }
+  
+  .hint {
+    font-size: 12px;
+    padding: 0;
+  }
+  
+  .closeButtonLarge {
+    padding: 10px;
+    font-size: 14px;
+  }
+}
+
+/* ====================== */
+/* DARK MODE SUPPORT */
+/* ====================== */
+
+@media (prefers-color-scheme: dark) {
+  .modalContent {
+    background: #1a1a1a;
+    border-color: #333;
+  }
+  
+  .sessionCard {
+    background: #2a2a2a;
+    border-color: #333;
+  }
+  
+  .sessionDetails {
+    background: #222;
+  }
+  
+  .tokenPreview {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ddd;
+  }
+  
+  .copyButton, .revokeButton {
+    background: rgba(255, 255, 255, 0.05);
   }
 }

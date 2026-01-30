@@ -1,0 +1,7 @@
+# bot/.env
+BOT_TOKEN=7953721912:AAF1nK3qHpnrXgkHtB6tY_xUvKwA6Ccd4cs
+WEBAPP_URL=https://kayatkin.github.io/flight-tracker  # или http://localhost:3000 для разработки
+
+# Supabase для проверки токенов (используйте те же, что в .env.local)
+SUPABASE_URL=https://iptnzxnbcrxczcowjead.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_IxZdpJsfWUo3ZvkUUcIhhw_NqMp9sc5
