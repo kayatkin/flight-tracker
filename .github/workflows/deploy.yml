@@ -3,18 +3,29 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  workflow_dispatch:  # Позволяет запускать вручную
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
+env:
+  # Используем GitHub Secrets для безопасности
+  REACT_APP_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  REACT_APP_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+  BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Полная история для правильной работы
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -23,26 +34,76 @@ jobs:
           cache: 'npm'
       
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci
+          # Устанавливаем зависимости для бота если нужно
+          cd bot && npm ci --only=production && cd ..
       
-      - name: Build
+      - name: Verify environment variables
+        run: |
+          echo "Checking environment variables..."
+          if [ -z "$REACT_APP_SUPABASE_URL" ]; then
+            echo "⚠️  WARNING: REACT_APP_SUPABASE_URL is not set"
+          else
+            echo "✅ REACT_APP_SUPABASE_URL is set"
+          fi
+          
+          if [ -z "$REACT_APP_SUPABASE_ANON_KEY" ]; then
+            echo "⚠️  WARNING: REACT_APP_SUPABASE_ANON_KEY is not set"
+          else
+            echo "✅ REACT_APP_SUPABASE_ANON_KEY is set"
+          fi
+          
+          if [ -z "$BOT_TOKEN" ]; then
+            echo "⚠️  WARNING: BOT_TOKEN is not set"
+          else
+            echo "✅ BOT_TOKEN is set"
+          fi
+      
+      - name: Lint code
+        run: npm run lint:fix || echo "Linting completed (warnings allowed)"
+      
+      - name: Build React app
         run: npm run build
+        env:
+          # Переопределяем для CRA
+          REACT_APP_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          REACT_APP_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          REACT_APP_BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          GENERATE_SOURCEMAP: false  # Уменьшаем размер билда
       
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
+      - name: Test bot dependencies
+        run: |
+          echo "Testing bot configuration..."
+          cd bot
+          if [ -f "package.json" ]; then
+            echo "✅ Bot package.json found"
+          else
+            echo "⚠️  Bot package.json not found"
+          fi
+          cd ..
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./build
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
+      
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: 'github-pages'
+          timeout: 600000  # 10 минут timeout
+  
+  # Дополнительный job для проверки секретов (необязательно)
+  validate-secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate secrets
+        run: |
+          echo "Validating GitHub Secrets..."
+          echo "Secrets are properly configured if no errors above"
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}

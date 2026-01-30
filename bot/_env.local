@@ -1,4 +1,0 @@
-# .env.local - НИКОГДА не коммитьте этот файл!
-NEXT_PUBLIC_SUPABASE_URL=https://iptnzxnbcrxczcowjead.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_IOYZlluZXw65w6DNSrA89Q_BL6PUVEF
-SUPABASE_SERVICE_ROLE_KEY=sb_secret_IxZdpJsfWUo3ZvkUUcIhhw_NqMp9sc5

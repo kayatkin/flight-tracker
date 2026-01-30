@@ -264,4 +264,5 @@ config/*.local.ts
 !tsconfig.json
 !craco.config.js
 !next.config.js
-!vite.config.ts
+!vite.config.ts.env.local
+.env
