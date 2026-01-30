@@ -38,7 +38,11 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
   const [destinationCities, setDestinationCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCheckingToken, setIsCheckingToken] = useState<boolean>(true);
-  const [showShareModal, setShowShareModal] = useState<boolean>(false);
+  // УДАЛЕНО: const [showShareModal, setShowShareModal] = useState<boolean>(false);
+  // Заменено на:
+  const setShowShareModal = useCallback((_show: boolean) => {
+    // Реализация будет в App.tsx, здесь это заглушка
+  }, []);
 
   // Инициализация приложения
   useEffect(() => {
