@@ -45,30 +45,20 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
 
       if (error) throw error;
 
-      // ========== КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: WebApp без запущенного бота ==========
       let url;
       let urlDescription = '';
       
       if (permissions === 'edit') {
-        // Вариант 1: Прямая ссылка на WebApp (рекомендуется)
-        // Формат: https://t.me/bot_username/app_name?startapp=параметры
         url = `https://t.me/my_flight_tracker1_bot?startapp=share_${token}`;
         urlDescription = 'Прямая ссылка на Telegram WebApp';
-        
-        // Вариант 2: Альтернативный формат (если первый не работает)
-        // url = `https://t.me/my_flight_tracker1_bot?start=share_${token}`;
-        // urlDescription = 'Ссылка откроет Telegram с кнопкой для WebApp';
       } else {
-        // Для просмотра: обычная веб-ссылка
         url = `${window.location.origin}?token=${token}`;
         urlDescription = 'Веб-ссылка для просмотра в браузере';
       }
       
-      // Сохраняем чистую ссылку
       setShareUrl(url);
       console.log(`🔗 Создана ссылка: ${url}`);
       console.log(`📝 Описание: ${urlDescription}`);
-      // ========== КЛЮЧЕВОЕ ИЗМЕНЕНИЕ ==========
       
       setGeneratedToken(token);
       onShareCreated(token);
@@ -106,7 +96,6 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
     }
   };
 
-  // Форматирование даты для отображения
   const formatExpiryDate = () => {
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + expiryDays);
@@ -122,13 +111,15 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
       <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
         <h3>📤 Поделиться историей перелетов</h3>
         
-        {/* ДОБАВЛЕНА ПОДСКАЗКА */}
-        <div className={styles.hintBox}>
-          <p>Создайте ссылку, чтобы поделиться историей с друзьями</p>
-          <p className={styles.hintSubtext}>
-            Вы можете дать права только на просмотр или разрешить редактирование
-          </p>
-        </div>
+        {/* ТОЛЬКО НА ЭТАПЕ СОЗДАНИЯ ССЫЛКИ */}
+        {!generatedToken && (
+          <div className={styles.hintBox}>
+            <p>Создайте ссылку, чтобы поделиться историей с друзьями</p>
+            <p className={styles.hintSubtext}>
+              Вы можете дать права только на просмотр или разрешить редактирование
+            </p>
+          </div>
+        )}
         
         {!generatedToken ? (
           <>
@@ -223,7 +214,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
               <div className={styles.infoRow}>
                 <span className={styles.infoIcon}>📋</span>
                 <div>
-                  <strong>Инструкция:</strong> Отправьте эту ссылку тому, с кем хотите поделиться историей
+                  <strong>Как использовать:</strong> Отправьте эту ссылку тому, с кем хотите поделиться
                   {permissions === 'edit' && (
                     <div style={{ fontSize: '13px', color: '#0a58ca', marginTop: '4px' }}>
                       Получателю нужно открыть ссылку в Telegram
