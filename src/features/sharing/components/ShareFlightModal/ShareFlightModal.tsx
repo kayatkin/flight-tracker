@@ -109,20 +109,19 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-        <h3>📤 Поделиться историей перелетов</h3>
-        
-        {/* ТОЛЬКО НА ЭТАПЕ СОЗДАНИЯ ССЫЛКИ */}
-        {!generatedToken && (
-          <div className={styles.hintBox}>
-            <p>Создайте ссылку, чтобы поделиться историей с друзьями</p>
-            <p className={styles.hintSubtext}>
-              Вы можете дать права только на просмотр или разрешить редактирование
-            </p>
-          </div>
-        )}
         
         {!generatedToken ? (
           <>
+            {/* ЭКРАН СОЗДАНИЯ ССЫЛКИ */}
+            <h3>📤 Поделиться историей перелетов</h3>
+            
+            <div className={styles.hintBox}>
+              <p>Создайте ссылку, чтобы поделиться историей с друзьями</p>
+              <p className={styles.hintSubtext}>
+                Вы можете дать права только на просмотр или разрешить редактирование
+              </p>
+            </div>
+            
             <div className={styles.formGroup}>
               <label>Права доступа:</label>
               <div className={styles.radioGroup}>
@@ -189,6 +188,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
           </>
         ) : (
           <>
+            {/* ЭКРАН СОЗДАННОЙ ССЫЛКИ - ТОЛЬКО ЭТОТ ЗАГОЛОВОК */}
             <div className={styles.successMessage}>
               ✅ Ссылка для совместного доступа создана!
             </div>
