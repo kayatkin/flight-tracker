@@ -1,137 +1,218 @@
 .section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid var(--tg-theme-hint-color, #e0e0e0);
+  gap: 16px;
+  background-color: var(--tg-theme-secondary-bg-color, #f8f9fa);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--tg-theme-hint-color, #e9ecef);
   margin-bottom: 16px;
 }
 
 .sectionTitle {
-  margin: 0 0 12px 0;
+  margin: 0;
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
   color: var(--tg-theme-text-color, #333);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .priceContainer {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
-.label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: bold;
-  font-size: 14px;
-  color: var(--tg-theme-text-color, #333);
+/* Основное поле ввода */
+.mainInputContainer {
+  margin-bottom: 4px;
 }
 
 .inputWrapper {
   position: relative;
-  margin-bottom: 8px;
+  width: 100%;
 }
 
 .input {
   width: 100%;
-  padding: 10px 12px 10px 40px;
-  border: 1px solid var(--tg-theme-hint-color, #ccc);
-  border-radius: 8px;
-  font-size: 16px;
+  padding: 14px 40px 14px 16px;
+  border: 2px solid var(--tg-theme-hint-color, #dee2e6);
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: 600;
   box-sizing: border-box;
-  background-color: var(--tg-theme-secondary-bg-color, #fff);
+  background-color: var(--tg-theme-bg-color, #ffffff);
   color: var(--tg-theme-text-color, #000);
-  transition: border-color 0.2s;
-  font-family: monospace;
+  transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: 0.5px;
+  text-align: right;
 }
 
 .input:focus {
   outline: none;
   border-color: var(--tg-theme-button-color, #0088cc);
+  box-shadow: 0 0 0 3px rgba(0, 136, 204, 0.1);
+}
+
+.input::placeholder {
+  color: var(--tg-theme-hint-color, #adb5bd);
+  font-weight: normal;
+  opacity: 0.7;
+  text-align: left;
 }
 
 .currency {
   position: absolute;
-  left: 12px;
+  right: 16px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 16px;
-  font-weight: bold;
-  color: var(--tg-theme-text-color, #666);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--tg-theme-text-color, #495057);
 }
 
-.formattedPrice {
-  font-size: 14px;
-  color: var(--tg-theme-button-color, #0088cc);
-  font-weight: bold;
-  margin-top: 4px;
-  padding: 4px 8px;
-  background-color: var(--tg-theme-bg-color, #fff);
-  border-radius: 4px;
-  display: inline-block;
-}
-
-.priceBreakdown {
-  margin-top: 12px;
-  padding: 12px;
-  background-color: var(--tg-theme-bg-color, #fff);
-  border-radius: 6px;
-  border: 1px solid var(--tg-theme-hint-color, #eee);
-}
-
-.breakdownItem {
+/* Стоимость на человека */
+.perPersonBlock {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  padding: 12px 16px;
+  background-color: var(--tg-theme-bg-color, #ffffff);
+  border-radius: 8px;
+  border: 1px solid var(--tg-theme-hint-color, #e9ecef);
+  animation: fadeIn 0.3s ease-out;
 }
 
-.breakdownLabel {
+.perPersonLabel {
   font-size: 14px;
+  color: var(--tg-theme-text-color, #666);
+  font-weight: 500;
+}
+
+.perPersonValue {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--tg-theme-text-color, #333);
+}
+
+.singlePassengerNote {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background-color: rgba(0, 136, 204, 0.05);
+  border-radius: 8px;
+  border-left: 4px solid var(--tg-theme-button-color, #0088cc);
+  font-size: 13px;
   color: var(--tg-theme-text-color, #555);
+  line-height: 1.4;
+  animation: fadeIn 0.3s ease-out;
 }
 
-.breakdownValue {
-  font-size: 16px;
-  font-weight: bold;
-  color: var(--tg-theme-button-color, #0088cc);
+.noteIcon {
+  font-size: 14px;
+  flex-shrink: 0;
 }
 
-.breakdownHint {
+/* Подсказка по вводу */
+.inputHint {
   font-size: 12px;
-  color: var(--tg-theme-hint-color, #888);
-  font-style: italic;
-  text-align: center;
+  color: var(--tg-theme-hint-color, #868e96);
+  line-height: 1.4;
+  padding: 8px 0 0 0;
+  border-top: 1px dashed var(--tg-theme-hint-color, #e9ecef);
 }
 
-.hint {
-  font-size: 12px;
-  color: var(--tg-theme-hint-color, #888);
-  margin: 4px 0 0 0;
-  font-style: italic;
+/* Анимации */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Мобильная адаптация */
 @media (max-width: 480px) {
   .section {
-    padding: 10px;
-    margin-bottom: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
+    border-radius: 10px;
   }
   
   .input {
-    padding: 8px 10px 8px 36px;
-    font-size: 15px;
+    padding: 12px 36px 12px 14px;
+    font-size: 16px;
+    border-radius: 8px;
   }
   
   .currency {
-    left: 10px;
-    font-size: 15px;
+    right: 14px;
+    font-size: 16px;
   }
   
-  .breakdownValue {
-    font-size: 15px;
+  .perPersonValue {
+    font-size: 16px;
+  }
+  
+  .singlePassengerNote {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .section {
+    padding: 12px;
+  }
+  
+  .perPersonBlock {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 10px 12px;
+  }
+  
+  .perPersonValue {
+    width: 100%;
+    text-align: left;
+    font-size: 16px;
+  }
+  
+  .singlePassengerNote {
+    font-size: 11px;
+    padding: 8px 10px;
+  }
+  
+  .inputHint {
+    font-size: 11px;
+  }
+}
+
+/* Темная тема */
+@media (prefers-color-scheme: dark) {
+  .input {
+    background-color: var(--tg-theme-secondary-bg-color, #2d3748);
+    border-color: #4a5568;
+    color: #e2e8f0;
+  }
+  
+  .currency {
+    color: #cbd5e0;
+  }
+  
+  .perPersonBlock {
+    background-color: var(--tg-theme-secondary-bg-color, #2d3748);
+    border-color: #4a5568;
+  }
+  
+  .perPersonValue {
+    color: #e2e8f0;
+  }
+  
+  .singlePassengerNote {
+    background-color: rgba(99, 179, 237, 0.1);
+    border-left-color: #63b3ed;
+    color: #cbd5e0;
   }
 }
