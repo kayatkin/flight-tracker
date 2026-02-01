@@ -24,7 +24,6 @@ const PassengersSection: React.FC<PassengersSectionProps> = ({
       
       <div className={styles.selectContainer}>
         <label className={styles.label}>
-          Количество пассажиров
           <select
             name="passengers"
             value={formData.passengers}
@@ -40,11 +39,14 @@ const PassengersSection: React.FC<PassengersSectionProps> = ({
           </select>
         </label>
         
+        {/* УБРАТЬ ЭТОТ БЛОК */}
+        {/* 
         <div className={styles.passengerIcons}>
           {Array.from({ length: formData.passengers }).map((_, index) => (
             <span key={index} className={styles.passengerIcon}>👤</span>
           ))}
         </div>
+        */}
       </div>
     </div>
   );
