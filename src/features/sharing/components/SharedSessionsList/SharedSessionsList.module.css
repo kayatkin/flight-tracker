@@ -1,5 +1,3 @@
-/* src\features\sharing\components\SharedSessionsList\SharedSessionsList.module.css */
-
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -479,7 +477,8 @@
 
 .dateCompact {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  min-height: 24px;
   gap: 4px;
   font-size: 13px;
   color: var(--tg-hint-color, #5f6b7a);
@@ -491,6 +490,7 @@
   color: var(--tg-text-color, #3d4c5e);
   flex-shrink: 0;
   min-width: 70px;
+  white-space: nowrap;
 }
 
 .dateCompact span:not(.dateLabel) {
@@ -503,7 +503,6 @@
   display: flex;
   gap: 8px;
   flex-shrink: 0;
-  margin-top: 4px;
 }
 
 .copyButtonCompact,
@@ -518,8 +517,10 @@
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   min-height: 32px;
+  min-width: 80px;
   line-height: 1;
   outline: none;
   white-space: nowrap;
@@ -546,10 +547,17 @@
   background: rgba(46, 204, 113, 0.1) !important;
   border-color: rgba(39, 174, 96, 0.3) !important;
   color: #27ae60 !important;
+  animation: copySuccess 0.3s ease;
 }
 
 .copyButtonCompactActive:hover {
   background: rgba(39, 174, 96, 0.15) !important;
+}
+
+@keyframes copySuccess {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
 }
 
 .revokeButtonCompact {
@@ -597,6 +605,7 @@
   font-weight: 500;
   color: var(--tg-text-color, #3d4c5e);
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .tokenPreview {
@@ -674,7 +683,7 @@
 }
 
 /* ====================== */
-/* RESPONSIVE DESIGN */
+/* RESPONSIVE DESIGN - УЛУЧШЕННАЯ ВЕРСИЯ */
 /* ====================== */
 
 @media (max-width: 768px) {
@@ -704,6 +713,14 @@
   .filterHint {
     padding: 8px 12px;
     font-size: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .filterSubHint {
+    margin-left: 0;
+    display: block;
   }
   
   .noResults {
@@ -711,42 +728,100 @@
     padding: 32px 16px;
   }
   
+  .noResults p {
+    font-size: 14px;
+  }
+  
   .sessionsList {
     padding: 0 16px 16px;
   }
   
+  .sessionCard {
+    padding: 14px;
+  }
+  
+  /* УЛУЧШЕННАЯ КОМПАКТНАЯ ВЕРСИЯ ДЛЯ МОБИЛЬНЫХ */
   .sessionMiddleRow {
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  
+  .datesCompact {
+    width: 100%;
+    gap: 8px;
+  }
+  
+  .dateCompact {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--tg-border-color, #f0f0f0);
+    min-height: auto;
+  }
+  
+  .dateCompact:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  
+  .dateLabel {
+    min-width: 80px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--tg-text-color, #444);
+  }
+  
+  .dateCompact span:not(.dateLabel) {
+    text-align: right;
+    font-size: 12px;
+    flex: none;
+    max-width: 60%;
   }
   
   .actionButtonsCompact {
     width: 100%;
-    justify-content: stretch;
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
   }
   
   .copyButtonCompact,
   .revokeButtonCompact {
     flex: 1;
     justify-content: center;
-  }
-  
-  .datesCompact {
-    width: 100%;
-  }
-  
-  .dateCompact {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-  }
-  
-  .dateLabel {
+    padding: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    min-height: 40px;
     min-width: auto;
   }
   
+  /* Скрываем иконки на кнопках для экономии места */
+  .copyButtonCompact span:first-child,
+  .revokeButtonCompact span:first-child {
+    font-size: 14px;
+  }
+  
+  .sessionFooter {
+    padding-top: 14px;
+  }
+  
+  .tokenRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  
+  .tokenRow .detailLabel {
+    font-size: 12px;
+  }
+  
   .tokenPreview {
-    max-width: 150px;
+    width: 100%;
+    font-size: 11px;
+    padding: 6px 8px;
   }
 }
 
@@ -755,6 +830,7 @@
     max-height: 90vh;
     margin: 10px;
     padding: 0;
+    border-radius: 14px;
   }
   
   .modalOverlay {
@@ -762,15 +838,22 @@
   }
   
   .header {
-    padding: 20px 16px 12px;
+    padding: 18px 16px 12px;
   }
   
   .header h3 {
     font-size: 18px;
   }
   
+  .closeButton {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+  }
+  
   .statsContainer {
-    margin: 12px 16px;
+    margin: 12px 16px 10px;
+    gap: 8px;
   }
   
   .statItem {
@@ -785,9 +868,22 @@
     font-size: 12px;
   }
   
+  .filterInfo {
+    margin: 0 16px 10px;
+  }
+  
+  .filterHint {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+  
   .noResults {
     margin: 12px 16px;
     padding: 24px 12px;
+  }
+  
+  .noResultsIcon {
+    font-size: 28px;
   }
   
   .noResults p {
@@ -799,26 +895,107 @@
     font-size: 13px;
   }
   
+  .sessionsList {
+    padding: 0 16px 12px;
+  }
+  
   .sessionCard {
     padding: 12px;
+    margin-bottom: 10px;
+  }
+  
+  .sessionHeader {
+    margin-bottom: 10px;
+  }
+  
+  .sessionInfo {
+    gap: 6px;
+  }
+  
+  .permissionBadge {
+    padding: 3px 8px;
+    font-size: 12px;
+  }
+  
+  .status {
+    padding: 2px 6px;
+    font-size: 11px;
+  }
+  
+  .sessionMiddleRow {
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .datesCompact {
+    gap: 6px;
+  }
+  
+  .dateCompact {
+    padding: 6px 0;
+  }
+  
+  .dateLabel {
+    min-width: 70px;
+    font-size: 11px;
+  }
+  
+  .dateCompact span:not(.dateLabel) {
+    font-size: 11px;
+  }
+  
+  .actionButtonsCompact {
+    gap: 8px;
   }
   
   .copyButtonCompact,
   .revokeButtonCompact {
-    padding: 6px 8px;
+    padding: 8px 10px;
     font-size: 12px;
-    min-height: 28px;
+    min-height: 36px;
+  }
+  
+  /* Еще более компактные кнопки на очень узких экранах */
+  @media (max-width: 360px) {
+    .actionButtonsCompact {
+      flex-direction: column;
+      gap: 6px;
+    }
+    
+    .copyButtonCompact,
+    .revokeButtonCompact {
+      width: 100%;
+    }
+    
+    /* Скрываем текст на кнопках, оставляем только иконки */
+    .copyButtonCompact span:last-child,
+    .revokeButtonCompact span:last-child {
+      display: none;
+    }
+    
+    .copyButtonCompact,
+    .revokeButtonCompact {
+      justify-content: center;
+      font-size: 16px;
+      min-height: 32px;
+    }
+  }
+  
+  .sessionFooter {
+    padding-top: 10px;
   }
   
   .tokenRow {
-    flex-direction: column;
-    align-items: flex-start;
     gap: 4px;
   }
   
+  .tokenRow .detailLabel {
+    font-size: 11px;
+  }
+  
   .tokenPreview {
-    max-width: 100%;
-    width: 100%;
+    font-size: 10px;
+    padding: 4px 6px;
   }
   
   .footer {
@@ -826,13 +1003,63 @@
   }
   
   .hint {
-    font-size: 12px;
+    font-size: 11px;
+    margin-bottom: 10px;
     padding: 0;
+    line-height: 1.4;
   }
   
   .closeButtonLarge {
     padding: 10px;
     font-size: 14px;
+    border-radius: 8px;
+  }
+}
+
+/* ====================== */
+/* ДОПОЛНИТЕЛЬНЫЕ МЕДИА-ЗАПРОСЫ ДЛЯ ОЧЕНЬ МАЛЕНЬКИХ УСТРОЙСТВ */
+/* ====================== */
+
+@media (max-width: 320px) {
+  .header {
+    padding: 16px 14px 10px;
+  }
+  
+  .header h3 {
+    font-size: 16px;
+  }
+  
+  .statsContainer {
+    margin: 10px 14px 8px;
+  }
+  
+  .statItem {
+    padding: 8px 12px;
+  }
+  
+  .statNumber {
+    font-size: 20px;
+  }
+  
+  .statLabel {
+    font-size: 11px;
+  }
+  
+  .sessionCard {
+    padding: 10px;
+  }
+  
+  .dateLabel {
+    min-width: 60px;
+    font-size: 10px;
+  }
+  
+  .dateCompact span:not(.dateLabel) {
+    font-size: 10px;
+  }
+  
+  .hint {
+    font-size: 10px;
   }
 }
 
@@ -849,6 +1076,10 @@
   .sessionCard {
     background: #2a2a2a;
     border-color: #333;
+  }
+  
+  .dateCompact {
+    border-bottom-color: #333;
   }
   
   .copyButtonCompact {
@@ -879,5 +1110,13 @@
   .tokenPreview {
     background: rgba(255, 255, 255, 0.05);
     color: #ddd;
+  }
+  
+  .dateLabel {
+    color: #ccc;
+  }
+  
+  .dateCompact span:not(.dateLabel) {
+    color: #aaa;
   }
 }
