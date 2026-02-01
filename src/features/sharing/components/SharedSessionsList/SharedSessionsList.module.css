@@ -391,7 +391,11 @@
 
 .sessionInfo {
   flex: 1;
-  min-width: 0; /* Для правильного обрезания текста */
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .permissionBadge {
@@ -402,12 +406,11 @@
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
-  margin-bottom: 6px;
-  border: 1px solid rgba(76, 175, 80, 0.2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  border: 1px solid rgba(76, 175, 80, 0.2);
 }
 
 /* Стили для бейджа с правами просмотра */
@@ -430,7 +433,6 @@
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
-  margin-left: 8px;
   white-space: nowrap;
 }
 
@@ -454,117 +456,159 @@
   color: #d32f2f;
 }
 
-.sessionActions {
+/* ====================== */
+/* COMPACT SESSION CARD LAYOUT */
+/* ====================== */
+
+.sessionMiddleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.datesCompact {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dateCompact {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--tg-hint-color, #5f6b7a);
+  line-height: 1.4;
+}
+
+.dateLabel {
+  font-weight: 500;
+  color: var(--tg-text-color, #3d4c5e);
+  flex-shrink: 0;
+  min-width: 70px;
+}
+
+.dateCompact span:not(.dateLabel) {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  flex: 1;
+}
+
+.actionButtonsCompact {
   display: flex;
   gap: 8px;
   flex-shrink: 0;
+  margin-top: 4px;
 }
 
-.copyButton, .revokeButton {
-  background: none;
-  border: none;
-  font-size: 16px;
+.copyButtonCompact,
+.revokeButtonCompact {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--tg-border-color, #e1e5e9);
+  background: var(--tg-card-bg, white);
   cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  transition: all 0.2s ease;
+  gap: 4px;
+  min-height: 32px;
+  line-height: 1;
   outline: none;
+  white-space: nowrap;
 }
 
-.copyButton {
+.copyButtonCompact {
   color: var(--tg-link-color, #667eea);
-  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-color: rgba(102, 126, 234, 0.3);
   background: rgba(102, 126, 234, 0.05);
 }
 
-.copyButton:hover:not(:disabled) {
+.copyButtonCompact:hover:not(:disabled) {
   background: rgba(102, 126, 234, 0.1);
-  transform: scale(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
 }
 
-.copyButton:focus {
+.copyButtonCompact:focus {
   outline: 2px solid var(--tg-link-color, #667eea);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
-.copyButtonActive {
-  background: #2ecc71 !important;
-  color: white !important;
-  border-color: #27ae60 !important;
-  transform: scale(1.1) !important;
+.copyButtonCompactActive {
+  background: rgba(46, 204, 113, 0.1) !important;
+  border-color: rgba(39, 174, 96, 0.3) !important;
+  color: #27ae60 !important;
 }
 
-.copyButtonActive:hover {
-  background: #27ae60 !important;
+.copyButtonCompactActive:hover {
+  background: rgba(39, 174, 96, 0.15) !important;
 }
 
-.revokeButton {
+.revokeButtonCompact {
   color: #f44336;
-  border: 1px solid rgba(244, 67, 54, 0.3);
+  border-color: rgba(244, 67, 54, 0.3);
   background: rgba(244, 67, 54, 0.05);
 }
 
-.revokeButton:hover:not(:disabled) {
+.revokeButtonCompact:hover:not(:disabled) {
   background: rgba(244, 67, 54, 0.1);
-  transform: scale(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(244, 67, 54, 0.1);
 }
 
-.revokeButton:focus {
+.revokeButtonCompact:focus {
   outline: 2px solid #f44336;
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
-.copyButton:disabled, .revokeButton:disabled {
+.copyButtonCompact:disabled,
+.revokeButtonCompact:disabled {
   opacity: 0.4;
   cursor: not-allowed;
   transform: none !important;
+  background: var(--tg-active-bg, #f5f7fa) !important;
+  border-color: var(--tg-border-color, #e0e0e0) !important;
+  color: var(--tg-hint-color, #888) !important;
 }
 
-.copyButton:disabled:hover, .revokeButton:disabled:hover {
-  background: none !important;
+.sessionFooter {
+  padding-top: 12px;
+  border-top: 1px solid var(--tg-border-color, #f0f2f5);
 }
 
-.sessionDetails {
-  background: var(--tg-active-bg, #f8f9ff);
-  padding: 12px;
-  border-radius: 8px;
-  border-left: 3px solid var(--tg-link-color, #667eea);
-  font-size: 13px;
-}
-
-.detailRow {
+.tokenRow {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--tg-hint-color, #5f6b7a);
 }
 
-.detailRow:last-child {
-  margin-bottom: 0;
-}
-
-.detailLabel {
-  color: var(--tg-hint-color, #666);
+.tokenRow .detailLabel {
+  min-width: auto;
   font-weight: 500;
-  min-width: 80px;
+  color: var(--tg-text-color, #3d4c5e);
   flex-shrink: 0;
 }
 
 .tokenPreview {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  color: var(--tg-text-color, #333);
-  background: rgba(0, 0, 0, 0.05);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 12px;
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  background: var(--tg-active-bg, #f8f9fa);
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: var(--tg-text-color, #333);
 }
 
 .footer {
@@ -671,15 +715,34 @@
     padding: 0 16px 16px;
   }
   
-  .sessionHeader {
+  .sessionMiddleRow {
     flex-direction: column;
     gap: 12px;
   }
   
-  .sessionActions {
-    align-self: flex-end;
+  .actionButtonsCompact {
     width: 100%;
-    justify-content: flex-end;
+    justify-content: stretch;
+  }
+  
+  .copyButtonCompact,
+  .revokeButtonCompact {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .datesCompact {
+    width: 100%;
+  }
+  
+  .dateCompact {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  
+  .dateLabel {
+    min-width: auto;
   }
   
   .tokenPreview {
@@ -740,25 +803,22 @@
     padding: 12px;
   }
   
-  .sessionDetails {
-    padding: 10px;
+  .copyButtonCompact,
+  .revokeButtonCompact {
+    padding: 6px 8px;
+    font-size: 12px;
+    min-height: 28px;
   }
   
-  .detailRow {
+  .tokenRow {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
   }
   
-  .detailLabel {
-    min-width: auto;
-  }
-  
   .tokenPreview {
     max-width: 100%;
     width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
   
   .footer {
@@ -791,16 +851,33 @@
     border-color: #333;
   }
   
-  .sessionDetails {
-    background: #222;
+  .copyButtonCompact {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: rgba(102, 126, 234, 0.3);
+  }
+  
+  .copyButtonCompact:hover:not(:disabled) {
+    background: rgba(102, 126, 234, 0.2);
+  }
+  
+  .revokeButtonCompact {
+    background: rgba(244, 67, 54, 0.1);
+    border-color: rgba(244, 67, 54, 0.3);
+  }
+  
+  .revokeButtonCompact:hover:not(:disabled) {
+    background: rgba(244, 67, 54, 0.2);
+  }
+  
+  .copyButtonCompact:disabled,
+  .revokeButtonCompact:disabled {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: #444 !important;
+    color: #777 !important;
   }
   
   .tokenPreview {
-    background: rgba(255, 255, 255, 0.1);
-    color: #ddd;
-  }
-  
-  .copyButton, .revokeButton {
     background: rgba(255, 255, 255, 0.05);
+    color: #ddd;
   }
 }

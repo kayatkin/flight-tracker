@@ -1,4 +1,3 @@
-// src/features/sharing/components/SharedSessionsList/SharedSessionsList.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@shared/lib';
 import styles from './SharedSessionsList.module.css';
@@ -316,6 +315,7 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
                       role="listitem"
                       aria-labelledby={`session-${session.id}-title`}
                     >
+                      {/* Верхняя строка - права доступа и статус */}
                       <div className={styles.sessionHeader}>
                         <div className={styles.sessionInfo}>
                           <div
@@ -340,11 +340,26 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
                             {status.text}
                           </div>
                         </div>
-                        <div className={styles.sessionActions}>
+                      </div>
+
+                      {/* Средняя строка - даты и кнопки действий */}
+                      <div className={styles.sessionMiddleRow}>
+                        <div className={styles.datesCompact}>
+                          <div className={styles.dateCompact}>
+                            <span className={styles.dateLabel}>Создано:</span>
+                            <span>{formatDate(session.created_at)}</span>
+                          </div>
+                          <div className={styles.dateCompact}>
+                            <span className={styles.dateLabel}>Истекает:</span>
+                            <span>{formatDate(session.expires_at!)}</span>
+                          </div>
+                        </div>
+                        
+                        <div className={styles.actionButtonsCompact}>
                           <button
                             onClick={() => copyToken(session.token)}
-                            className={`${styles.copyButton} ${
-                              isTokenCopied ? styles.copyButtonActive : ''
+                            className={`${styles.copyButtonCompact} ${
+                              isTokenCopied ? styles.copyButtonCompactActive : ''
                             }`}
                             aria-label={
                               isTokenCopied 
@@ -355,31 +370,24 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
                             aria-disabled={!session.is_active}
                             title={isTokenCopied ? 'Скопировано!' : 'Копировать ссылку'}
                           >
-                            {isTokenCopied ? '✓' : '📋'}
+                            {isTokenCopied ? '✓ Скопировано' : '📋 Ссылка'}
                           </button>
                           <button
                             onClick={() => deactivateSession(session.id, session.token)}
-                            className={styles.revokeButton}
+                            className={styles.revokeButtonCompact}
                             aria-label="Отозвать доступ по этому приглашению"
                             disabled={!session.is_active}
                             aria-disabled={!session.is_active}
                             title={session.is_active ? 'Отозвать доступ' : 'Доступ уже отозван'}
                           >
-                            🔒
+                            🔒 Отозвать
                           </button>
                         </div>
                       </div>
 
-                      <div className={styles.sessionDetails}>
-                        <div className={styles.detailRow}>
-                          <span className={styles.detailLabel}>Создано:</span>
-                          <span>{formatDate(session.created_at)}</span>
-                        </div>
-                        <div className={styles.detailRow}>
-                          <span className={styles.detailLabel}>Истекает:</span>
-                          <span>{formatDate(session.expires_at!)}</span>
-                        </div>
-                        <div className={styles.detailRow}>
+                      {/* Нижняя строка - идентификатор */}
+                      <div className={styles.sessionFooter}>
+                        <div className={styles.tokenRow}>
                           <span className={styles.detailLabel}>Идентификатор:</span>
                           <span className={styles.tokenPreview} title={session.token}>
                             {session.token.substring(0, 15)}...
@@ -394,7 +402,7 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
 
             <div className={styles.footer}>
               <div className={styles.hint}>
-                💡 Нажмите 📋 чтобы скопировать ссылку, 🔒 чтобы отозвать доступ
+                💡 Нажмите «Ссылка» чтобы скопировать, «Отозвать» чтобы отозвать доступ
               </div>
               <button 
                 onClick={onClose} 
