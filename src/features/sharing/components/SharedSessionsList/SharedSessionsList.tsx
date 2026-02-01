@@ -388,7 +388,7 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
                       {/* Нижняя строка - идентификатор */}
                       <div className={styles.sessionFooter}>
                         <div className={styles.tokenRow}>
-                          <span className={styles.detailLabel}>Идентификатор:</span>
+                          <span className={styles.detailLabel}>Токен:</span>
                           <span className={styles.tokenPreview} title={session.token}>
                             {session.token.substring(0, 15)}...
                           </span>
