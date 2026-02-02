@@ -40,16 +40,19 @@ const AirlineSection: React.FC<AirlineSectionProps> = ({
             isOpen={airlineAutocomplete.isOpen}
             onSelectSuggestion={handleAirlineSelect}
             onCloseSuggestions={airlineAutocomplete.closeSuggestions}
-            placeholder="Аэрофлот, S7, Победа, Utair, Nordwind..."
+            placeholder="Аэрофлот, S7, Победа..."
             label="Авиакомпания"
-            hideLabel={true} // Скрываем label, так как заголовок уже есть в секции
+            hideLabel={true}
             required
             aria-label="Название авиакомпании"
           />
         </div>
+        {/* УБИРАЕМ ЭТУ ПОДСКАЗКУ - она избыточна */}
+        {/* 
         <p className={styles.hint}>
           Введите название авиакомпании: Аэрофлот, S7, Победа, Utair, Nordwind...
         </p>
+        */}
       </div>
     </div>
   );

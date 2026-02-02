@@ -29,6 +29,8 @@
   width: 100%;
 }
 
+/* УБИРАЕМ СТИЛИ ДЛЯ .hint ТАК КАК ЭЛЕМЕНТА БОЛЬШЕ НЕТ */
+/*
 .hint {
   font-size: 12px;
   color: var(--tg-theme-hint-color, #868e96);
@@ -38,6 +40,7 @@
   padding: 8px 0 0 0;
   border-top: 1px dashed var(--tg-theme-hint-color, #e9ecef);
 }
+*/
 
 /* Мобильная адаптация */
 @media (max-width: 480px) {
@@ -45,9 +48,5 @@
     padding: 14px;
     margin-bottom: 14px;
     border-radius: 10px;
-  }
-  
-  .hint {
-    font-size: 11px;
   }
 }
