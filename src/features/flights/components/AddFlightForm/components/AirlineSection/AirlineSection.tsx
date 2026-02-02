@@ -32,7 +32,6 @@ const AirlineSection: React.FC<AirlineSectionProps> = ({
       <h4 className={styles.sectionTitle}>✈️ Авиакомпания</h4>
       
       <div className={styles.inputContainer}>
-        {/* Обертка с классом для автодополнения */}
         <div className={styles.autocompleteInput}>
           <AutocompleteInput
             value={formData.airline}
@@ -41,14 +40,15 @@ const AirlineSection: React.FC<AirlineSectionProps> = ({
             isOpen={airlineAutocomplete.isOpen}
             onSelectSuggestion={handleAirlineSelect}
             onCloseSuggestions={airlineAutocomplete.closeSuggestions}
-            placeholder="Начните вводить..."
+            placeholder="Аэрофлот, S7, Победа, Utair, Nordwind..."
             label="Авиакомпания"
+            hideLabel={true} // Скрываем label, так как заголовок уже есть в секции
             required
-            aria-label="Авиакомпания"
+            aria-label="Название авиакомпании"
           />
         </div>
         <p className={styles.hint}>
-          Начните вводить название авиакомпании, например: "Аэрофлот", "S7", "Победа"
+          Введите название авиакомпании: Аэрофлот, S7, Победа, Utair, Nordwind...
         </p>
       </div>
     </div>

@@ -1,19 +1,22 @@
 .section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid var(--tg-theme-hint-color, #e0e0e0);
+  gap: 12px;
+  background-color: var(--tg-theme-secondary-bg-color, #f8f9fa);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--tg-theme-hint-color, #e9ecef);
   margin-bottom: 16px;
 }
 
 .sectionTitle {
-  margin: 0 0 12px 0;
+  margin: 0;
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
   color: var(--tg-theme-text-color, #333);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .inputContainer {
@@ -22,40 +25,26 @@
   gap: 8px;
 }
 
-.autocompleteInput input {
+.autocompleteInput {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--tg-theme-hint-color, #ccc);
-  border-radius: 8px;
-  font-size: 16px;
-  box-sizing: border-box;
-  background-color: var(--tg-theme-secondary-bg-color, #fff);
-  color: var(--tg-theme-text-color, #000);
-  transition: border-color 0.2s;
-}
-
-.autocompleteInput input:focus {
-  outline: none;
-  border-color: var(--tg-theme-button-color, #0088cc);
 }
 
 .hint {
   font-size: 12px;
-  color: var(--tg-theme-hint-color, #888);
+  color: var(--tg-theme-hint-color, #868e96);
   margin: 4px 0 0 0;
   font-style: italic;
+  line-height: 1.4;
+  padding: 8px 0 0 0;
+  border-top: 1px dashed var(--tg-theme-hint-color, #e9ecef);
 }
 
 /* Мобильная адаптация */
 @media (max-width: 480px) {
   .section {
-    padding: 10px;
-    margin-bottom: 12px;
-  }
-  
-  .autocompleteInput input {
-    padding: 8px 10px;
-    font-size: 15px;
+    padding: 14px;
+    margin-bottom: 14px;
+    border-radius: 10px;
   }
   
   .hint {

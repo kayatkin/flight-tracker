@@ -1,4 +1,3 @@
-// src\shared\ui\AutocompleteInput\AutocompleteInput.tsx
 import React, { useRef, useEffect } from 'react';
 import styles from './AutocompleteInput.module.css';
 
@@ -11,6 +10,7 @@ interface AutocompleteInputProps {
   onCloseSuggestions: () => void;
   placeholder: string;
   label?: string;
+  hideLabel?: boolean; // Новый пропс для скрытия label
   required?: boolean;
   disabled?: boolean;
   'aria-label'?: string;
@@ -26,6 +26,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
   onCloseSuggestions,
   placeholder,
   label,
+  hideLabel = false, // Значение по умолчанию
   required = false,
   disabled = false,
   'aria-label': ariaLabel,
@@ -84,7 +85,8 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
 
   return (
     <div className={styles.container} ref={containerRef}>
-      {label && (
+      {/* Показываем label только если hideLabel = false */}
+      {label && !hideLabel && (
         <label className={styles.label}>
           {label}
           {required && <span className={styles.required}> *</span>}
