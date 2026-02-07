@@ -41,7 +41,6 @@ export const isMobileDevice = (): boolean => {
 export const redirectToTelegramForEdit = (token: string): void => {
   const BOT_USERNAME = 'my_flight_tracker1_bot';
   
-  // ========== КЛЮЧЕВОЕ ИЗМЕНЕНИЕ ==========
   // Формат для прямого открытия WebApp в Telegram
   // Telegram автоматически покажет кнопку "Open" при таком формате
   const telegramUrl = `https://t.me/${BOT_USERNAME}?startapp=share_${token}`;
@@ -125,211 +124,243 @@ export const isInTelegramDirectWebApp = (): boolean => {
  */
 const showDesktopInstructions = (token: string, telegramUrl: string): void => {
   // Создаем модальное окно с инструкциями
-  const modalHtml = `
-    <div id="telegram-instruction-modal" style="
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.85);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 999999;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      padding: 20px;
-    ">
-      <div style="
-        background: white;
-        border-radius: 20px;
-        padding: 40px;
-        max-width: 600px;
-        width: 100%;
-        max-height: 90vh;
-        overflow-y: auto;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        animation: modalAppear 0.3s ease;
-      ">
-        <h2 style="margin-top: 0; color: #333; text-align: center;">
-          🔐 Открыть в Telegram
-        </h2>
-        
-        <p style="color: #666; line-height: 1.6; text-align: center;">
-          Для редактирования нужно открыть мини-приложение в Telegram на телефоне.
-        </p>
-        
-        <div style="
-          background: #0088cc;
-          color: white;
-          padding: 15px;
-          border-radius: 12px;
-          margin: 25px 0;
-          text-align: center;
-          font-weight: bold;
-          font-size: 18px;
-        ">
-          📱 Откройте на телефоне
-        </div>
-        
-        <div style="
-          background: #f8f9fa;
-          border-radius: 12px;
-          padding: 20px;
-          margin: 20px 0;
-          border: 1px solid #e9ecef;
-          word-break: break-all;
-          font-family: 'Monaco', 'Courier New', monospace;
-          font-size: 14px;
-          line-height: 1.5;
-        ">
-          <div style="color: #666; font-size: 12px; margin-bottom: 5px;">Ссылка:</div>
-          ${telegramUrl}
-        </div>
-        
-        <div style="
-          background: #fff3cd;
-          border-left: 4px solid #ffc107;
-          padding: 15px;
-          border-radius: 8px;
-          margin: 20px 0;
-        ">
-          <strong>📋 Как открыть:</strong>
-          <ol style="margin: 10px 0 0 0; padding-left: 20px;">
-            <li>Скопируйте ссылку выше</li>
-            <li>Отправьте её себе в Telegram (любым чатом)</li>
-            <li>Нажмите на ссылку в Telegram</li>
-            <li>Telegram покажет кнопку "Open"</li>
-            <li>Нажмите "Open" чтобы открыть мини-приложение</li>
-          </ol>
-        </div>
-        
-        <div style="
-          display: flex;
-          gap: 12px;
-          margin-top: 30px;
-          flex-wrap: wrap;
-        ">
-          <button onclick="copyLink('${telegramUrl}')" style="
-            flex: 1;
-            background: #0088cc;
-            color: white;
-            border: none;
-            padding: 16px 24px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            min-width: 200px;
-          ">
-            📋 Копировать ссылку
-          </button>
-          
-          <button onclick="openInNewTab('${telegramUrl}')" style="
-            flex: 1;
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 16px 24px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            min-width: 200px;
-          ">
-            🔗 Открыть в новой вкладке
-          </button>
-          
-          <button onclick="closeModal()" style="
-            flex: 1;
-            background: white;
-            color: #666;
-            border: 2px solid #ddd;
-            padding: 16px 24px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            min-width: 200px;
-          ">
-            Отмена
-          </button>
-        </div>
-        
-        <p style="
-          margin-top: 25px;
-          color: #999;
-          font-size: 13px;
-          text-align: center;
-          font-style: italic;
-        ">
-          ⚡ Бот не должен быть запущен для работы этой ссылки
-        </p>
-      </div>
-    </div>
-    
-    <style>
-      @keyframes modalAppear {
-        from { opacity: 0; transform: translateY(20px) scale(0.95); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
-      }
-    </style>
-    
-    <script>
-      function copyLink(url) {
-        navigator.clipboard.writeText(url).then(() => {
-          alert('✅ Ссылка скопирована! Отправьте её в Telegram.');
-        }).catch(err => {
-          // Fallback для старых браузеров
-          const textArea = document.createElement('textarea');
-          textArea.value = url;
-          document.body.appendChild(textArea);
-          textArea.select();
-          document.execCommand('copy');
-          document.body.removeChild(textArea);
-          alert('✅ Ссылка скопирована! Отправьте её в Telegram.');
-        });
-      }
-      
-      function openInNewTab(url) {
-        window.open(url, '_blank');
-      }
-      
-      function closeModal() {
-        const modal = document.getElementById('telegram-instruction-modal');
-        if (modal) {
-          modal.remove();
-        }
-      }
-      
-      // Закрытие по клику на фон
-      document.getElementById('telegram-instruction-modal').addEventListener('click', function(e) {
-        if (e.target === this) {
-          closeModal();
-        }
-      });
-      
-      // Закрытие по ESC
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-          closeModal();
-        }
-      });
-    </script>
+  const modal = document.createElement('div');
+  modal.id = 'telegram-instruction-modal';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999999;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    padding: 20px;
   `;
   
-  // Вставляем модальное окно в документ
-  const div = document.createElement('div');
-  div.innerHTML = modalHtml;
-  document.body.appendChild(div.firstElementChild as HTMLElement);
+  const modalContent = document.createElement('div');
+  modalContent.style.cssText = `
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  `;
+  
+  // Создаем CSS для анимации
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes modalAppear {
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    
+    #telegram-instruction-modal > div {
+      animation: modalAppear 0.3s ease;
+    }
+    
+    .telegram-modal-btn {
+      flex: 1;
+      border: none;
+      padding: 16px 24px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-width: 200px;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+    
+    .telegram-modal-btn:hover {
+      transform: translateY(-2px);
+      opacity: 0.9;
+    }
+    
+    .telegram-modal-btn:active {
+      transform: translateY(0);
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // Функции для работы с модальным окном
+  const copyLink = () => {
+    navigator.clipboard.writeText(telegramUrl).then(() => {
+      alert('✅ Ссылка скопирована! Отправьте её в Telegram.');
+    }).catch(err => {
+      // Fallback для старых браузеров
+      const textArea = document.createElement('textarea');
+      textArea.value = telegramUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert('✅ Ссылка скопирована! Отправьте её в Telegram.');
+    });
+  };
+  
+  const openInNewTab = () => {
+    window.open(telegramUrl, '_blank');
+  };
+  
+  const closeModal = () => {
+    if (modal.parentNode) {
+      modal.parentNode.removeChild(modal);
+    }
+    if (style.parentNode) {
+      style.parentNode.removeChild(style);
+    }
+    document.removeEventListener('keydown', handleKeydown);
+  };
+  
+  const handleKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      closeModal();
+    }
+  };
+  
+  // Закрытие по клику на фон
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+  
+  // Закрытие по ESC
+  document.addEventListener('keydown', handleKeydown);
+  
+  // Создаем содержимое модального окна без inline onclick
+  const title = document.createElement('h2');
+  title.textContent = '🔐 Открыть в Telegram';
+  title.style.cssText = 'margin-top: 0; color: #333; text-align: center;';
+  
+  const description = document.createElement('p');
+  description.textContent = 'Для редактирования нужно открыть мини-приложение в Telegram на телефоне.';
+  description.style.cssText = 'color: #666; line-height: 1.6; text-align: center;';
+  
+  const mobileNote = document.createElement('div');
+  mobileNote.textContent = '📱 Откройте на телефоне';
+  mobileNote.style.cssText = `
+    background: #0088cc;
+    color: white;
+    padding: 15px;
+    border-radius: 12px;
+    margin: 25px 0;
+    text-align: center;
+    font-weight: bold;
+    font-size: 18px;
+  `;
+  
+  const urlContainer = document.createElement('div');
+  urlContainer.style.cssText = `
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid #e9ecef;
+    word-break: break-all;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+  `;
+  
+  const urlLabel = document.createElement('div');
+  urlLabel.textContent = 'Ссылка:';
+  urlLabel.style.cssText = 'color: #666; font-size: 12px; margin-bottom: 5px;';
+  
+  const urlText = document.createElement('div');
+  urlText.textContent = telegramUrl;
+  
+  urlContainer.appendChild(urlLabel);
+  urlContainer.appendChild(urlText);
+  
+  const instructions = document.createElement('div');
+  instructions.style.cssText = `
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 20px 0;
+  `;
+  
+  const instructionsTitle = document.createElement('strong');
+  instructionsTitle.textContent = '📋 Как открыть:';
+  
+  const instructionsList = document.createElement('ol');
+  instructionsList.style.cssText = 'margin: 10px 0 0 0; padding-left: 20px;';
+  
+  ['Скопируйте ссылку выше', 'Отправьте её себе в Telegram (любым чатом)', 
+   'Нажмите на ссылку в Telegram', 'Telegram покажет кнопку "Open"', 
+   'Нажмите "Open" чтобы открыть мини-приложение'].forEach(text => {
+    const li = document.createElement('li');
+    li.textContent = text;
+    instructionsList.appendChild(li);
+  });
+  
+  instructions.appendChild(instructionsTitle);
+  instructions.appendChild(instructionsList);
+  
+  // Создаем кнопки
+  const buttonsContainer = document.createElement('div');
+  buttonsContainer.style.cssText = `
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+  `;
+  
+  const copyBtn = document.createElement('button');
+  copyBtn.textContent = '📋 Копировать ссылку';
+  copyBtn.className = 'telegram-modal-btn';
+  copyBtn.style.cssText = 'background: #0088cc; color: white;';
+  copyBtn.addEventListener('click', copyLink);
+  
+  const openTabBtn = document.createElement('button');
+  openTabBtn.textContent = '🔗 Открыть в новой вкладке';
+  openTabBtn.className = 'telegram-modal-btn';
+  openTabBtn.style.cssText = 'background: #6c757d; color: white;';
+  openTabBtn.addEventListener('click', openInNewTab);
+  
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = 'Отмена';
+  closeBtn.className = 'telegram-modal-btn';
+  closeBtn.style.cssText = 'background: white; color: #666; border: 2px solid #ddd;';
+  closeBtn.addEventListener('click', closeModal);
+  
+  buttonsContainer.appendChild(copyBtn);
+  buttonsContainer.appendChild(openTabBtn);
+  buttonsContainer.appendChild(closeBtn);
+  
+  const footerNote = document.createElement('p');
+  footerNote.textContent = '⚡ Бот не должен быть запущен для работы этой ссылки';
+  footerNote.style.cssText = `
+    margin-top: 25px;
+    color: #999;
+    font-size: 13px;
+    text-align: center;
+    font-style: italic;
+  `;
+  
+  // Собираем модальное окно
+  modalContent.appendChild(title);
+  modalContent.appendChild(description);
+  modalContent.appendChild(mobileNote);
+  modalContent.appendChild(urlContainer);
+  modalContent.appendChild(instructions);
+  modalContent.appendChild(buttonsContainer);
+  modalContent.appendChild(footerNote);
+  
+  modal.appendChild(modalContent);
+  document.body.appendChild(modal);
 };
 
 /**
