@@ -89,7 +89,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
       {label && !hideLabel && (
         <label className={styles.label}>
           {label}
-          {required && <span className={styles.required}> *</span>}
+          {/* required && <span className={styles.required}> *</span> */}
         </label>
       )}
       

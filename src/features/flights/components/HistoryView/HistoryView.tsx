@@ -95,10 +95,11 @@ const HistoryView: React.FC<HistoryViewProps> = ({
       )}
 
       {/* Индикатор гостевого режима */}
+      {/* 
       {isGuest && (
         <GuestIndicator guestPermissions={guestPermissions} />
       )}
-
+      */}
       {/* Основной контент */}
       <SearchBar
         searchTerm={searchTerm}
