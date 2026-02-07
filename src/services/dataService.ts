@@ -26,11 +26,60 @@ const isValidUUID = (uuid: string): boolean => {
   return uuidRegex.test(uuid);
 };
 
-// Функция для валидации токена совместного доступа
+// 🔥 Новая функция: получение читаемого имени владельца
+const getReadableOwnerName = async (ownerId: string): Promise<string> => {
+  if (!ownerId) return 'Владельца';
+  
+  try {
+    // Пытаемся получить имя из таблицы users
+    const { data: userData, error } = await supabase
+      .from('users')
+      .select('name')
+      .eq('user_id', ownerId)
+      .maybeSingle();
+    
+    if (!error && userData?.name) {
+      // Нашли имя в таблице users
+      console.log('[TOKEN] Found owner name in users table:', userData.name);
+      return userData.name;
+    }
+    
+    // Если не нашли в users, форматируем ID
+    if (ownerId.startsWith('tg_')) {
+      const numId = ownerId.replace('tg_', '');
+      return `Пользователь #${numId.substring(0, Math.min(6, numId.length))}`;
+    }
+    
+    if (ownerId.startsWith('telegram_anon_')) {
+      return 'Анонимный пользователь';
+    }
+    
+    if (ownerId === 'dev_user' || ownerId.includes('development')) {
+      return 'Разработчик';
+    }
+    
+    // Общий fallback
+    return `Пользователь ${ownerId.substring(0, 8)}`;
+    
+  } catch (err) {
+    // Если таблицы users нет или ошибка - используем старую логику
+    console.log('[TOKEN] Error getting owner name from users table, using fallback');
+    
+    if (ownerId.startsWith('tg_')) {
+      const numId = ownerId.replace('tg_', '');
+      return `Пользователь #${numId.substring(0, 8)}`;
+    }
+    
+    return 'Владелец';
+  }
+};
+
+// Функция для валидации токена совместного доступа (БЕЗОПАСНАЯ версия)
 export const validateToken = async (token: string): Promise<GuestUser | null> => {
   try {
     console.log('[TOKEN] Validating token:', token);
     
+    // 🔥 ЗАПРОС ОСТАЛСЯ ТАКИМ ЖЕ (безопасно)
     const { data: session, error } = await supabase
       .from('shared_sessions')
       .select('*')
@@ -55,19 +104,17 @@ export const validateToken = async (token: string): Promise<GuestUser | null> =>
       expires_at: session.expires_at
     });
 
-    let ownerName = 'Владельца';
-    if (session.owner_id) {
-      ownerName = `Пользователь ${session.owner_id.substring(0, 8)}`;
-    }
+    // 🔥 УЛУЧШЕННАЯ ЛОГИКА ИМЕН (безопасная)
+    const ownerName = await getReadableOwnerName(session.owner_id);
 
     return {
       userId: `guest_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
       name: 'Гость',
       isGuest: true,
       sessionToken: token,
-      permissions: session.permissions || 'read',
+      permissions: session.permissions || 'view', // 🔥 Исправлено: 'read' → 'view'
       ownerId: session.owner_id,
-      ownerName: ownerName
+      ownerName: ownerName // 🔥 Используем улучшенное имя
     };
   } catch (err) {
     console.error('[TOKEN] Validation crashed:', err);
@@ -97,7 +144,7 @@ export const loadUserData = async (targetUserId: string): Promise<LoadUserDataRe
       // Преобразуем записи из базы в объекты Flight
       const flights: Flight[] = flightRecords.map(record => {
         const flight: Flight = {
-          id: record.flight_id || generateUUID(), // ← ИСПРАВЛЕНО: убрано this.
+          id: record.flight_id || generateUUID(),
           origin: record.origin || '',
           destination: record.destination || '',
           type: (record.flight_type as 'oneWay' | 'roundTrip'),
@@ -196,7 +243,7 @@ export const saveOwnerData = async (
       
       // Для каждого рейса создаем запись в таблице user_flights
       const record = {
-        flight_id: flightId, // ← ТЕПЕРЬ UUID, а не число
+        flight_id: flightId,
         user_id: userId,
         origin: flight.origin,
         destination: flight.destination,

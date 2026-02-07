@@ -123,9 +123,32 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
       if (guestResult) {
         const { guestUser, ownerData } = guestResult;
         
+        // 🔥 КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Определяем имя текущего пользователя
+        // Проверяем, есть ли Telegram WebApp и данные пользователя
+        const webApp = window.Telegram?.WebApp;
+        let displayName: string;
+        
+        if (webApp?.initDataUnsafe?.user) {
+          // Telegram пользователь зашел в гостевой режим
+          const tgUser = webApp.initDataUnsafe.user;
+          // Используем имя из Telegram или username
+          displayName = tgUser.first_name || 
+                       tgUser.username || 
+                       `Гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
+          console.log('[JOIN] Telegram user in guest mode:', { 
+            firstName: tgUser.first_name,
+            username: tgUser.username,
+            displayName 
+          });
+        } else {
+          // Анонимный пользователь (без Telegram)
+          displayName = `Гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
+          console.log('[JOIN] Anonymous user in guest mode');
+        }
+        
         setAppUser(guestUser);
         setUserId(guestUser.ownerId);
-        setUserName(`Гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`);
+        setUserName(displayName); // 🔥 Используем правильное имя!
         setFlights(ownerData.flights);
         setAirlines(ownerData.airlines);
         setOriginCities(ownerData.originCities);

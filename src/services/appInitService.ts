@@ -194,9 +194,8 @@ export const createAppUser = (
   };
 };
 
-// Основная функция инициализации приложения (обновленная)
+// Основная функция инициализации приложения (ОБНОВЛЕННАЯ)
 export const initializeApp = async (): Promise<AppInitResult> => {
-  // ==================== ДОБАВЬТЕ ЭТО ====================
   // Защита от повторной инициализации
   if (isInitializing && initializationPromise) {
     console.log('[INIT] Already initializing, returning existing promise');
@@ -204,16 +203,12 @@ export const initializeApp = async (): Promise<AppInitResult> => {
   }
   
   isInitializing = true;
-  // ==================== ДОБАВЬТЕ ЭТО ====================
   
   console.log('[INIT] Starting app initialization...');
   console.log('[INIT] Serverless bot mode: Telegram links work without running bot');
   
-  // ==================== ДОБАВЬТЕ ЭТО ====================
   // Создаем промис один раз
   initializationPromise = (async () => {
-  // ==================== ДОБАВЬТЕ ЭТО ====================
-  
     // Ждем немного для загрузки Telegram WebApp
     await new Promise(resolve => setTimeout(resolve, 100));
     
@@ -236,18 +231,39 @@ export const initializeApp = async (): Promise<AppInitResult> => {
         });
         // ========== ОПРЕДЕЛЯЕМ ТИП ДОСТУПА ==========
         
-        // ==================== ДОБАВЬТЕ ЭТО ====================
+        // 🔥 КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Получаем имя ТЕКУЩЕГО пользователя
+        const { currentUserId, currentUserName, telegramDetected } = initTelegramUser();
+        
+        // 🔥 Определяем, какое имя показывать в приветствии:
+        // 1. Если пользователь аутентифицирован в Telegram - показываем его реальное имя
+        // 2. Если нет (аноним) - показываем "Гость (права)"
+        let displayUserName: string;
+        if (telegramDetected && !currentUserId.includes('anon') && currentUserId !== getDevelopmentUserId()) {
+          // Реальный Telegram пользователь (не аноним, не разработчик)
+          displayUserName = currentUserName;
+          console.log('[INIT] Showing real Telegram user name:', displayUserName);
+        } else {
+          // Анонимный пользователь, разработчик или ошибка
+          displayUserName = `Гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
+          console.log('[INIT] Showing guest name:', displayUserName);
+        }
+        
+        // 🔥 Определяем ID для appUser
+        // Для Telegram пользователя используем его ID, для анонима - гостевой ID
+        const appUserId = telegramDetected && !currentUserId.includes('anon') 
+          ? currentUserId 
+          : `guest_${Date.now()}`;
+        
         isInitializing = false;
-        // ==================== ДОБАВЬТЕ ЭТО ====================
         
         return {
-          userName: `Гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`,
+          userName: displayUserName, // 🔥 Используем правильное имя!
           userId: guestUser.ownerId,
           appUser: createAppUser(
-            guestUser.ownerId,
-            'Гость',
+            appUserId,
+            displayUserName,
             true,
-            isTelegramAccess, // Используем реальное значение
+            telegramDetected,
             guestUser
           ),
           flights: ownerData.flights,
@@ -258,13 +274,11 @@ export const initializeApp = async (): Promise<AppInitResult> => {
       }
     }
     
-    // Инициализация для владельца
+    // Инициализация для владельца (не гостя)
     const { currentUserId, currentUserName, telegramDetected } = initTelegramUser();
     const userData = await loadUserData(currentUserId);
     
-    // ==================== ДОБАВЬТЕ ЭТО ====================
     isInitializing = false;
-    // ==================== ДОБАВЬТЕ ЭТО ====================
     
     return {
       userName: currentUserName,
@@ -276,11 +290,9 @@ export const initializeApp = async (): Promise<AppInitResult> => {
       destinationCities: userData.destinationCities
     };
     
-  // ==================== ДОБАВЬТЕ ЭТО ====================
   })();
   
   return initializationPromise;
-  // ==================== ДОБАВЬТЕ ЭТО ====================
 };
 
 // Функция для обработки ошибок инициализации
@@ -304,7 +316,6 @@ export const getFallbackInitResult = (error: any): AppInitResult => {
   };
 };
 
-// ==================== ДОБАВЬТЕ ЭТО ====================
 // Функция для сброса состояния инициализации (для тестов)
 export const resetInitialization = (): void => {
   isInitializing = false;
@@ -324,4 +335,3 @@ export const debugInitialization = (): void => {
     hash: window.location.hash
   });
 };
-// ==================== ДОБАВЬТЕ ЭТО ====================
