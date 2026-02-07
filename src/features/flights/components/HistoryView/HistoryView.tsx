@@ -5,7 +5,7 @@ import { PriceChartModal } from '@features/flights';
 import { DestinationGroup } from './components/DestinationGroup';
 import { SearchBar } from './components/SearchBar';
 import { AccessManagement } from './components/AccessManagement';
-import { GuestIndicator } from './components/GuestIndicator';
+// import { GuestIndicator } from './components/GuestIndicator';
 import { EmptyState } from './components/EmptyState';
 import { groupFlightsByDestination } from './utils/historyViewHelpers';
 
