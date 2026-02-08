@@ -1,4 +1,3 @@
-// src/services/appInitService.ts
 import { AppUser, GuestUser, OwnerUser } from '../types/shared';
 import { Flight } from '../types';
 import { 
@@ -154,23 +153,16 @@ export const initGuestMode = async (token: string): Promise<GuestInitResult | nu
       return null;
     }
     
-    // 🔥 ПРОВЕРКА ДЛЯ РЕДАКТИРОВАНИЯ
+    // 🔥 ПРОВЕРКА ДЛЯ РЕДАКТИРОВАНИЯ — ТОЛЬКО РЕАЛЬНЫЕ TELEGRAM ПОЛЬЗОВАТЕЛИ
     if (guestUser.permissions === 'edit') {
-      const inTelegramWebApp = isInTelegramWebApp() || isInTelegramDirectWebApp();
+      const isRealTelegram = isRealTelegramUser();
       
-      if (!inTelegramWebApp) {
-        console.log('[GUEST] Edit permission detected outside Telegram, redirecting...');
-        console.log('[GUEST] Note: Bot does not need to be running!');
-        
-        // 🔥 Добавляем небольшую задержку для лучшего UX
-        setTimeout(() => {
-          redirectToTelegramForEdit(token);
-        }, 100);
-        
-        console.log('[GUEST] Redirecting to Telegram WebApp...');
-        return null;
+      if (!isRealTelegram) {
+        console.log('[GUEST] Edit permission requires real Telegram user, downgrading to "view"');
+        // 🔥 Понижаем права до "view" вместо редиректа
+        guestUser.permissions = 'view';
       } else {
-        console.log('[GUEST] ✓ Edit permission in Telegram WebApp - allowing access');
+        console.log('[GUEST] ✓ Real Telegram user with edit permission - allowing access');
       }
     }
     
@@ -357,6 +349,15 @@ export const initializeApp = async (): Promise<AppInitResult> => {
     // Даем время для загрузки Telegram WebApp
     await new Promise(resolve => setTimeout(resolve, 300));
     
+    // 🔥 ЗАЩИТА ОТ ПОВТОРНОЙ ОБРАБОТКИ ТОКЕНА
+    const hasProcessedToken = (): boolean => {
+      return sessionStorage.getItem('processed_invitation_token') === 'true';
+    };
+
+    const markTokenAsProcessed = (): void => {
+      sessionStorage.setItem('processed_invitation_token', 'true');
+    };
+
     // Проверяем токен в URL
     const token = getTokenFromUrl();
     
@@ -365,14 +366,18 @@ export const initializeApp = async (): Promise<AppInitResult> => {
       hasTelegramWebApp: !!window.Telegram?.WebApp,
       startParam: window.Telegram?.WebApp?.initDataUnsafe?.start_param,
       user: window.Telegram?.WebApp?.initDataUnsafe?.user,
-      location: window.location.href
+      location: window.location.href,
+      alreadyProcessed: hasProcessedToken()
     });
     
-    if (token) {
-      console.log('[INIT] Token found, initializing guest mode...');
+    // 🔥 Обрабатываем токен только если он ещё не был обработан
+    if (token && !hasProcessedToken()) {
+      console.log('[INIT] Token found and not yet processed, initializing guest mode...');
       const guestResult = await initGuestMode(token);
       
       if (guestResult) {
+        markTokenAsProcessed(); // 🔥 Запоминаем, что токен уже использован
+        
         const { guestUser, ownerData } = guestResult;
         
         // Определяем тип доступа
@@ -399,20 +404,17 @@ export const initializeApp = async (): Promise<AppInitResult> => {
         
         switch (userType) {
           case 'real_telegram':
-            // ✅ Реальный Telegram пользователь
             displayUserName = currentUserName;
             console.log('[INIT] ✅ Showing real Telegram user name:', displayUserName);
             break;
             
           case 'anonymous_telegram':
-            // ⚠️ Аноним в Telegram WebApp
             displayUserName = `Анонимный гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
             console.log('[INIT] ⚠️ Showing anonymous Telegram guest name:', displayUserName);
             break;
             
           case 'web_browser':
           default:
-            // 🌐 Веб-браузер
             displayUserName = `Веб-гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
             console.log('[INIT] 🌐 Showing web guest name:', displayUserName);
             break;
@@ -443,6 +445,8 @@ export const initializeApp = async (): Promise<AppInitResult> => {
       } else {
         console.log('[INIT] Guest mode initialization failed or redirected');
       }
+    } else if (token && hasProcessedToken()) {
+      console.log('[INIT] Token already processed in this session, skipping guest mode');
     }
     
     // 🔥 Инициализация для владельца (не гостя)

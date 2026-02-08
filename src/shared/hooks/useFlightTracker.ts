@@ -1,4 +1,3 @@
-// src/shared/hooks/useFlightTracker.ts
 import { useState, useCallback, useEffect } from 'react';
 import { Flight } from '../../shared/types';
 import { AppUser } from '../../shared/types';
@@ -164,6 +163,10 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     try {
       console.log('[HOOK] Joining session with token:', token);
       setLoading(true);
+      
+      // 🔥 ОЧИЩАЕМ ПРЕДЫДУЩИЙ ФЛАГ ОБРАБОТКИ
+      sessionStorage.removeItem('processed_invitation_token');
+      
       const guestResult = await initGuestMode(token);
       
       if (guestResult) {

@@ -1,5 +1,3 @@
-// src/utils/telegramUtils.ts
-
 /**
  * Проверяет, открыто ли приложение внутри Telegram WebApp
  */
@@ -41,9 +39,8 @@ export const isMobileDevice = (): boolean => {
 export const redirectToTelegramForEdit = (token: string): void => {
   const BOT_USERNAME = 'my_flight_tracker1_bot';
   
-  // Формат для прямого открытия WebApp в Telegram
-  // Telegram автоматически покажет кнопку "Open" при таком формате
-  const telegramUrl = `https://t.me/${BOT_USERNAME}?startapp=share_${token}`;
+  // 🔥 ИСПРАВЛЕНО: убраны пробелы и префикс share_
+  const telegramUrl = `https://t.me/${BOT_USERNAME}?startapp=${token}`;
   
   console.log('[TELEGRAM] Opening via Menu Button:', telegramUrl);
   console.log('[TELEGRAM] Opening WebApp directly:', telegramUrl);
@@ -52,8 +49,8 @@ export const redirectToTelegramForEdit = (token: string): void => {
   // Пытаемся открыть через tg:// протокол для лучшего UX на мобильных
   if (isMobileDevice()) {
     try {
-      // Пытаемся открыть через tg:// (работает лучше на мобильных)
-      const tgProtocolUrl = `tg://resolve?domain=${BOT_USERNAME}&startapp=share_${token}`;
+      // 🔥 ИСПРАВЛЕНО: убраны пробелы и префикс share_
+      const tgProtocolUrl = `tg://resolve?domain=${BOT_USERNAME}&startapp=${token}`;
       
       // Создаем невидимый iframe для открытия tg://
       const iframe = document.createElement('iframe');
@@ -96,11 +93,9 @@ export const getTokenFromTelegramStartParam = (): string | null => {
   const webApp = window.Telegram?.WebApp;
   if (webApp?.initDataUnsafe?.start_param) {
     const startParam = webApp.initDataUnsafe.start_param;
-    if (startParam && startParam.startsWith('share_')) {
-      const token = startParam.replace('share_', '');
-      console.log('[TELEGRAM] Found token from WebApp SDK start_param:', token);
-      return token;
-    }
+    // 🔥 УБРАН ПРЕФИКС share_ — теперь принимаем токен как есть
+    console.log('[TELEGRAM] Found token from WebApp SDK start_param:', startParam);
+    return startParam;
   }
   
   // 🔥 ПРИОРИТЕТ 2: Проверяем обычный токен в query параметрах (для тестирования)
@@ -111,50 +106,46 @@ export const getTokenFromTelegramStartParam = (): string | null => {
     return queryToken;
   }
   
-  // 🔥 ПРИОРИТЕТ 3: Проверяем startapp параметр в query (новый формат)
-  const queryStartParam = urlParams.get('tgWebAppStartParam');
-  if (queryStartParam && queryStartParam.startsWith('share_')) {
-    const token = queryStartParam.replace('share_', '');
-    console.log('[TELEGRAM] Found token from query params (tgWebAppStartParam):', token);
-    return token;
+  // 🔥 ПРИОRIТЕТ 3: Проверяем tgWebAppStartParam (для ?startapp=...)
+  const tgWebAppStartParam = urlParams.get('tgWebAppStartParam');
+  if (tgWebAppStartParam) {
+    console.log('[TELEGRAM] Found token from tgWebAppStartParam:', tgWebAppStartParam);
+    return tgWebAppStartParam;
   }
   
-  // 🔥 ПРИОРИТЕТ 4: Проверяем hash параметры (Telegram WebApp иногда помещает параметры в hash)
+  // 🔥 ПРИОРИТЕТ 4: Проверяем hash параметры
   if (window.location.hash) {
     const hash = window.location.hash.substring(1);
     console.log('[TELEGRAM] Hash analysis:', hash);
     
-    // Пытаемся парсить как query строку в hash
     try {
       const hashParams = new URLSearchParams(hash);
       const hashStartParam = hashParams.get('tgWebAppStartParam');
-      if (hashStartParam && hashStartParam.startsWith('share_')) {
-        const token = hashStartParam.replace('share_', '');
-        console.log('[TELEGRAM] Found token from hash params:', token);
-        return token;
+      if (hashStartParam) {
+        console.log('[TELEGRAM] Found token from hash params:', hashStartParam);
+        return hashStartParam;
       }
     } catch (err) {
-      console.log('[TELEGRAM] Hash is not a query string, trying direct match');
+      console.log('[TELEGRAM] Hash is not a query string');
     }
     
-    // Если hash напрямую содержит токен
-    if (hash.startsWith('share_')) {
-      const token = hash.replace('share_', '');
+    // Прямой поиск токена в hash
+    const directTokenMatch = hash.match(/token=([^&]+)/);
+    if (directTokenMatch) {
+      const token = directTokenMatch[1];
       console.log('[TELEGRAM] Found token directly in hash:', token);
       return token;
     }
   }
   
-  // 🔥 ПРИОРИТЕТ 5: Проверяем initData строку (если есть)
+  // 🔥 ПРИОРИТЕТ 5: Проверяем initData строку
   if (webApp?.initData) {
     try {
-      // initData может быть строкой параметров
       const initDataParams = new URLSearchParams(webApp.initData);
       const initDataStartParam = initDataParams.get('start_param');
-      if (initDataStartParam && initDataStartParam.startsWith('share_')) {
-        const token = initDataStartParam.replace('share_', '');
-        console.log('[TELEGRAM] Found token from initData params:', token);
-        return token;
+      if (initDataStartParam) {
+        console.log('[TELEGRAM] Found token from initData params:', initDataStartParam);
+        return initDataStartParam;
       }
     } catch (err) {
       console.log('[TELEGRAM] Could not parse initData:', err);
@@ -179,7 +170,6 @@ export const isInTelegramDirectWebApp = (): boolean => {
     startParam: window.Telegram?.WebApp?.initDataUnsafe?.start_param
   });
   
-  // Если есть токен И мы в Telegram WebApp - это прямое открытие
   return hasToken && inTelegram;
 };
 
@@ -187,7 +177,7 @@ export const isInTelegramDirectWebApp = (): boolean => {
  * Показывает инструкции для десктопных пользователей
  */
 const showDesktopInstructions = (token: string, telegramUrl: string): void => {
-  // Создаем модальное окно с инструкциями
+  // ... (оставляем без изменений — весь код ниже остаётся как есть)
   const modal = document.createElement('div');
   modal.id = 'telegram-instruction-modal';
   modal.style.cssText = `
@@ -217,7 +207,6 @@ const showDesktopInstructions = (token: string, telegramUrl: string): void => {
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
   `;
   
-  // Создаем CSS для анимации
   const style = document.createElement('style');
   style.textContent = `
     @keyframes modalAppear {
@@ -256,12 +245,10 @@ const showDesktopInstructions = (token: string, telegramUrl: string): void => {
   `;
   document.head.appendChild(style);
   
-  // Функции для работы с модальным окном
   const copyLink = () => {
     navigator.clipboard.writeText(telegramUrl).then(() => {
       alert('✅ Ссылка скопирована! Отправьте её в Telegram.');
     }).catch(err => {
-      // Fallback для старых браузеров
       const textArea = document.createElement('textarea');
       textArea.value = telegramUrl;
       document.body.appendChild(textArea);
@@ -292,17 +279,14 @@ const showDesktopInstructions = (token: string, telegramUrl: string): void => {
     }
   };
   
-  // Закрытие по клику на фон
   modal.addEventListener('click', (e) => {
     if (e.target === modal) {
       closeModal();
     }
   });
   
-  // Закрытие по ESC
   document.addEventListener('keydown', handleKeydown);
   
-  // Создаем содержимое модального окна без inline onclick
   const title = document.createElement('h2');
   title.textContent = '🔐 Открыть в Telegram';
   title.style.cssText = 'margin-top: 0; color: #333; text-align: center;';
@@ -373,7 +357,6 @@ const showDesktopInstructions = (token: string, telegramUrl: string): void => {
   instructions.appendChild(instructionsTitle);
   instructions.appendChild(instructionsList);
   
-  // Создаем кнопки
   const buttonsContainer = document.createElement('div');
   buttonsContainer.style.cssText = `
     display: flex;
@@ -414,7 +397,6 @@ const showDesktopInstructions = (token: string, telegramUrl: string): void => {
     font-style: italic;
   `;
   
-  // Собираем модальное окно
   modalContent.appendChild(title);
   modalContent.appendChild(description);
   modalContent.appendChild(mobileNote);
@@ -441,84 +423,54 @@ export const testTelegramLinkFormats = (token: string): string[] => {
   const BOT_USERNAME = 'my_flight_tracker1_bot';
   
   return [
-    // Основной рекомендуемый формат (прямое открытие WebApp)
-    `https://t.me/${BOT_USERNAME}/flight_tracker?startapp=share_${token}`,
-    
-    // Альтернативный формат (через стартовую команду)
-    `https://t.me/${BOT_USERNAME}?start=share_${token}`,
-    
-    // tg:// протокол для мобильных
-    `tg://resolve?domain=${BOT_USERNAME}&startapp=share_${token}`,
-    
-    // tg:// с командой start
-    `tg://resolve?domain=${BOT_USERNAME}&start=share_${token}`,
+    `https://t.me/${BOT_USERNAME}/flight_tracker?startapp=${token}`,
+    `https://t.me/${BOT_USERNAME}?start=${token}`,
+    `tg://resolve?domain=${BOT_USERNAME}&startapp=${token}`,
+    `tg://resolve?domain=${BOT_USERNAME}&start=${token}`,
   ];
 };
 
 /**
- * 🔥 ИСПРАВЛЕННАЯ ФУНКЦИЯ: Получает токен из Telegram WebApp параметров
- * Специально для ссылок формата: https://t.me/bot?startapp=share_TOKEN
+ * 🔥 ОСНОВНАЯ ФУНКЦИЯ: Получает токен из любого источника
  */
 export const getTokenFromTelegramStartParamFixed = (): string | null => {
   if (typeof window === 'undefined') return null;
-  
+
   const webApp = window.Telegram?.WebApp;
   
-  console.log('[TELEGRAM FIXED] Token search started:', {
-    hasWebApp: !!webApp,
-    location: window.location.href,
-    startParam: webApp?.initDataUnsafe?.start_param,
-    startappParam: new URLSearchParams(window.location.search).get('startapp')
-  });
-  
-  // 1. Telegram WebApp SDK - start_param (самый надежный)
+  // 1. start_param (для ?start=...)
   if (webApp?.initDataUnsafe?.start_param) {
-    const startParam = webApp.initDataUnsafe.start_param;
-    if (startParam && startParam.startsWith('share_')) {
-      const token = startParam.replace('share_', '');
-      console.log('[TELEGRAM FIXED] ✓ Found in start_param:', token);
-      return token;
-    }
-  }
-  
-  // 2. Параметр startapp в query string (новый формат)
-  const urlParams = new URLSearchParams(window.location.search);
-  const startappParam = urlParams.get('startapp');
-  if (startappParam && startappParam.startsWith('share_')) {
-    const token = startappParam.replace('share_', '');
-    console.log('[TELEGRAM FIXED] ✓ Found in startapp param:', token);
+    const token = webApp.initDataUnsafe.start_param;
+    console.log('[TOKEN] Found in start_param:', token);
     return token;
   }
-  
-  // 3. Обычный токен для веб-версии
+
+  // 2. tgWebAppStartParam (для ?startapp=...)
+  const urlParams = new URLSearchParams(window.location.search);
+  const startappParam = urlParams.get('tgWebAppStartParam');
+  if (startappParam) {
+    console.log('[TOKEN] Found in tgWebAppStartParam:', startappParam);
+    return startappParam;
+  }
+
+  // 3. Обычный ?token= (для веба)
   const regularToken = urlParams.get('token');
   if (regularToken) {
-    console.log('[TELEGRAM FIXED] ✓ Found regular token:', regularToken);
+    console.log('[TOKEN] Found in ?token=', regularToken);
     return regularToken;
   }
-  
-  // 4. Telegram иногда помещает параметры в hash
+
+  // 4. Hash fallback
   if (window.location.hash) {
     const hash = window.location.hash.substring(1);
-    console.log('[TELEGRAM FIXED] Checking hash:', hash);
-    
-    // Пытаемся извлечь из hash разными способами
-    const patterns = [
-      /token=([^&]+)/,
-      /share_([a-zA-Z0-9]+)/,
-      /startapp=share_([a-zA-Z0-9]+)/
-    ];
-    
-    for (const pattern of patterns) {
-      const match = hash.match(pattern);
-      if (match) {
-        const token = match[1];
-        console.log(`[TELEGRAM FIXED] ✓ Found in hash with pattern ${pattern}:`, token);
-        return token;
-      }
+    const hashParams = new URLSearchParams(hash);
+    const hashToken = hashParams.get('token');
+    if (hashToken) {
+      console.log('[TOKEN] Found in hash:', hashToken);
+      return hashToken;
     }
   }
-  
-  console.log('[TELEGRAM FIXED] ✗ No token found');
+
+  console.log('[TOKEN] No token found in any location');
   return null;
 };

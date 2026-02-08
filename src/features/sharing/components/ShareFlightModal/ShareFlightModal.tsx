@@ -51,7 +51,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
       
       if (permissions === 'edit') {
         // Telegram ссылка для редактирования
-        url = `https://t.me/my_flight_tracker1_bot?start=share_${token}`;
+        url = `https://t.me/my_flight_tracker1_bot?startapp=${token}`;
         urlDescription = 'Telegram ссылка для редактирования';
       } else {
         // Веб-ссылка для просмотра
