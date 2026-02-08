@@ -1,4 +1,3 @@
-// src/components/ShareFlightModal.tsx
 import React, { useState } from 'react';
 import { supabase } from '@shared/lib';
 import styles from './ShareFlightModal.module.css';
@@ -45,17 +44,12 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
 
       if (error) throw error;
 
-      let url;
-      let urlDescription = '';
-      
-      if (permissions === 'edit') {
-        url = `https://t.me/my_flight_tracker1_bot?startapp=share_${token}`;
-        urlDescription = 'Прямая ссылка на Telegram WebApp';
-      } else {
-        url = `${window.location.origin}?token=${token}`;
-        urlDescription = 'Веб-ссылка для просмотра в браузере';
-      }
-      
+      // 🔥 ИСПРАВЛЕНО: ЕДИНЫЙ ФОРМАТ ССЫЛКИ — ВСЕГДА ?start=токен
+      const url = `https://t.me/my_flight_tracker1_bot?start=${token}`;
+      const urlDescription = permissions === 'edit'
+        ? 'Ссылка для редактирования через Telegram'
+        : 'Ссылка для просмотра (работает везде)';
+
       setShareUrl(url);
       console.log(`🔗 Создана ссылка: ${url}`);
       console.log(`📝 Описание: ${urlDescription}`);
@@ -135,7 +129,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                   />
                   👁️ Только просмотр
                   <span className={styles.radioDescription}>
-                    Гость сможет только просматривать вашу историю в браузере
+                    Гость сможет просматривать вашу историю в браузере или Telegram
                   </span>
                 </label>
                 <label className={styles.radioLabel}>
@@ -188,7 +182,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
           </>
         ) : (
           <>
-            {/* ЭКРАН СОЗДАННОЙ ССЫЛКИ - ТОЛЬКО ЭТОТ ЗАГОЛОВОК */}
+            {/* ЭКРАН СОЗДАННОЙ ССЫЛКИ */}
             <div className={styles.successMessage}>
               ✅ Ссылка для совместного доступа создана!
             </div>
@@ -200,7 +194,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                   <strong>Права доступа:</strong> {permissions === 'view' ? 'Только просмотр' : 'Просмотр и редактирование'}
                   {permissions === 'edit' && (
                     <div style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>
-                      📱 Ссылка откроет мини-приложение в Telegram
+                      📱 Требуется Telegram для редактирования
                     </div>
                   )}
                 </div>
@@ -214,10 +208,10 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
               <div className={styles.infoRow}>
                 <span className={styles.infoIcon}>📋</span>
                 <div>
-                  <strong>Как использовать:</strong> Отправьте эту ссылку тому, с кем хотите поделиться
+                  <strong>Как использовать:</strong> Отправьте эту ссылку тому, с кем хотите поделиться.
                   {permissions === 'edit' && (
                     <div style={{ fontSize: '13px', color: '#0a58ca', marginTop: '4px' }}>
-                      Получателю нужно открыть ссылку в Telegram
+                      Получатель должен открыть её в Telegram
                     </div>
                   )}
                 </div>
@@ -226,7 +220,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
 
             <div className={styles.urlContainer}>
               <div className={styles.urlLabel}>
-                {permissions === 'edit' ? 'Ссылка для Telegram WebApp:' : 'Веб-ссылка:'}
+                Ссылка для совместного доступа:
               </div>
               <input
                 type="text"
@@ -248,13 +242,13 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                     <strong>Как открыть ссылку:</strong>
                     <ol style={{ margin: '8px 0 0 0', paddingLeft: '20px' }}>
                       <li>Получатель открывает ссылку в Telegram</li>
-                      <li>Telegram автоматически покажет кнопку "Open"</li>
-                      <li>Нажимает кнопку → открывается мини-приложение</li>
+                      <li>Telegram покажет кнопку «Open»</li>
+                      <li>После нажатия откроется мини-приложение</li>
                     </ol>
                   </div>
                 </div>
                 <p style={{ margin: '0', fontSize: '13px', color: '#666', fontStyle: 'italic' }}>
-                  Бот не должен быть постоянно запущен для работы ссылки
+                  Бот не должен быть запущен — ссылка работает автономно
                 </p>
               </div>
             )}
