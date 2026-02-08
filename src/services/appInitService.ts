@@ -9,8 +9,7 @@ import {
 } from '../utils';
 // Обновляем импорт для безсерверной версии
 import { 
-  isInTelegramWebApp, 
-  redirectToTelegramForEdit,
+  isInTelegramWebApp,
   isInTelegramDirectWebApp 
 } from '../utils/telegramUtils';
 // Импортируем только getTokenFromTelegramStartParam
