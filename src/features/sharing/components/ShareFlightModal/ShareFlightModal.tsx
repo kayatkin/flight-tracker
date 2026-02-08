@@ -1,3 +1,4 @@
+// src/features/sharing/components/ShareFlightModal/ShareFlightModal.tsx
 import React, { useState } from 'react';
 import { supabase } from '@shared/lib';
 import styles from './ShareFlightModal.module.css';
@@ -44,12 +45,20 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
 
       if (error) throw error;
 
-      // 🔥 ИСПРАВЛЕНО: ЕДИНЫЙ ФОРМАТ ССЫЛКИ — ВСЕГДА ?start=токен
-      const url = `https://t.me/my_flight_tracker1_bot?start=${token}`;
-      const urlDescription = permissions === 'edit'
-        ? 'Ссылка для редактирования через Telegram'
-        : 'Ссылка для просмотра (работает везде)';
-
+      // 🔥 КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: РАЗНЫЕ ССЫЛКИ ДЛЯ РАЗНЫХ ПРАВ
+      let url: string;
+      let urlDescription: string;
+      
+      if (permissions === 'edit') {
+        // Telegram ссылка для редактирования
+        url = `https://t.me/my_flight_tracker1_bot?start=share_${token}`;
+        urlDescription = 'Telegram ссылка для редактирования';
+      } else {
+        // Веб-ссылка для просмотра
+        url = `${window.location.origin}${window.location.pathname}?token=${token}`;
+        urlDescription = 'Веб-ссылка для просмотра (работает в любом браузере)';
+      }
+      
       setShareUrl(url);
       console.log(`🔗 Создана ссылка: ${url}`);
       console.log(`📝 Описание: ${urlDescription}`);
@@ -129,7 +138,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                   />
                   👁️ Только просмотр
                   <span className={styles.radioDescription}>
-                    Гость сможет просматривать вашу историю в браузере или Telegram
+                    Гость сможет просматривать вашу историю в любом браузере
                   </span>
                 </label>
                 <label className={styles.radioLabel}>
@@ -209,9 +218,13 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                 <span className={styles.infoIcon}>📋</span>
                 <div>
                   <strong>Как использовать:</strong> Отправьте эту ссылку тому, с кем хотите поделиться.
-                  {permissions === 'edit' && (
+                  {permissions === 'edit' ? (
                     <div style={{ fontSize: '13px', color: '#0a58ca', marginTop: '4px' }}>
-                      Получатель должен открыть её в Telegram
+                      🔗 Получатель должен открыть её в Telegram
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '13px', color: '#0a58ca', marginTop: '4px' }}>
+                      🌐 Работает в любом браузере (Chrome, Safari, Firefox)
                     </div>
                   )}
                 </div>
@@ -220,7 +233,9 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
 
             <div className={styles.urlContainer}>
               <div className={styles.urlLabel}>
-                Ссылка для совместного доступа:
+                {permissions === 'edit' 
+                  ? 'Telegram ссылка для редактирования:' 
+                  : 'Веб-ссылка для просмотра:'}
               </div>
               <input
                 type="text"
@@ -239,16 +254,37 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '10px' }}>
                   <span style={{ fontSize: '18px' }}>ℹ️</span>
                   <div>
-                    <strong>Как открыть ссылку:</strong>
+                    <strong>Как открыть ссылку в Telegram:</strong>
                     <ol style={{ margin: '8px 0 0 0', paddingLeft: '20px' }}>
-                      <li>Получатель открывает ссылку в Telegram</li>
-                      <li>Telegram покажет кнопку «Open»</li>
-                      <li>После нажатия откроется мини-приложение</li>
+                      <li>Отправьте ссылку в любой чат Telegram</li>
+                      <li>Нажмите на ссылку внутри Telegram</li>
+                      <li>Telegram покажет кнопку «Open» или «Открыть»</li>
+                      <li>Нажмите кнопку → откроется мини-приложение</li>
                     </ol>
                   </div>
                 </div>
                 <p style={{ margin: '0', fontSize: '13px', color: '#666', fontStyle: 'italic' }}>
-                  Бот не должен быть запущен — ссылка работает автономно
+                  ⚡ Бот не должен быть запущен — ссылка работает автономно
+                </p>
+              </div>
+            )}
+
+            {permissions === 'view' && (
+              <div className={styles.webHint}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '18px' }}>🌐</span>
+                  <div>
+                    <strong>Как открыть веб-ссылку:</strong>
+                    <ol style={{ margin: '8px 0 0 0', paddingLeft: '20px' }}>
+                      <li>Скопируйте ссылку выше</li>
+                      <li>Откройте в любом браузере</li>
+                      <li>Нажмите «Открыть» в появившемся окне</li>
+                      <li>Начнется просмотр истории в гостевом режиме</li>
+                    </ol>
+                  </div>
+                </div>
+                <p style={{ margin: '0', fontSize: '13px', color: '#666', fontStyle: 'italic' }}>
+                  ✅ Работает на компьютере и телефоне без Telegram
                 </p>
               </div>
             )}

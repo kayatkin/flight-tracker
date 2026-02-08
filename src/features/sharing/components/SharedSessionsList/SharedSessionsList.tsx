@@ -135,9 +135,22 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
     [loadSessions, onSessionDeactivated]
   );
 
-  // 🔥 ИСПРАВЛЕНО: ВСЕГДА копируем Telegram-ссылку
-  const copyToken = useCallback(async (token: string) => {
-    const url = `https://t.me/my_flight_tracker1_bot?start=${token}`;
+  // 🔥 ИСПРАВЛЕНО: Правильная генерация ссылок в зависимости от прав
+  const copyToken = useCallback(async (token: string, permissions: 'view' | 'edit') => {
+    let url: string;
+    let linkType: string;
+    
+    if (permissions === 'edit') {
+      // Telegram ссылка для редактирования
+      url = `https://t.me/my_flight_tracker1_bot?start=share_${token}`;
+      linkType = 'Telegram ссылка для редактирования';
+    } else {
+      // Веб-ссылка для просмотра
+      url = `${window.location.origin}${window.location.pathname}?token=${token}`;
+      linkType = 'Веб-ссылка для просмотра';
+    }
+    
+    console.log(`[COPY] ${linkType}:`, url);
     
     try {
       await navigator.clipboard.writeText(url);
@@ -324,13 +337,13 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
                             data-permission={session.permissions}
                             aria-label={
                               session.permissions === 'view'
-                                ? 'Только просмотр'
-                                : 'Полный доступ с редактированием'
+                                ? 'Только просмотр (веб-ссылка)'
+                                : 'Редактирование (Telegram ссылка)'
                             }
                           >
                             {session.permissions === 'view' 
-                              ? '👁️ Только просмотр' 
-                              : '✏️ Редактирование'}
+                              ? '👁️ Просмотр (веб)' 
+                              : '✏️ Редактирование (Telegram)'}
                           </div>
                           <div 
                             className={`${styles.status} ${status.className}`}
@@ -357,20 +370,23 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
                         
                         <div className={styles.actionButtonsCompact}>
                           <button
-                            onClick={() => copyToken(session.token)}
+                            onClick={() => copyToken(session.token, session.permissions)}
                             className={`${styles.copyButtonCompact} ${
                               isTokenCopied ? styles.copyButtonCompactActive : ''
                             }`}
                             aria-label={
                               isTokenCopied 
                                 ? 'Ссылка скопирована' 
-                                : 'Копировать ссылку на приглашение'
+                                : `Копировать ${session.permissions === 'edit' ? 'Telegram' : 'веб'} ссылку`
                             }
                             disabled={!session.is_active}
                             aria-disabled={!session.is_active}
-                            title={isTokenCopied ? 'Скопировано!' : 'Копировать ссылку'}
+                            title={isTokenCopied 
+                              ? 'Скопировано!' 
+                              : `Копировать ${session.permissions === 'edit' ? 'Telegram ссылку для редактирования' : 'веб-ссылку для просмотра'}`}
                           >
-                            {isTokenCopied ? '✓ Скопировано' : '📋 Ссылка'}
+                            {isTokenCopied ? '✓ Скопировано' : 
+                              session.permissions === 'edit' ? '📱 Telegram' : '🌐 Веб'}
                           </button>
                           <button
                             onClick={() => deactivateSession(session.id, session.token)}
@@ -393,6 +409,13 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
                             {session.token.substring(0, 15)}...
                           </span>
                         </div>
+                        <div className={styles.linkTypeHint}>
+                          <small>
+                            {session.permissions === 'view' 
+                              ? '🌐 Открывается в браузере' 
+                              : '📱 Открывается в Telegram'}
+                          </small>
+                        </div>
                       </div>
                     </div>
                   );
@@ -402,7 +425,17 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
 
             <div className={styles.footer}>
               <div className={styles.hint}>
-                💡 Нажмите «Ссылка» чтобы скопировать универсальную ссылку для Telegram и браузера
+                💡 Нажмите «Telegram» или «Веб» чтобы скопировать ссылку для соответствующего типа доступа
+              </div>
+              <div className={styles.typeExplanation}>
+                <div className={styles.typeItem}>
+                  <span className={styles.typeIcon}>🌐</span>
+                  <span className={styles.typeText}><strong>Веб-ссылка</strong> — для просмотра в любом браузере</span>
+                </div>
+                <div className={styles.typeItem}>
+                  <span className={styles.typeIcon}>📱</span>
+                  <span className={styles.typeText}><strong>Telegram ссылка</strong> — для редактирования в мини-приложении</span>
+                </div>
               </div>
               <button 
                 onClick={onClose} 
