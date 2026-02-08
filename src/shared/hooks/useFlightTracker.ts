@@ -33,6 +33,26 @@ interface UseFlightTrackerResult {
   setShowShareModal: (show: boolean) => void;
 }
 
+/**
+ * 🔥 Вспомогательная функция: Определяет тип Telegram пользователя
+ */
+const getTelegramUserType = (): 'real_telegram' | 'anonymous_telegram' | 'web_browser' => {
+  const webApp = window.Telegram?.WebApp;
+  
+  if (!webApp) {
+    return 'web_browser';
+  }
+  
+  const hasUserData = !!webApp.initDataUnsafe?.user;
+  const hasUserId = !!webApp.initDataUnsafe?.user?.id;
+  
+  if (hasUserData && hasUserId) {
+    return 'real_telegram';
+  } else {
+    return 'anonymous_telegram';
+  }
+};
+
 export const useFlightTracker = (): UseFlightTrackerResult => {
   const [userName, setUserName] = useState<string>('Гость');
   const [userId, setUserId] = useState<string>('');
@@ -60,7 +80,8 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
           userName: initResult.userName,
           userId: initResult.userId,
           isGuest: initResult.appUser.isGuest,
-          flightsCount: initResult.flights.length
+          flightsCount: initResult.flights.length,
+          userType: getTelegramUserType()
         });
         
         setUserName(initResult.userName);
@@ -154,26 +175,34 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
           flightsCount: ownerData.flights.length
         });
         
-        // Определяем имя для отображения
-        const webApp = window.Telegram?.WebApp;
+        // 🔥 УЛУЧШЕННАЯ ЛОГИКА: Определяем имя для отображения
+        const userType = getTelegramUserType();
         let displayName: string;
         
-        if (webApp?.initDataUnsafe?.user) {
-          // Telegram пользователь в гостевом режиме
-          const tgUser = webApp.initDataUnsafe.user;
-          displayName = tgUser.first_name || 
-                       tgUser.username || 
-                       `Гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
-          
-          console.log('[HOOK] Telegram user in guest mode:', { 
-            first_name: tgUser.first_name,
-            username: tgUser.username,
-            displayName 
-          });
-        } else {
-          // Анонимный пользователь (без Telegram)
-          displayName = `Гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
-          console.log('[HOOK] Anonymous user in guest mode');
+        switch (userType) {
+          case 'real_telegram':
+            // ✅ Реальный Telegram пользователь
+            const tgUser = window.Telegram!.WebApp!.initDataUnsafe!.user!;
+            displayName = tgUser.first_name || tgUser.username || 'Telegram пользователь';
+            console.log('[HOOK] ✅ Real Telegram user joining:', { 
+              first_name: tgUser.first_name,
+              username: tgUser.username,
+              displayName 
+            });
+            break;
+            
+          case 'anonymous_telegram':
+            // ⚠️ Аноним в Telegram WebApp
+            displayName = `Анонимный гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
+            console.log('[HOOK] ⚠️ Anonymous Telegram user joining');
+            break;
+            
+          case 'web_browser':
+          default:
+            // 🌐 Веб-браузер
+            displayName = `Веб-гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
+            console.log('[HOOK] 🌐 Web user joining');
+            break;
         }
         
         // Обновляем состояние
@@ -185,15 +214,14 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
         setOriginCities(ownerData.originCities);
         setDestinationCities(ownerData.destinationCities);
         
-        // Обновляем URL с токеном (только для веб-версии)
-        // В Telegram WebApp URL не меняется
-        if (!window.Telegram?.WebApp) {
+        // 🔥 Обновляем URL только для веб-браузера (не для Telegram)
+        if (userType === 'web_browser') {
           const newUrl = `${window.location.origin}${window.location.pathname}?token=${token}`;
           window.history.pushState({}, '', newUrl);
-          console.log('[HOOK] URL updated with token');
+          console.log('[HOOK] URL updated with token (web only)');
         }
         
-        alert(`✅ Вы успешно присоединились!\nПрава: ${guestUser.permissions === 'edit' ? 'Редактирование' : 'Просмотр'}`);
+        alert(`✅ Вы успешно присоединились!\nПрава: ${guestUser.permissions === 'edit' ? 'Редактирование' : 'Просмотр'}\nРежим: ${userType === 'real_telegram' ? 'Telegram пользователь' : 'Гость'}`);
       } else {
         console.log('[HOOK] Invalid or expired token');
         alert('❌ Неверный или просроченный токен');
@@ -208,57 +236,70 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
 
   // 🔥 ИСПРАВЛЕННАЯ функция выхода из гостевого режима
   const handleLeaveGuestMode = useCallback(() => {
-    console.log('[HOOK] Leaving guest mode...', {
+    console.log('[EXIT] Leaving guest mode...', {
       isGuest: appUser?.isGuest,
-      inTelegramWebApp: !!window.Telegram?.WebApp,
+      userType: getTelegramUserType(),
+      hasTelegramWebApp: !!window.Telegram?.WebApp,
       currentUrl: window.location.href
     });
     
     try {
-      // Проверяем, находимся ли мы в Telegram WebApp
-      const webApp = window.Telegram?.WebApp;
+      // 🔥 КЛЮЧЕВОЕ: Определяем тип пользователя
+      const userType = getTelegramUserType();
       
-      if (webApp && appUser?.isGuest) {
-        // 🔥 СЦЕНАРИЙ 1: Telegram WebApp в гостевом режиме
-        console.log('[HOOK] Telegram WebApp in guest mode - closing...');
-        
-        // Очищаем токен из URL перед закрытием
-        clearTokenFromUrl();
-        
-        // Добавляем небольшую задержку для гарантированного сохранения
-        setTimeout(() => {
-          try {
-            webApp.close();
-            console.log('[HOOK] Telegram WebApp closed');
-          } catch (closeError) {
-            console.error('[HOOK] Failed to close WebApp:', closeError);
-            // Fallback: перезагружаем страницу
+      // 1. Очищаем токен из URL (всегда делаем это)
+      clearTokenFromUrl();
+      
+      // 2. Определяем правильное действие в зависимости от типа пользователя
+      switch (userType) {
+        case 'real_telegram':
+          // ✅ СЦЕНАРИЙ 1: Реальный Telegram пользователь
+          console.log('[EXIT] ✅ Real Telegram user in guest mode - reloading (staying in Mini App)...');
+          
+          // Telegram пользователь должен остаться в Mini App
+          // Просто перезагружаем страницу - он останется авторизованным
+          setTimeout(() => {
             window.location.reload();
-          }
-        }, 50);
-        
-      } else if (webApp && !appUser?.isGuest) {
-        // 🔥 СЦЕНАРИЙ 2: Telegram WebApp, но не в гостевом режиме (владелец)
-        console.log('[HOOK] Telegram WebApp owner - reloading...');
-        window.location.reload();
-        
-      } else if (!webApp && appUser?.isGuest) {
-        // 🔥 СЦЕНАРИЙ 3: Веб-версия в гостевом режиме
-        console.log('[HOOK] Web version in guest mode - redirecting...');
-        clearTokenFromUrl();
-        window.location.href = window.location.origin + window.location.pathname;
-        
-      } else {
-        // 🔥 СЦЕНАРИЙ 4: Веб-версия, не гость (владелец или аноним)
-        console.log('[HOOK] Web version owner/anonymous - redirecting...');
-        window.location.href = window.location.origin + window.location.pathname;
+          }, 100);
+          break;
+          
+        case 'anonymous_telegram':
+          // ⚠️ СЦЕНАРИЙ 2: Аноним в Telegram WebApp
+          console.log('[EXIT] ⚠️ Anonymous Telegram user - closing Mini App...');
+          
+          // Анонимного пользователя закрываем (ему нечего терять)
+          setTimeout(() => {
+            try {
+              window.Telegram!.WebApp!.close();
+            } catch (closeError) {
+              console.error('[EXIT] Failed to close WebApp:', closeError);
+              window.location.reload();
+            }
+          }, 100);
+          break;
+          
+        case 'web_browser':
+          // 🌐 СЦЕНАРИЙ 3: Веб-браузер
+          console.log('[EXIT] 🌐 Web browser - redirecting to main page...');
+          
+          // Веб-версия: редирект на главную без токена
+          setTimeout(() => {
+            window.location.href = window.location.origin + window.location.pathname;
+          }, 100);
+          break;
+          
+        default:
+          // 🔧 СЦЕНАРИЙ 4: Запасной вариант
+          console.log('[EXIT] 🔧 Fallback - reloading...');
+          window.location.reload();
+          break;
       }
       
     } catch (error) {
-      console.error('[HOOK] Error leaving guest mode:', error);
+      console.error('[EXIT] Error leaving guest mode:', error);
       // Аварийный fallback
       clearTokenFromUrl();
-      window.location.href = window.location.origin + window.location.pathname;
+      window.location.reload();
     }
   }, [appUser]);
 

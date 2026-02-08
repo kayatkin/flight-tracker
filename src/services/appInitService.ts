@@ -113,6 +113,35 @@ const convertToTelegramUser = (user: { id: string, first_name: string } | null) 
   };
 };
 
+/**
+ * 🔥 НОВАЯ ФУНКЦИЯ: Определяет, является ли пользователь реальным Telegram пользователем
+ * (а не анонимом в браузере)
+ */
+const isRealTelegramUser = (): boolean => {
+  const webApp = window.Telegram?.WebApp;
+  
+  if (!webApp) {
+    // Нет Telegram WebApp = браузер
+    console.log('[USER CHECK] No Telegram WebApp - browser user');
+    return false;
+  }
+  
+  const hasUserData = !!webApp.initDataUnsafe?.user;
+  const hasUserId = !!webApp.initDataUnsafe?.user?.id;
+  const isAnonymous = !hasUserId;
+  
+  console.log('[USER CHECK] Telegram user analysis:', {
+    hasWebApp: true,
+    hasUserData,
+    hasUserId,
+    isAnonymous,
+    userExists: !!webApp.initDataUnsafe?.user,
+    userId: webApp.initDataUnsafe?.user?.id
+  });
+  
+  return hasUserData && hasUserId && !isAnonymous;
+};
+
 // 🔥 Функция для инициализации гостевого режима
 export const initGuestMode = async (token: string): Promise<GuestInitResult | null> => {
   try {
@@ -245,43 +274,68 @@ export const createAppUser = (
   return ownerUser;
 };
 
-// 🔥 Функция определения текущего пользователя
+// 🔥 УЛУЧШЕННАЯ ФУНКЦИЯ определения текущего пользователя
 const getCurrentUserInfo = (): {
   userId: string;
   userName: string;
   telegramDetected: boolean;
   isAuthenticatedTelegramUser: boolean;
+  userType: 'real_telegram' | 'anonymous_telegram' | 'web_browser';
 } => {
   const webApp = window.Telegram?.WebApp;
   
-  if (webApp?.initDataUnsafe?.user) {
-    // Telegram WebApp с пользователем
-    const tgUser = webApp.initDataUnsafe.user;
+  if (isRealTelegramUser()) {
+    // ✅ Реальный Telegram пользователь (с ID)
+    const tgUser = webApp!.initDataUnsafe!.user!;
     const userId = 'tg_' + tgUser.id;
     const userName = tgUser.first_name || tgUser.username || 'Telegram пользователь';
     
-    console.log('[USER] Current user from Telegram WebApp:', {
+    console.log('[USER] ✅ Real Telegram user detected:', {
       id: userId,
       name: userName,
-      hasStartParam: !!webApp.initDataUnsafe.start_param
+      hasStartParam: !!webApp!.initDataUnsafe!.start_param,
+      userType: 'real_telegram'
     });
     
     return {
       userId,
       userName,
       telegramDetected: true,
-      isAuthenticatedTelegramUser: true
+      isAuthenticatedTelegramUser: true,
+      userType: 'real_telegram'
+    };
+  } else if (webApp) {
+    // ⚠️ Telegram WebApp, но без данных пользователя (аноним)
+    const userId = 'telegram_anon_' + Math.random().toString(36).substr(2, 8);
+    const userName = 'Аноним';
+    
+    console.log('[USER] ⚠️ Anonymous Telegram WebApp user', {
+      userType: 'anonymous_telegram',
+      hasInitData: !!webApp.initData,
+      hasStartParam: !!webApp.initDataUnsafe?.start_param
+    });
+    
+    return {
+      userId,
+      userName,
+      telegramDetected: true,
+      isAuthenticatedTelegramUser: false,
+      userType: 'anonymous_telegram'
     };
   }
   
-  // Fallback: старая логика
-  const { currentUserId, currentUserName, telegramDetected } = initTelegramUser();
+  // 🌐 Нет Telegram WebApp = веб-браузер
+  console.log('[USER] 🌐 Web browser user (not Telegram)', {
+    userType: 'web_browser'
+  });
+  const devUserId = getDevelopmentUserId();
   
   return {
-    userId: currentUserId,
-    userName: currentUserName,
-    telegramDetected,
-    isAuthenticatedTelegramUser: telegramDetected && !currentUserId.includes('anon')
+    userId: devUserId,
+    userName: 'Гость',
+    telegramDetected: false,
+    isAuthenticatedTelegramUser: false,
+    userType: 'web_browser'
   };
 };
 
@@ -336,19 +390,32 @@ export const initializeApp = async (): Promise<AppInitResult> => {
           userId: currentUserId, 
           userName: currentUserName, 
           telegramDetected,
-          isAuthenticatedTelegramUser 
+          isAuthenticatedTelegramUser,
+          userType 
         } = getCurrentUserInfo();
         
-        // 🔥 Определяем имя для отображения
+        // 🔥 КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Определяем имя для отображения
         let displayUserName: string;
-        if (isAuthenticatedTelegramUser) {
-          // Реальный Telegram пользователь в гостевом режиме
-          displayUserName = currentUserName;
-          console.log('[INIT] Showing real Telegram user name:', displayUserName);
-        } else {
-          // Анонимный пользователь или веб-версия
-          displayUserName = `Гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
-          console.log('[INIT] Showing guest name:', displayUserName);
+        
+        switch (userType) {
+          case 'real_telegram':
+            // ✅ Реальный Telegram пользователь
+            displayUserName = currentUserName;
+            console.log('[INIT] ✅ Showing real Telegram user name:', displayUserName);
+            break;
+            
+          case 'anonymous_telegram':
+            // ⚠️ Аноним в Telegram WebApp
+            displayUserName = `Анонимный гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
+            console.log('[INIT] ⚠️ Showing anonymous Telegram guest name:', displayUserName);
+            break;
+            
+          case 'web_browser':
+          default:
+            // 🌐 Веб-браузер
+            displayUserName = `Веб-гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
+            console.log('[INIT] 🌐 Showing web guest name:', displayUserName);
+            break;
         }
         
         // Определяем ID для appUser
@@ -437,6 +504,7 @@ export const debugInitialization = (): void => {
     } : 'No Telegram WebApp',
     url: window.location.href,
     searchParams: window.location.search,
-    hash: window.location.hash
+    hash: window.location.hash,
+    isRealTelegramUser: isRealTelegramUser()
   });
 };
