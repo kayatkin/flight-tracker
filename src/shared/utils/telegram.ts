@@ -20,7 +20,7 @@ export const getTelegramWebApp = (): TelegramWebApp | null => {
   return webApp || null;
 };
 
-export const getTelegramUser = (): {id: string, firstName: string} | null => {
+export const getTelegramUser = (): {id: string, first_name: string} | null => {
   const webApp = getTelegramWebApp();
   
   if (!webApp) {
@@ -34,7 +34,7 @@ export const getTelegramUser = (): {id: string, firstName: string} | null => {
     
     return {
       id: user.id.toString(),
-      firstName: user.first_name || user.username || 'Пользователь'
+      first_name: user.first_name || user.username || 'Пользователь'
     };
   }
   

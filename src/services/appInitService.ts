@@ -147,7 +147,7 @@ export const initTelegramUser = (): {
   
   if (telegramUser) {
     currentUserId = 'tg_' + telegramUser.id;
-    currentUserName = telegramUser.firstName;
+    currentUserName = telegramUser.first_name;
     console.log('[INIT] Using Telegram user:', { 
       id: currentUserId, 
       name: currentUserName 
@@ -194,7 +194,47 @@ export const createAppUser = (
   };
 };
 
-// Основная функция инициализации приложения (ОБНОВЛЕННАЯ)
+// 🔥 Улучшенная функция определения текущего пользователя (особенно в гостевом режиме)
+const getCurrentUserInfo = (): {
+  userId: string;
+  userName: string;
+  telegramDetected: boolean;
+  isAuthenticatedTelegramUser: boolean;
+} => {
+  const webApp = window.Telegram?.WebApp;
+  
+  if (webApp?.initDataUnsafe?.user) {
+    // 🔥 КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Проверяем Telegram WebApp напрямую
+    const tgUser = webApp.initDataUnsafe.user;
+    const userId = 'tg_' + tgUser.id;
+    const userName = tgUser.first_name || tgUser.username || 'Telegram пользователь';
+    
+    console.log('[INIT] Current user from Telegram WebApp:', {
+      id: userId,
+      name: userName,
+      hasStartParam: !!webApp.initDataUnsafe.start_param
+    });
+    
+    return {
+      userId,
+      userName,
+      telegramDetected: true,
+      isAuthenticatedTelegramUser: true
+    };
+  }
+  
+  // 🔥 Если нет Telegram WebApp, используем старую логику
+  const { currentUserId, currentUserName, telegramDetected } = initTelegramUser();
+  
+  return {
+    userId: currentUserId,
+    userName: currentUserName,
+    telegramDetected,
+    isAuthenticatedTelegramUser: telegramDetected && !currentUserId.includes('anon')
+  };
+};
+
+// Основная функция инициализации приложения (УЛУЧШЕННАЯ)
 export const initializeApp = async (): Promise<AppInitResult> => {
   // Защита от повторной инициализации
   if (isInitializing && initializationPromise) {
@@ -209,11 +249,18 @@ export const initializeApp = async (): Promise<AppInitResult> => {
   
   // Создаем промис один раз
   initializationPromise = (async () => {
-    // Ждем немного для загрузки Telegram WebApp
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // 🔥 УВЕЛИЧИВАЕМ время ожидания для загрузки Telegram WebApp
+    await new Promise(resolve => setTimeout(resolve, 300));
     
     // Проверяем токен в URL (обновленная функция)
     const token = getTokenFromUrl();
+    
+    console.log('[INIT DEBUG] Token check:', {
+      token,
+      hasTelegramWebApp: !!window.Telegram?.WebApp,
+      startParam: window.Telegram?.WebApp?.initDataUnsafe?.start_param,
+      user: window.Telegram?.WebApp?.initDataUnsafe?.user
+    });
     
     if (token) {
       const guestResult = await initGuestMode(token);
@@ -231,26 +278,29 @@ export const initializeApp = async (): Promise<AppInitResult> => {
         });
         // ========== ОПРЕДЕЛЯЕМ ТИП ДОСТУПА ==========
         
-        // 🔥 КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Получаем имя ТЕКУЩЕГО пользователя
-        const { currentUserId, currentUserName, telegramDetected } = initTelegramUser();
+        // 🔥 КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Используем улучшенную функцию определения пользователя
+        const { 
+          userId: currentUserId, 
+          userName: currentUserName, 
+          telegramDetected,
+          isAuthenticatedTelegramUser 
+        } = getCurrentUserInfo();
         
         // 🔥 Определяем, какое имя показывать в приветствии:
-        // 1. Если пользователь аутентифицирован в Telegram - показываем его реальное имя
-        // 2. Если нет (аноним) - показываем "Гость (права)"
         let displayUserName: string;
-        if (telegramDetected && !currentUserId.includes('anon') && currentUserId !== getDevelopmentUserId()) {
-          // Реальный Telegram пользователь (не аноним, не разработчик)
+        if (isAuthenticatedTelegramUser) {
+          // Реальный Telegram пользователь
           displayUserName = currentUserName;
-          console.log('[INIT] Showing real Telegram user name:', displayUserName);
+          console.log('[INIT] Showing real Telegram user name in guest mode:', displayUserName);
         } else {
-          // Анонимный пользователь, разработчик или ошибка
+          // Анонимный пользователь, разработчик или не в Telegram
           displayUserName = `Гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
-          console.log('[INIT] Showing guest name:', displayUserName);
+          console.log('[INIT] Showing guest name (not authenticated):', displayUserName);
         }
         
         // 🔥 Определяем ID для appUser
         // Для Telegram пользователя используем его ID, для анонима - гостевой ID
-        const appUserId = telegramDetected && !currentUserId.includes('anon') 
+        const appUserId = isAuthenticatedTelegramUser 
           ? currentUserId 
           : `guest_${Date.now()}`;
         
@@ -330,6 +380,11 @@ export const debugInitialization = (): void => {
     inTelegramWebApp: isInTelegramWebApp(),
     inTelegramDirectWebApp: isInTelegramDirectWebApp(),
     tokenFromTelegram: getTokenFromTelegramStartParam(),
+    telegramWebApp: window.Telegram?.WebApp ? {
+      hasInitData: !!window.Telegram.WebApp.initData,
+      startParam: window.Telegram.WebApp.initDataUnsafe?.start_param,
+      user: window.Telegram.WebApp.initDataUnsafe?.user
+    } : 'No Telegram WebApp',
     url: window.location.href,
     searchParams: window.location.search,
     hash: window.location.hash

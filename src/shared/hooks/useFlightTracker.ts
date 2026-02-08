@@ -136,7 +136,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
                        tgUser.username || 
                        `Гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
           console.log('[JOIN] Telegram user in guest mode:', { 
-            firstName: tgUser.first_name,
+            first_name: tgUser.first_name,
             username: tgUser.username,
             displayName 
           });

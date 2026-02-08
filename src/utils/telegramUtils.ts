@@ -84,30 +84,84 @@ export const redirectToTelegramForEdit = (token: string): void => {
 export const getTokenFromTelegramStartParam = (): string | null => {
   if (typeof window === 'undefined') return null;
   
-  // Проверяем параметры URL
-  const urlParams = new URLSearchParams(window.location.search);
-  let startParam = urlParams.get('tgWebAppStartParam');
+  console.log('[TELEGRAM DEBUG] Location analysis:', {
+    href: window.location.href,
+    search: window.location.search,
+    hash: window.location.hash,
+    hasTelegramWebApp: !!window.Telegram?.WebApp,
+    startParam: window.Telegram?.WebApp?.initDataUnsafe?.start_param
+  });
   
-  // Если не нашли в query params, проверяем hash
-  if (!startParam && window.location.hash) {
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    startParam = hashParams.get('tgWebAppStartParam');
+  // 🔥 ПРИОРИТЕТ 1: Проверяем Telegram WebApp SDK (самый надежный способ)
+  const webApp = window.Telegram?.WebApp;
+  if (webApp?.initDataUnsafe?.start_param) {
+    const startParam = webApp.initDataUnsafe.start_param;
+    if (startParam && startParam.startsWith('share_')) {
+      const token = startParam.replace('share_', '');
+      console.log('[TELEGRAM] Found token from WebApp SDK start_param:', token);
+      return token;
+    }
   }
   
-  // Обрабатываем параметр startapp
-  if (startParam && startParam.startsWith('share_')) {
-    const token = startParam.replace('share_', '');
-    console.log('[TELEGRAM] Found token from start param:', token);
+  // 🔥 ПРИОРИТЕТ 2: Проверяем обычный токен в query параметрах (для тестирования)
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryToken = urlParams.get('token');
+  if (queryToken) {
+    console.log('[TELEGRAM] Found token from query params (token):', queryToken);
+    return queryToken;
+  }
+  
+  // 🔥 ПРИОРИТЕТ 3: Проверяем startapp параметр в query (новый формат)
+  const queryStartParam = urlParams.get('tgWebAppStartParam');
+  if (queryStartParam && queryStartParam.startsWith('share_')) {
+    const token = queryStartParam.replace('share_', '');
+    console.log('[TELEGRAM] Found token from query params (tgWebAppStartParam):', token);
     return token;
   }
   
-  // Также проверяем обычный токен в URL (для совместимости)
-  const regularToken = urlParams.get('token');
-  if (regularToken) {
-    console.log('[TELEGRAM] Found regular token from URL:', regularToken);
-    return regularToken;
+  // 🔥 ПРИОРИТЕТ 4: Проверяем hash параметры (Telegram WebApp иногда помещает параметры в hash)
+  if (window.location.hash) {
+    const hash = window.location.hash.substring(1);
+    console.log('[TELEGRAM] Hash analysis:', hash);
+    
+    // Пытаемся парсить как query строку в hash
+    try {
+      const hashParams = new URLSearchParams(hash);
+      const hashStartParam = hashParams.get('tgWebAppStartParam');
+      if (hashStartParam && hashStartParam.startsWith('share_')) {
+        const token = hashStartParam.replace('share_', '');
+        console.log('[TELEGRAM] Found token from hash params:', token);
+        return token;
+      }
+    } catch (err) {
+      console.log('[TELEGRAM] Hash is not a query string, trying direct match');
+    }
+    
+    // Если hash напрямую содержит токен
+    if (hash.startsWith('share_')) {
+      const token = hash.replace('share_', '');
+      console.log('[TELEGRAM] Found token directly in hash:', token);
+      return token;
+    }
   }
   
+  // 🔥 ПРИОРИТЕТ 5: Проверяем initData строку (если есть)
+  if (webApp?.initData) {
+    try {
+      // initData может быть строкой параметров
+      const initDataParams = new URLSearchParams(webApp.initData);
+      const initDataStartParam = initDataParams.get('start_param');
+      if (initDataStartParam && initDataStartParam.startsWith('share_')) {
+        const token = initDataStartParam.replace('share_', '');
+        console.log('[TELEGRAM] Found token from initData params:', token);
+        return token;
+      }
+    } catch (err) {
+      console.log('[TELEGRAM] Could not parse initData:', err);
+    }
+  }
+  
+  console.log('[TELEGRAM] No token found in Telegram start params');
   return null;
 };
 
@@ -116,7 +170,17 @@ export const getTokenFromTelegramStartParam = (): string | null => {
  * (через startapp параметр)
  */
 export const isInTelegramDirectWebApp = (): boolean => {
-  return !!getTokenFromTelegramStartParam();
+  const hasToken = !!getTokenFromTelegramStartParam();
+  const inTelegram = !!window.Telegram?.WebApp;
+  
+  console.log('[TELEGRAM DEBUG] isInTelegramDirectWebApp:', {
+    hasToken,
+    inTelegram,
+    startParam: window.Telegram?.WebApp?.initDataUnsafe?.start_param
+  });
+  
+  // Если есть токен И мы в Telegram WebApp - это прямое открытие
+  return hasToken && inTelegram;
 };
 
 /**
