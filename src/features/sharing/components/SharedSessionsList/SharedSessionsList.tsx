@@ -135,9 +135,9 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
     [loadSessions, onSessionDeactivated]
   );
 
-  // Копирование токена
+  // 🔥 ИСПРАВЛЕНО: ВСЕГДА копируем Telegram-ссылку
   const copyToken = useCallback(async (token: string) => {
-    const url = `${window.location.origin}${window.location.pathname}?token=${token}`;
+    const url = `https://t.me/my_flight_tracker1_bot?start=${token}`;
     
     try {
       await navigator.clipboard.writeText(url);
@@ -402,7 +402,7 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
 
             <div className={styles.footer}>
               <div className={styles.hint}>
-                💡 Нажмите «Ссылка» чтобы скопировать, «Отозвать» чтобы отозвать доступ
+                💡 Нажмите «Ссылка» чтобы скопировать универсальную ссылку для Telegram и браузера
               </div>
               <button 
                 onClick={onClose} 
