@@ -56,7 +56,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
       } else {
         // Веб-ссылка для просмотра
         url = `${window.location.origin}${window.location.pathname}?token=${token}`;
-        urlDescription = 'Веб-ссылка для просмотра (работает в любом браузере)';
+        urlDescription = 'Web-ссылка для просмотра (работает в любом браузере)';
       }
       
       setShareUrl(url);
@@ -121,7 +121,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
             <div className={styles.hintBox}>
               <p>Создайте ссылку, чтобы поделиться историей с друзьями</p>
               <p className={styles.hintSubtext}>
-                Вы можете дать права только на просмотр или разрешить редактирование
+                Вы можете дать права только на просмотр или разрешить просмотр и редактирование
               </p>
             </div>
             
@@ -138,7 +138,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                   />
                   👁️ Только просмотр
                   <span className={styles.radioDescription}>
-                    Гость сможет просматривать вашу историю в любом браузере
+                    Гость сможет просматривать вашу историю в браузере или через Telegram WebApp
                   </span>
                 </label>
                 <label className={styles.radioLabel}>
@@ -151,7 +151,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                   />
                   ✏️ Просмотр и редактирование
                   <span className={styles.radioDescription}>
-                    Гость сможет редактировать историю через Telegram WebApp
+                    Гость сможет просматривать и редактировать Вашу историю через Telegram WebApp
                   </span>
                 </label>
               </div>
@@ -217,16 +217,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
               <div className={styles.infoRow}>
                 <span className={styles.infoIcon}>📋</span>
                 <div>
-                  <strong>Как использовать:</strong> Отправьте эту ссылку тому, с кем хотите поделиться.
-                  {permissions === 'edit' ? (
-                    <div style={{ fontSize: '13px', color: '#0a58ca', marginTop: '4px' }}>
-                      🔗 Получатель должен открыть её в Telegram
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: '13px', color: '#0a58ca', marginTop: '4px' }}>
-                      🌐 Работает в любом браузере (Chrome, Safari, Firefox)
-                    </div>
-                  )}
+                  <strong>Как использовать:</strong> Отправьте эту ссылку тому, с кем хотите поделиться своей историей.
                 </div>
               </div>
             </div>
@@ -234,8 +225,8 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
             <div className={styles.urlContainer}>
               <div className={styles.urlLabel}>
                 {permissions === 'edit' 
-                  ? 'Telegram ссылка для редактирования:' 
-                  : 'Веб-ссылка для просмотра:'}
+                  ? 'Telegram ссылка для просмотра и редактирования:' 
+                  : 'Web-ссылка для просмотра:'}
               </div>
               <input
                 type="text"
@@ -252,7 +243,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
             {permissions === 'edit' && (
               <div className={styles.telegramHint}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '10px' }}>
-                  <span style={{ fontSize: '18px' }}>ℹ️</span>
+                  <span style={{ fontSize: '18px' }}>📱</span>
                   <div>
                     <strong>Как открыть ссылку в Telegram:</strong>
                     <ol style={{ margin: '8px 0 0 0', paddingLeft: '20px' }}>
@@ -263,9 +254,6 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                     </ol>
                   </div>
                 </div>
-                <p style={{ margin: '0', fontSize: '13px', color: '#666', fontStyle: 'italic' }}>
-                  ⚡ Бот не должен быть запущен — ссылка работает автономно
-                </p>
               </div>
             )}
 
@@ -274,26 +262,32 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '10px' }}>
                   <span style={{ fontSize: '18px' }}>🌐</span>
                   <div>
-                    <strong>Как открыть веб-ссылку:</strong>
+                    <strong>Как открыть в браузере:</strong>
                     <ol style={{ margin: '8px 0 0 0', paddingLeft: '20px' }}>
                       <li>Скопируйте ссылку выше</li>
                       <li>Откройте в любом браузере</li>
-                      <li>Нажмите «Открыть» в появившемся окне</li>
                       <li>Начнется просмотр истории в гостевом режиме</li>
                     </ol>
                   </div>
                 </div>
-                <p style={{ margin: '0', fontSize: '13px', color: '#666', fontStyle: 'italic' }}>
-                  ✅ Работает на компьютере и телефоне без Telegram
-                </p>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '18px' }}>📱</span>
+                  <div>
+                    <strong>Как открыть в Telegram:</strong>
+                    <ol style={{ margin: '8px 0 0 0', paddingLeft: '20px' }}>
+                      <li>Скопируйте ссылку выше</li>
+                      <li>Откройте мини-приложение</li>
+                      <li>Вставьте ссылку в разделе "Присоединиться"</li>
+                      <li>Начнется просмотр истории в гостевом режиме</li>
+                    </ol>
+                  </div>
+                </div>
               </div>
             )}
 
             <div className={styles.finalHint}>
-              <p>⚠️ <strong>Важно:</strong> Эта ссылка предоставляет доступ к вашей истории перелетов.</p>
-              <p>Делитесь ей только с теми, кому доверяете.</p>
+              <p>⚠️ <strong>Важно:</strong> Эта ссылка предоставляет доступ к Вашей истории перелетов. Делитесь ей только с теми, кому доверяете.</p>
             </div>
-
             <div className={styles.buttonGroup}>
               <button onClick={deactivateLink} className={styles.deactivateButton}>
                 🔒 Отозвать доступ

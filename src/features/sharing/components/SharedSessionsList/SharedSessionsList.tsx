@@ -337,13 +337,13 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
                             data-permission={session.permissions}
                             aria-label={
                               session.permissions === 'view'
-                                ? 'Только просмотр (веб-ссылка)'
-                                : 'Редактирование (Telegram ссылка)'
+                                ? 'Только просмотр (Web-ссылка)'
+                                : 'Редактирование (Telegram-ссылка)'
                             }
                           >
                             {session.permissions === 'view' 
-                              ? '👁️ Просмотр (веб)' 
-                              : '✏️ Редактирование (Telegram)'}
+                              ? '👁️ Просмотр' 
+                              : '✏️ Редактирование'}
                           </div>
                           <div 
                             className={`${styles.status} ${status.className}`}
@@ -377,16 +377,16 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
                             aria-label={
                               isTokenCopied 
                                 ? 'Ссылка скопирована' 
-                                : `Копировать ${session.permissions === 'edit' ? 'Telegram' : 'веб'} ссылку`
+                                : `Копировать ${session.permissions === 'edit' ? 'Telegram' : 'Web'} ссылку`
                             }
                             disabled={!session.is_active}
                             aria-disabled={!session.is_active}
                             title={isTokenCopied 
                               ? 'Скопировано!' 
-                              : `Копировать ${session.permissions === 'edit' ? 'Telegram ссылку для редактирования' : 'веб-ссылку для просмотра'}`}
+                              : `Копировать ${session.permissions === 'edit' ? 'Telegram ссылку для редактирования' : 'Web-ссылку для просмотра'}`}
                           >
                             {isTokenCopied ? '✓ Скопировано' : 
-                              session.permissions === 'edit' ? '📱 Telegram' : '🌐 Веб'}
+                              session.permissions === 'edit' ? '📱 Telegram' : '🌐 Web'}
                           </button>
                           <button
                             onClick={() => deactivateSession(session.id, session.token)}
@@ -412,8 +412,8 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
                         <div className={styles.linkTypeHint}>
                           <small>
                             {session.permissions === 'view' 
-                              ? '🌐 Открывается в браузере' 
-                              : '📱 Открывается в Telegram'}
+                              ? '🌐 Web-ссылка для просмотра в любом браузере' 
+                              : '📱 Telegram-ссылка для редактирования в мини-приложении'}
                           </small>
                         </div>
                       </div>
@@ -425,17 +425,7 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
 
             <div className={styles.footer}>
               <div className={styles.hint}>
-                💡 Нажмите «Telegram» или «Веб» чтобы скопировать ссылку для соответствующего типа доступа
-              </div>
-              <div className={styles.typeExplanation}>
-                <div className={styles.typeItem}>
-                  <span className={styles.typeIcon}>🌐</span>
-                  <span className={styles.typeText}><strong>Веб-ссылка</strong> — для просмотра в любом браузере</span>
-                </div>
-                <div className={styles.typeItem}>
-                  <span className={styles.typeIcon}>📱</span>
-                  <span className={styles.typeText}><strong>Telegram ссылка</strong> — для редактирования в мини-приложении</span>
-                </div>
+                💡 Нажмите «Telegram» или «Web» чтобы скопировать ссылку для соответствующего типа доступа
               </div>
               <button 
                 onClick={onClose} 
