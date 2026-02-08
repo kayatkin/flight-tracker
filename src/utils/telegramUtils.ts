@@ -454,3 +454,71 @@ export const testTelegramLinkFormats = (token: string): string[] => {
     `tg://resolve?domain=${BOT_USERNAME}&start=share_${token}`,
   ];
 };
+
+/**
+ * 🔥 ИСПРАВЛЕННАЯ ФУНКЦИЯ: Получает токен из Telegram WebApp параметров
+ * Специально для ссылок формата: https://t.me/bot?startapp=share_TOKEN
+ */
+export const getTokenFromTelegramStartParamFixed = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  
+  const webApp = window.Telegram?.WebApp;
+  
+  console.log('[TELEGRAM FIXED] Token search started:', {
+    hasWebApp: !!webApp,
+    location: window.location.href,
+    startParam: webApp?.initDataUnsafe?.start_param,
+    startappParam: new URLSearchParams(window.location.search).get('startapp')
+  });
+  
+  // 1. Telegram WebApp SDK - start_param (самый надежный)
+  if (webApp?.initDataUnsafe?.start_param) {
+    const startParam = webApp.initDataUnsafe.start_param;
+    if (startParam && startParam.startsWith('share_')) {
+      const token = startParam.replace('share_', '');
+      console.log('[TELEGRAM FIXED] ✓ Found in start_param:', token);
+      return token;
+    }
+  }
+  
+  // 2. Параметр startapp в query string (новый формат)
+  const urlParams = new URLSearchParams(window.location.search);
+  const startappParam = urlParams.get('startapp');
+  if (startappParam && startappParam.startsWith('share_')) {
+    const token = startappParam.replace('share_', '');
+    console.log('[TELEGRAM FIXED] ✓ Found in startapp param:', token);
+    return token;
+  }
+  
+  // 3. Обычный токен для веб-версии
+  const regularToken = urlParams.get('token');
+  if (regularToken) {
+    console.log('[TELEGRAM FIXED] ✓ Found regular token:', regularToken);
+    return regularToken;
+  }
+  
+  // 4. Telegram иногда помещает параметры в hash
+  if (window.location.hash) {
+    const hash = window.location.hash.substring(1);
+    console.log('[TELEGRAM FIXED] Checking hash:', hash);
+    
+    // Пытаемся извлечь из hash разными способами
+    const patterns = [
+      /token=([^&]+)/,
+      /share_([a-zA-Z0-9]+)/,
+      /startapp=share_([a-zA-Z0-9]+)/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = hash.match(pattern);
+      if (match) {
+        const token = match[1];
+        console.log(`[TELEGRAM FIXED] ✓ Found in hash with pattern ${pattern}:`, token);
+        return token;
+      }
+    }
+  }
+  
+  console.log('[TELEGRAM FIXED] ✗ No token found');
+  return null;
+};
