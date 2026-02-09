@@ -1,0 +1,221 @@
+/* src/features/sharing/components/ShareLinkOptions/ShareLinkOptions.module.css */
+.container {
+    margin: 20px 0;
+  }
+  
+  .optionsSection {
+    padding: 15px;
+    background: #f8fbff;
+    border-radius: 8px;
+    border: 1px solid #e1f0ff;
+    margin-bottom: 15px;
+  }
+  
+  .checkboxLabel {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    color: #2c5282;
+    margin-bottom: 8px;
+  }
+  
+  .checkboxInput {
+    display: none;
+  }
+  
+  .checkboxCustom {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #4299e1;
+    border-radius: 4px;
+    margin-right: 10px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  
+  .checkboxInput:checked + .checkboxCustom {
+    background-color: #4299e1;
+  }
+  
+  .checkboxInput:checked + .checkboxCustom::after {
+    content: '✓';
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  
+  .optionHint {
+    font-size: 13px;
+    color: #666;
+    margin: 5px 0 0 30px;
+    line-height: 1.4;
+  }
+  
+  .previewSection {
+    margin-bottom: 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .previewHeader {
+    background: #f7fafc;
+    padding: 10px 15px;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4a5568;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .previewContent {
+    padding: 15px;
+    background: white;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  .previewText {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #2d3748;
+    white-space: pre-line;
+  }
+  
+  .previewUrl {
+    display: block;
+    background: #f7fafc;
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 10px;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    color: #2d3748;
+    border: 1px dashed #cbd5e0;
+    word-break: break-all;
+  }
+  
+  .actionsSection {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .buttonGroup {
+    display: flex;
+    gap: 10px;
+  }
+  
+  /* Стиль для кнопки, которая занимает всю ширину когда нет secondary кнопки */
+  .copyButtonFull {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+  }
+  
+  .copyButtonFull:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+  
+  .copyButtonSecondary {
+    flex: 1;
+    padding: 14px;
+    background: #f0f0f0;
+    color: #333;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+  }
+  
+  .copyButtonSecondary:hover {
+    background: #e5e5e5;
+    transform: translateY(-2px);
+  }
+  
+  .copyButtonPrimary {
+    flex: 2;
+    padding: 14px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+  }
+  
+  .copyButtonPrimary:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+  
+  .shareNativeButton {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+  }
+  
+  .shareNativeButton:hover {
+    background: linear-gradient(135deg, #2f855a 0%, #276749 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(56, 161, 105, 0.3);
+  }
+  
+  @media (max-width: 768px) {
+    .buttonGroup {
+      flex-direction: column;
+    }
+    
+    .copyButtonSecondary,
+    .copyButtonPrimary,
+    .copyButtonFull {
+      width: 100%;
+    }
+    
+    .copyButtonFull {
+      flex: none;
+    }
+  }

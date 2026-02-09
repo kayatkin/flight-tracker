@@ -1,6 +1,7 @@
 // src/features/sharing/components/ShareFlightModal/ShareFlightModal.tsx
 import React, { useState } from 'react';
 import { supabase } from '@shared/lib';
+import ShareLinkOptions from '../ShareLinkOptions/ShareLinkOptions'; // 🔥 ИМПОРТ
 import styles from './ShareFlightModal.module.css';
 
 interface ShareFlightModalProps {
@@ -45,24 +46,15 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
 
       if (error) throw error;
 
-      // 🔥 КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: РАЗНЫЕ ССЫЛКИ ДЛЯ РАЗНЫХ ПРАВ
       let url: string;
-      let urlDescription: string;
       
       if (permissions === 'edit') {
-        // Telegram ссылка для редактирования
         url = `https://t.me/my_flight_tracker1_bot?startapp=${token}`;
-        urlDescription = 'Telegram ссылка для редактирования';
       } else {
-        // Веб-ссылка для просмотра
         url = `${window.location.origin}${window.location.pathname}?token=${token}`;
-        urlDescription = 'Web-ссылка для просмотра (работает в любом браузере)';
       }
       
       setShareUrl(url);
-      console.log(`🔗 Создана ссылка: ${url}`);
-      console.log(`📝 Описание: ${urlDescription}`);
-      
       setGeneratedToken(token);
       onShareCreated(token);
         
@@ -74,9 +66,13 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
     }
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(shareUrl)
-      .then(() => alert('Ссылка скопирована!'))
+  // 🔥 ОБНОВЛЕННАЯ ФУНКЦИЯ КОПИРОВАНИЯ
+  const handleCopyText = (text: string) => {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        const hasInstructions = text.includes('КАК ОТКРЫТЬ') || text.includes('Привет!');
+        alert(hasInstructions ? 'Ссылка с инструкцией скопирована!' : 'Ссылка скопирована!');
+      })
       .catch(err => console.error('Copy failed:', err));
   };
 
@@ -115,7 +111,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
         
         {!generatedToken ? (
           <>
-            {/* ЭКРАН СОЗДАНИЯ ССЫЛКИ */}
+            {/* ЭКРАН СОЗДАНИЯ ССЫЛКИ - БЕЗ ИЗМЕНЕНИЙ */}
             <h3>📤 Поделиться историей перелетов</h3>
             
             <div className={styles.hintBox}>
@@ -191,7 +187,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
           </>
         ) : (
           <>
-            {/* ЭКРАН СОЗДАННОЙ ССЫЛКИ */}
+            {/* ЭКРАН СОЗДАННОЙ ССЫЛКИ - УПРОЩЕННЫЙ */}
             <div className={styles.successMessage}>
               ✅ Ссылка для совместного доступа создана!
             </div>
@@ -202,7 +198,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                 <div>
                   <strong>Права доступа:</strong> {permissions === 'view' ? 'Только просмотр' : 'Просмотр и редактирование'}
                   {permissions === 'edit' && (
-                    <div style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>
+                    <div className={styles.telegramNote}>
                       📱 Требуется Telegram для редактирования
                     </div>
                   )}
@@ -214,19 +210,14 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                   <strong>Срок действия:</strong> до {formatExpiryDate()}
                 </div>
               </div>
-              <div className={styles.infoRow}>
-                <span className={styles.infoIcon}>📋</span>
-                <div>
-                  <strong>Как использовать:</strong> Отправьте эту ссылку тому, с кем хотите поделиться своей историей.
-                </div>
-              </div>
             </div>
 
+            {/* Отображаем ссылку */}
             <div className={styles.urlContainer}>
               <div className={styles.urlLabel}>
                 {permissions === 'edit' 
-                  ? 'Telegram ссылка для просмотра и редактирования:' 
-                  : 'Web-ссылка для просмотра:'}
+                  ? 'Telegram ссылка:' 
+                  : 'Web-ссылка:'}
               </div>
               <input
                 type="text"
@@ -235,59 +226,21 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                 className={styles.urlInput}
                 onClick={(e) => (e.target as HTMLInputElement).select()}
               />
-              <button onClick={copyToClipboard} className={styles.copyButton}>
-                📋 Копировать ссылку
-              </button>
             </div>
 
-            {permissions === 'edit' && (
-              <div className={styles.telegramHint}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '10px' }}>
-                  <span style={{ fontSize: '18px' }}>📱</span>
-                  <div>
-                    <strong>Как открыть ссылку в Telegram:</strong>
-                    <ol style={{ margin: '8px 0 0 0', paddingLeft: '20px' }}>
-                      <li>Отправьте ссылку в любой чат Telegram</li>
-                      <li>Нажмите на ссылку внутри Telegram</li>
-                      <li>Telegram покажет кнопку «Open» или «Открыть»</li>
-                      <li>Нажмите кнопку → откроется мини-приложение</li>
-                    </ol>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {permissions === 'view' && (
-              <div className={styles.webHint}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '10px' }}>
-                  <span style={{ fontSize: '18px' }}>🌐</span>
-                  <div>
-                    <strong>Как открыть в браузере:</strong>
-                    <ol style={{ margin: '8px 0 0 0', paddingLeft: '20px' }}>
-                      <li>Скопируйте ссылку выше</li>
-                      <li>Откройте в любом браузере</li>
-                      <li>Начнется просмотр истории в гостевом режиме</li>
-                    </ol>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '10px' }}>
-                  <span style={{ fontSize: '18px' }}>📱</span>
-                  <div>
-                    <strong>Как открыть в Telegram:</strong>
-                    <ol style={{ margin: '8px 0 0 0', paddingLeft: '20px' }}>
-                      <li>Скопируйте ссылку выше</li>
-                      <li>Откройте мини-приложение</li>
-                      <li>Вставьте ссылку в разделе "Присоединиться"</li>
-                      <li>Начнется просмотр истории в гостевом режиме</li>
-                    </ol>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* 🔥 ИСПОЛЬЗУЕМ НАШ КОМПОНЕНТ ВМЕСТО СТАРОЙ ЛОГИКИ */}
+            <ShareLinkOptions
+              shareUrl={shareUrl}
+              permissions={permissions}
+              token={generatedToken}
+              onCopy={handleCopyText}
+            />
 
             <div className={styles.finalHint}>
-              <p>⚠️ <strong>Важно:</strong> Эта ссылка предоставляет доступ к Вашей истории перелетов. Делитесь ей только с теми, кому доверяете.</p>
+              <p>📤 <strong>Что делать:</strong> Используйте кнопки выше чтобы скопировать или поделиться ссылкой</p>
+              <p>⚠️ <strong>Важно:</strong> Делитесь ссылкой только с теми, кому доверяете</p>
             </div>
+
             <div className={styles.buttonGroup}>
               <button onClick={deactivateLink} className={styles.deactivateButton}>
                 🔒 Отозвать доступ
