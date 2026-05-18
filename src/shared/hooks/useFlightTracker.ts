@@ -8,6 +8,9 @@ import {
   clearTokenFromUrl 
 } from '../../services/appInitService';
 import { saveOwnerData, saveGuestData } from '../../services/dataService';
+import { getTelegramUserType } from '../utils/telegramUserType';
+import { toast } from '@shared/ui/Toast';
+import { devLog, logError } from '../utils/logger';
 
 interface UseFlightTrackerResult {
   // Состояния
@@ -31,26 +34,6 @@ interface UseFlightTrackerResult {
   setActiveTab: (tab: 'add' | 'history') => void;
   setShowShareModal: (show: boolean) => void;
 }
-
-/**
- * 🔥 Вспомогательная функция: Определяет тип Telegram пользователя
- */
-const getTelegramUserType = (): 'real_telegram' | 'anonymous_telegram' | 'web_browser' => {
-  const webApp = window.Telegram?.WebApp;
-  
-  if (!webApp) {
-    return 'web_browser';
-  }
-  
-  const hasUserData = !!webApp.initDataUnsafe?.user;
-  const hasUserId = !!webApp.initDataUnsafe?.user?.id;
-  
-  if (hasUserData && hasUserId) {
-    return 'real_telegram';
-  } else {
-    return 'anonymous_telegram';
-  }
-};
 
 export const useFlightTracker = (): UseFlightTrackerResult => {
   const [userName, setUserName] = useState<string>('Гость');
@@ -183,16 +166,12 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
         let displayName: string;
         
         switch (userType) {
-          case 'real_telegram':
-            // ✅ Реальный Telegram пользователь
+          case 'real_telegram': {
             const tgUser = window.Telegram!.WebApp!.initDataUnsafe!.user!;
             displayName = tgUser.first_name || tgUser.username || 'Telegram пользователь';
-            console.log('[HOOK] ✅ Real Telegram user joining:', { 
-              first_name: tgUser.first_name,
-              username: tgUser.username,
-              displayName 
-            });
+            devLog('[HOOK] Real Telegram user joining:', displayName);
             break;
+          }
             
           case 'anonymous_telegram':
             // ⚠️ Аноним в Telegram WebApp
@@ -224,14 +203,17 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
           console.log('[HOOK] URL updated with token (web only)');
         }
         
-        alert(`✅ Вы успешно присоединились!\nПрава: ${guestUser.permissions === 'edit' ? 'Редактирование' : 'Просмотр'}\nРежим: ${userType === 'real_telegram' ? 'Telegram пользователь' : 'Гость'}`);
+        toast(
+          `Вы присоединились. Права: ${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'}`,
+          'success'
+        );
       } else {
-        console.log('[HOOK] Invalid or expired token');
-        alert('❌ Неверный или просроченный токен');
+        devLog('[HOOK] Invalid or expired token');
+        toast('Неверный или просроченный токен', 'error');
       }
     } catch (err) {
-      console.error('[HOOK] Join error:', err);
-      alert('❌ Ошибка при присоединении');
+      logError('[HOOK] Join error:', err);
+      toast('Ошибка при присоединении', 'error');
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Flight } from '@shared/types';
 import { useFlightForm } from '@shared/hooks';
 import { validateFlightForm, validateRoundTripDates, analyzeFlightPrice } from '@shared/utils';
+import { toast } from '@shared/ui/Toast';
 import { PriceAnalysis } from '@features/flights';
 
 // Импортируем все компоненты
@@ -40,7 +41,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
 
     const errors = validateFlightForm(formData);
     if (errors.length > 0) {
-      alert(errors.join('\n'));
+      toast(errors.join('\n'), 'error');
       return;
     }
 
@@ -54,14 +55,14 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
       );
       
       if (!isValidDates) {
-        alert('Дата и время обратного вылета должны быть позже времени прилёта "туда"');
+        toast('Дата и время обратного вылета должны быть позже времени прилёта «туда»', 'warning');
         return;
       }
     }
 
     const priceNum = Number(formData.totalPrice);
     if (!formData.totalPrice || priceNum <= 0) {
-      alert('Укажите корректную стоимость (только цифры, больше 0)');
+      toast('Укажите корректную стоимость (только цифры, больше 0)', 'error');
       return;
     }
 

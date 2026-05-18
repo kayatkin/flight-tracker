@@ -1,0 +1,11 @@
+# Supabase local config — see https://supabase.com/docs/guides/cli/config
+project_id = "flight-tracker"
+
+[api]
+enabled = true
+
+[db]
+major_version = 17
+
+[functions]
+# Edge functions live in supabase/functions/

@@ -1,7 +1,9 @@
 // src/features/sharing/components/ShareFlightModal/ShareFlightModal.tsx
 import React, { useState } from 'react';
-import { supabase } from '@shared/lib';
-import ShareLinkOptions from '../ShareLinkOptions/ShareLinkOptions'; // 🔥 ИМПОРТ
+import { createShareSession, revokeShareSession } from '@services/shareService';
+import { toast } from '@shared/ui/Toast';
+import { logError } from '@shared/utils/logger';
+import ShareLinkOptions from '../ShareLinkOptions/ShareLinkOptions';
 import styles from './ShareFlightModal.module.css';
 
 interface ShareFlightModalProps {
@@ -18,49 +20,25 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
-  const generateToken = () => {
-    return Math.random().toString(36).substring(2, 15) + 
-           Math.random().toString(36).substring(2, 15);
-  };
-
   const createShareLink = async () => {
     try {
       setLoading(true);
       setError('');
       
-      const token = generateToken();
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + expiryDays);
+      const { token, url } = await createShareSession({
+        ownerId: userId,
+        permissions,
+        expiryDays,
+      });
 
-      const { error } = await supabase
-        .from('shared_sessions')
-        .insert({
-          owner_id: userId,
-          token: token,
-          permissions: permissions,
-          expires_at: expiresAt.toISOString(),
-          is_active: true
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      let url: string;
-      
-      if (permissions === 'edit') {
-        url = `https://t.me/my_flight_tracker1_bot?startapp=${token}`;
-      } else {
-        url = `${window.location.origin}${window.location.pathname}?token=${token}`;
-      }
-      
       setShareUrl(url);
       setGeneratedToken(token);
       onShareCreated(token);
         
-    } catch (err: any) {
-      setError(err.message || 'Ошибка при создании ссылки');
-      console.error('Error creating share link:', err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Ошибка при создании ссылки';
+      setError(message);
+      logError('Error creating share link:', err);
     } finally {
       setLoading(false);
     }
@@ -71,9 +49,12 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
     navigator.clipboard.writeText(text)
       .then(() => {
         const hasInstructions = text.includes('КАК ОТКРЫТЬ') || text.includes('Привет!');
-        alert(hasInstructions ? 'Ссылка с инструкцией скопирована!' : 'Ссылка скопирована!');
+        toast(
+          hasInstructions ? 'Ссылка с инструкцией скопирована' : 'Ссылка скопирована',
+          'success'
+        );
       })
-      .catch(err => console.error('Copy failed:', err));
+      .catch((err) => logError('Copy failed:', err));
   };
 
   const deactivateLink = async () => {
@@ -82,16 +63,12 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
     }
 
     try {
-      const { error } = await supabase
-        .from('shared_sessions')
-        .update({ is_active: false })
-        .eq('token', generatedToken);
-
-      if (error) throw error;
-      alert('Доступ успешно отозван');
+      await revokeShareSession(generatedToken);
+      toast('Доступ успешно отозван', 'success');
       onClose();
-    } catch (err: any) {
-      setError(err.message || 'Ошибка при отзыве доступа');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Ошибка при отзыве доступа';
+      setError(message);
     }
   };
 

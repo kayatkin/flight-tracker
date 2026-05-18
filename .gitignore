@@ -76,7 +76,6 @@ pnpm-lock.yaml
 
 # Supabase
 supabase/.env
-supabase/config.toml
 supabase/seed.sql
 supabase-functions/
 supabase-key.txt
@@ -261,7 +260,13 @@ config/*.local.ts
 !package.json
 !README.md
 !tsconfig.json
-!craco.config.js
-!next.config.js
-!vite.config.ts.env.local
+!vite.config.ts
+!index.html
+!eslint.config.mjs
+!docs/
+!scripts/
+!.env.example
+!ARCHITECTURE.md
+!CHANGELOG.md
+!CONTRIBUTING.md
 .env

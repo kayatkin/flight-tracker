@@ -5,6 +5,7 @@ import { ShareFlightModal } from '@features/sharing';
 import { SharedSessionsList } from '@features/sharing';
 import { JoinSessionModal } from '@features/sharing';
 import styles from '../HistoryView.module.css';
+import { toast } from '@shared/ui/Toast';
 
 interface AccessManagementProps {
   flights: Flight[];
@@ -75,7 +76,7 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
                   if (flights.length > 0 && userId) {
                     setShowShareModal(true);
                   } else {
-                    alert('Сначала добавьте хотя бы один перелет, чтобы поделиться историей');
+                    toast('Сначала добавьте хотя бы один перелёт, чтобы поделиться историей', 'warning');
                   }
                 }}
                 className={styles.shareButton}
@@ -101,7 +102,7 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
                     if (flights.length > 0) {
                       setShowSessionsModal(true);
                     } else {
-                      alert('Сначала добавьте хотя бы один перелет, чтобы управлять приглашениями');
+                      toast('Сначала добавьте хотя бы один перелёт', 'warning');
                     }
                   }}
                   className={styles.sessionsListButton}

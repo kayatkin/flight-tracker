@@ -1,17 +1,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';           // Импорт index.css
-import './styles/tokens.css';   // Дополнительный импорт токенов
+import './index.css';
+import './styles/tokens.css';
 import App from './App';
-import reportWebVitals from './reportWebVitals';
+import { ToastProvider } from '@shared/ui/Toast';
 
-const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
-);
-root.render(
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <ToastProvider>
+      <App />
+    </ToastProvider>
   </React.StrictMode>
 );
-
-reportWebVitals();

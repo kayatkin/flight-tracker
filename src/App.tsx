@@ -1,4 +1,4 @@
-// src/App.tsx - ФИНАЛЬНАЯ ВЕРСИЯ ПОСЛЕ РЕФАКТОРИНГА
+// src/App.tsx
 import React, { useState } from 'react';
 import { AddFlightForm } from '@features/flights';
 import { HistoryView } from '@features/flights';
@@ -31,11 +31,6 @@ const App: React.FC = () => {
     handleJoinSession,
     handleLeaveGuestMode,
   } = useFlightTracker();
-
-  // Обработчик создания ссылки
-  const handleShareCreated = (token: string) => {
-    console.log('Share created with token:', token);
-  };
 
   if (loading || isCheckingToken) {
     return (
@@ -72,7 +67,7 @@ const App: React.FC = () => {
         <ShareFlightModal
           userId={appUser.userId}
           onClose={() => setShowShareModal(false)}
-          onShareCreated={handleShareCreated}
+          onShareCreated={() => {}}
         />
       )}
 

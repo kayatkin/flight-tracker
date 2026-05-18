@@ -1,22 +1,27 @@
-import { AppUser, GuestUser, OwnerUser } from '../types/shared';
-import { Flight } from '../types';
+import { AppUser, GuestUser, OwnerUser } from '../shared/types/shared';
+import { Flight } from '../shared/types';
 import { 
   getTelegramWebApp, 
   getTelegramUser, 
   getDevelopmentUserId, 
   initTelegramWebApp,
   applyDefaultTheme 
-} from '../utils';
+} from '../shared/utils';
 // Обновляем импорт для безсерверной версии
 import { 
   isInTelegramWebApp,
   isInTelegramDirectWebApp 
-} from '../utils/telegramUtils';
+} from '../shared/utils/telegramUtils';
 // Импортируем только getTokenFromTelegramStartParam
 import { 
   getTokenFromTelegramStartParam 
 } from '../shared/utils/telegramTokens';
-import { validateToken, loadUserData } from './dataService';
+import { loadUserData } from './dataService';
+import { authenticateGuest, authenticateOwner } from './authService';
+import { generateShortId } from '../shared/utils/id';
+import { isRealTelegramUser } from '../shared/utils/telegramUserType';
+import { clearTokenFromUrl } from '../shared/utils/url';
+import { devLog, logError } from '../shared/utils/logger';
 
 export interface AppInitResult {
   userName: string;
@@ -79,23 +84,7 @@ export const getTokenFromUrl = (): string | null => {
   return null;
 };
 
-// 🔥 Функция для очистки токена из URL
-export const clearTokenFromUrl = (): void => {
-  try {
-    // Сохраняем только pathname, полностью удаляем query и hash
-    const newUrl = window.location.pathname;
-    window.history.replaceState({}, document.title, newUrl);
-    console.log('[URL] ✓ Token cleared from URL');
-  } catch (error) {
-    console.error('[URL] Error clearing token from URL:', error);
-    // Fallback: пробуем очистить только query параметры
-    try {
-      window.history.replaceState({}, '', window.location.pathname + window.location.hash);
-    } catch (fallbackError) {
-      console.error('[URL] Fallback also failed:', fallbackError);
-    }
-  }
-};
+export { clearTokenFromUrl };
 
 // 🔥 Вспомогательная функция для преобразования Telegram пользователя
 const convertToTelegramUser = (user: { id: string, first_name: string } | null) => {
@@ -111,66 +100,24 @@ const convertToTelegramUser = (user: { id: string, first_name: string } | null) 
   };
 };
 
-/**
- * 🔥 НОВАЯ ФУНКЦИЯ: Определяет, является ли пользователь реальным Telegram пользователем
- * (а не анонимом в браузере)
- */
-const isRealTelegramUser = (): boolean => {
-  const webApp = window.Telegram?.WebApp;
-  
-  if (!webApp) {
-    // Нет Telegram WebApp = браузер
-    console.log('[USER CHECK] No Telegram WebApp - browser user');
-    return false;
-  }
-  
-  const hasUserData = !!webApp.initDataUnsafe?.user;
-  const hasUserId = !!webApp.initDataUnsafe?.user?.id;
-  const isAnonymous = !hasUserId;
-  
-  console.log('[USER CHECK] Telegram user analysis:', {
-    hasWebApp: true,
-    hasUserData,
-    hasUserId,
-    isAnonymous,
-    userExists: !!webApp.initDataUnsafe?.user,
-    userId: webApp.initDataUnsafe?.user?.id
-  });
-  
-  return hasUserData && hasUserId && !isAnonymous;
-};
-
 // 🔥 Функция для инициализации гостевого режима
 export const initGuestMode = async (token: string): Promise<GuestInitResult | null> => {
   try {
-    console.log('[GUEST] Initializing guest mode with token:', token);
-    const guestUser = await validateToken(token);
-    
+    devLog('[GUEST] Authenticating share token via Edge Function');
+    const guestUser = await authenticateGuest(token);
+
     if (!guestUser) {
-      console.log('[GUEST] ✗ Invalid token, clearing from URL');
+      devLog('[GUEST] Invalid token, clearing from URL');
       clearTokenFromUrl();
       return null;
     }
-    
-    // 🔥 ПРОВЕРКА ДЛЯ РЕДАКТИРОВАНИЯ — ТОЛЬКО РЕАЛЬНЫЕ TELEGRAM ПОЛЬЗОВАТЕЛИ
-    if (guestUser.permissions === 'edit') {
-      const isRealTelegram = isRealTelegramUser();
-      
-      if (!isRealTelegram) {
-        console.log('[GUEST] Edit permission requires real Telegram user, downgrading to "view"');
-        // 🔥 Понижаем права до "view" вместо редиректа
-        guestUser.permissions = 'view';
-      } else {
-        console.log('[GUEST] ✓ Real Telegram user with edit permission - allowing access');
-      }
-    }
-    
+
     const ownerData = await loadUserData(guestUser.ownerId);
-    console.log('[GUEST] ✓ Guest mode initialized successfully');
-    
+    devLog('[GUEST] Guest mode initialized');
+
     return { guestUser, ownerData };
   } catch (error) {
-    console.error('[GUEST] Guest mode initialization failed:', error);
+    logError('[GUEST] Guest mode initialization failed:', error);
     clearTokenFromUrl();
     return null;
   }
@@ -209,7 +156,7 @@ export const initTelegramUser = (): {
       name: currentUserName 
     });
   } else {
-    currentUserId = 'telegram_anon_' + Math.random().toString(36).substr(2, 8);
+    currentUserId = 'telegram_anon_' + generateShortId(8);
     currentUserName = 'Аноним';
     console.log('[INIT] Using anonymous Telegram user:', currentUserId);
   }
@@ -236,7 +183,7 @@ export const createAppUser = (
     
     // Гостевой пользователь
     const guestUser: GuestUser = {
-      userId: guestData.userId || `guest_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      userId: guestData.userId || `guest_${Date.now()}_${generateShortId(5)}`,
       name: guestData.name || 'Гость',
       isGuest: true,
       sessionToken: guestData.sessionToken || '',
@@ -297,7 +244,7 @@ const getCurrentUserInfo = (): {
     };
   } else if (webApp) {
     // ⚠️ Telegram WebApp, но без данных пользователя (аноним)
-    const userId = 'telegram_anon_' + Math.random().toString(36).substr(2, 8);
+    const userId = 'telegram_anon_' + generateShortId(8);
     const userName = 'Аноним';
     
     console.log('[USER] ⚠️ Anonymous Telegram WebApp user', {
@@ -422,7 +369,7 @@ export const initializeApp = async (): Promise<AppInitResult> => {
         // Определяем ID для appUser
         const appUserId = isAuthenticatedTelegramUser 
           ? currentUserId 
-          : `guest_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+          : `guest_${Date.now()}_${generateShortId(5)}`;
         
         isInitializing = false;
         
@@ -448,21 +395,27 @@ export const initializeApp = async (): Promise<AppInitResult> => {
       console.log('[INIT] Token already processed in this session, skipping guest mode');
     }
     
-    // 🔥 Инициализация для владельца (не гостя)
-    console.log('[INIT] Initializing as owner (not guest)');
-    const { currentUserId, currentUserName, telegramDetected } = initTelegramUser();
-    const userData = await loadUserData(currentUserId);
-    
+    devLog('[INIT] Initializing as owner');
+    const { telegramDetected } = initTelegramUser();
+    const auth = await authenticateOwner();
+
+    if (!auth) {
+      logError('[INIT] Owner authentication failed');
+      isInitializing = false;
+      throw new Error('Authentication required');
+    }
+
+    const userData = await loadUserData(auth.userId);
     isInitializing = false;
-    
+
     return {
-      userName: currentUserName,
-      userId: currentUserId,
-      appUser: createAppUser(currentUserId, currentUserName, false, telegramDetected),
+      userName: auth.userName,
+      userId: auth.userId,
+      appUser: createAppUser(auth.userId, auth.userName, false, telegramDetected),
       flights: userData.flights,
       airlines: userData.airlines,
       originCities: userData.originCities,
-      destinationCities: userData.destinationCities
+      destinationCities: userData.destinationCities,
     };
     
   })();

@@ -8,6 +8,7 @@ import { AccessManagement } from './components/AccessManagement';
 // import { GuestIndicator } from './components/GuestIndicator';
 import { EmptyState } from './components/EmptyState';
 import { groupFlightsByDestination } from './utils/historyViewHelpers';
+import { toast } from '@shared/ui/Toast';
 
 interface HistoryViewProps {
   flights: Flight[];
@@ -48,7 +49,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
     e.stopPropagation();
     
     if (isGuest && guestPermissions === 'view') {
-      alert('У вас нет прав для удаления билетов. Только просмотр.');
+      toast('У вас нет прав для удаления билетов. Только просмотр.', 'warning');
       return;
     }
     

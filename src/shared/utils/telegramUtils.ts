@@ -1,25 +1,25 @@
 /**
- * Проверяет, открыто ли приложение внутри Telegram WebApp
+* Проверяет, открыто ли приложение внутри Telegram WebApp
  */
 export const isInTelegramWebApp = (): boolean => {
   if (typeof window === 'undefined') return false;
-  
+
   // Способ 1: Стандартная проверка через Telegram WebApp SDK
   if (window.Telegram?.WebApp?.initData) {
     return true;
   }
-  
+
   // Способ 2: Проверка параметров URL для прямого открытия WebApp
   const urlParams = new URLSearchParams(window.location.search);
   const tgWebAppStartParam = urlParams.get('tgWebAppStartParam');
-  
+
   // Способ 3: Проверка hash параметров
   let hashStartParam = null;
   if (window.location.hash) {
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     hashStartParam = hashParams.get('tgWebAppStartParam');
   }
-  
+
   return !!(tgWebAppStartParam || hashStartParam);
 };
 
@@ -28,9 +28,9 @@ export const isInTelegramWebApp = (): boolean => {
  */
 export const getTokenFromTelegramStartParamFixed = (): string | null => {
   if (typeof window === 'undefined') return null;
-  
+
   const webApp = window.Telegram?.WebApp;
-  
+
   // 1. start_param (для ?start=...)
   if (webApp?.initDataUnsafe?.start_param) {
     const token = webApp.initDataUnsafe.start_param;
@@ -74,6 +74,6 @@ export const getTokenFromTelegramStartParamFixed = (): string | null => {
 export const isInTelegramDirectWebApp = (): boolean => {
   const hasToken = !!getTokenFromTelegramStartParamFixed();
   const inTelegram = !!window.Telegram?.WebApp;
-  
+
   return hasToken && inTelegram;
 };

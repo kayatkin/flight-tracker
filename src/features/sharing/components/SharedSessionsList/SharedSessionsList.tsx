@@ -7,7 +7,7 @@ import {
   getFilterLabel,
   getFilterDescription,
   type InvitationFilter,
-} from 'shared/lib/i18n/invitations';
+} from '@shared/lib/i18n/invitations';
 import { getDaysText } from '@shared/lib/i18n/pluralize';
 
 interface SharedSessionsListProps {

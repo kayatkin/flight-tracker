@@ -1,7 +1,8 @@
 // src/services/dataService.ts
 import { supabase } from '../lib/supabaseClient';
 import { Flight } from '../shared/types/types';
-import { GuestUser } from '../types/shared';
+import { generateUUID, isValidUUID } from '../shared/utils/id';
+import { devLog, logError } from '../shared/utils/logger';
 
 // Интерфейсы для ответов
 export interface LoadUserDataResult {
@@ -10,21 +11,6 @@ export interface LoadUserDataResult {
   originCities: string[];
   destinationCities: string[];
 }
-
-// Общая функция для генерации UUID
-const generateUUID = (): string => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : ((r & 0x3) | 0x8);
-    return v.toString(16);
-  });
-};
-
-// Функция для проверки валидности UUID
-const isValidUUID = (uuid: string): boolean => {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(uuid);
-};
 
 // 🔥 Новая функция: получение читаемого имени владельца
 const getReadableOwnerName = async (ownerId: string): Promise<string> => {
@@ -40,7 +26,7 @@ const getReadableOwnerName = async (ownerId: string): Promise<string> => {
     
     if (!error && userData?.name) {
       // Нашли имя в таблице users
-      console.log('[TOKEN] Found owner name in users table:', userData.name);
+      devLog('[TOKEN] Found owner name in users table:', userData.name);
       return userData.name;
     }
     
@@ -63,7 +49,7 @@ const getReadableOwnerName = async (ownerId: string): Promise<string> => {
     
   } catch (err) {
     // Если таблицы users нет или ошибка - используем старую логику
-    console.log('[TOKEN] Error getting owner name from users table, using fallback');
+    devLog('[TOKEN] Error getting owner name from users table, using fallback');
     
     if (ownerId.startsWith('tg_')) {
       const numId = ownerId.replace('tg_', '');
@@ -74,58 +60,10 @@ const getReadableOwnerName = async (ownerId: string): Promise<string> => {
   }
 };
 
-// Функция для валидации токена совместного доступа (БЕЗОПАСНАЯ версия)
-export const validateToken = async (token: string): Promise<GuestUser | null> => {
-  try {
-    console.log('[TOKEN] Validating token:', token);
-    
-    // 🔥 ЗАПРОС ОСТАЛСЯ ТАКИМ ЖЕ (безопасно)
-    const { data: session, error } = await supabase
-      .from('shared_sessions')
-      .select('*')
-      .eq('token', token)
-      .eq('is_active', true)
-      .gt('expires_at', new Date().toISOString())
-      .maybeSingle();
-
-    if (error) {
-      console.error('[TOKEN] Validation error:', error);
-      return null;
-    }
-
-    if (!session) {
-      console.log('[TOKEN] No active session found for token');
-      return null;
-    }
-
-    console.log('[TOKEN] Session found:', {
-      owner_id: session.owner_id,
-      permissions: session.permissions,
-      expires_at: session.expires_at
-    });
-
-    // 🔥 УЛУЧШЕННАЯ ЛОГИКА ИМЕН (безопасная)
-    const ownerName = await getReadableOwnerName(session.owner_id);
-
-    return {
-      userId: `guest_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-      name: 'Гость',
-      isGuest: true,
-      sessionToken: token,
-      permissions: session.permissions || 'view', // 🔥 Исправлено: 'read' → 'view'
-      ownerId: session.owner_id,
-      ownerName: ownerName // 🔥 Используем улучшенное имя
-    };
-  } catch (err) {
-    console.error('[TOKEN] Validation crashed:', err);
-    return null;
-  }
-};
-
 // Функция для загрузки данных пользователя/владельца
 export const loadUserData = async (targetUserId: string): Promise<LoadUserDataResult> => {
   try {
-    console.log('[LOAD] Loading data for user_id:', targetUserId);
+    devLog('[LOAD] Loading data for user_id:', targetUserId);
     
     const { data: flightRecords, error } = await supabase
       .from('user_flights')
@@ -134,12 +72,12 @@ export const loadUserData = async (targetUserId: string): Promise<LoadUserDataRe
       .order('departure_date', { ascending: true });
     
     if (error) {
-      console.error('[LOAD] Error loading flights:', error);
+      logError('[LOAD] Error loading flights:', error);
       return { flights: [], airlines: [], originCities: [], destinationCities: [] };
     }
     
     if (flightRecords && flightRecords.length > 0) {
-      console.log('[LOAD] Found', flightRecords.length, 'flight records');
+      devLog('[LOAD] Found', flightRecords.length, 'flight records');
       
       // Преобразуем записи из базы в объекты Flight
       const flights: Flight[] = flightRecords.map(record => {
@@ -189,7 +127,7 @@ export const loadUserData = async (targetUserId: string): Promise<LoadUserDataRe
         }
       });
       
-      console.log('[LOAD] Data converted:', {
+      devLog('[LOAD] Data converted:', {
         flights: flights.length,
         airlines: airlines.length,
         originCities: originCities.length,
@@ -203,11 +141,11 @@ export const loadUserData = async (targetUserId: string): Promise<LoadUserDataRe
         destinationCities
       };
     } else {
-      console.log('[LOAD] No data found for this user');
+      devLog('[LOAD] No data found for this user');
       return { flights: [], airlines: [], originCities: [], destinationCities: [] };
     }
   } catch (err) {
-    console.error('[LOAD] Load crashed:', err);
+    logError('[LOAD] Load crashed:', err);
     return { flights: [], airlines: [], originCities: [], destinationCities: [] };
   }
 };
@@ -221,11 +159,19 @@ export const saveOwnerData = async (
   destinationCities: string[]
 ): Promise<void> => {
   try {
-    console.log('[SAVE] Saving owner data for:', userId, 'flights:', flights.length);
-    
-    // Если нет рейсов - просто выходим
+    devLog('[SAVE] Saving owner data for:', userId, 'flights:', flights.length);
+
     if (flights.length === 0) {
-      console.log('[SAVE] No flights to save');
+      const { error: clearError } = await supabase
+        .from('user_flights')
+        .delete()
+        .eq('user_id', userId);
+
+      if (clearError) {
+        logError('[SAVE] Failed to clear flights:', clearError);
+        throw clearError;
+      }
+      devLog('[SAVE] Cleared all flights for user');
       return;
     }
     
@@ -238,7 +184,7 @@ export const saveOwnerData = async (
       if (!flightId || !isValidUUID(flightId)) {
         // Если ID не валидный UUID, генерируем новый
         flightId = generateUUID();
-        console.log(`[SAVE] Generated UUID for flight: ${flightId} (was: ${flight.id})`);
+        devLog(`[SAVE] Generated UUID for flight: ${flightId} (was: ${flight.id})`);
       }
       
       // Для каждого рейса создаем запись в таблице user_flights
@@ -272,45 +218,31 @@ export const saveOwnerData = async (
       return record;
     });
     
-    // Логирование для отладки
-    console.log('[SAVE DEBUG] Records to insert:', {
-      count: records.length,
-      firstRecordFlightId: records[0]?.flight_id,
-      flightIdType: typeof records[0]?.flight_id,
-      isValidUUID: records[0]?.flight_id ? isValidUUID(records[0].flight_id) : false
-    });
-    
-    // Удаляем старые рейсы пользователя
-    const { error: deleteError } = await supabase
+    devLog('[SAVE] Upserting records:', records.length);
+
+    const { error: upsertError } = await supabase
+      .from('user_flights')
+      .upsert(records, { onConflict: 'flight_id' });
+
+    if (upsertError) {
+      logError('[SAVE] Upsert flights error:', upsertError);
+      throw upsertError;
+    }
+
+    const flightIds = records.map((r) => r.flight_id);
+    const { error: pruneError } = await supabase
       .from('user_flights')
       .delete()
-      .eq('user_id', userId);
-    
-    if (deleteError) {
-      console.warn('[SAVE] Delete old flights warning:', deleteError);
-      // Продолжаем несмотря на ошибку
+      .eq('user_id', userId)
+      .not('flight_id', 'in', `(${flightIds.join(',')})`);
+
+    if (pruneError) {
+      logError('[SAVE] Prune removed flights warning:', pruneError);
     }
-    
-    // Сохраняем новые рейсы
-    const { error: insertError } = await supabase
-      .from('user_flights')
-      .insert(records);
-    
-    if (insertError) {
-      console.error('[SAVE] Insert flights error:', insertError);
-      console.error('[SAVE] Error details:', {
-        code: insertError.code,
-        message: insertError.message,
-        details: insertError.details,
-        hint: insertError.hint
-      });
-      throw insertError;
-    }
-    
-    console.log('[SAVE] Saved', records.length, 'flight records');
-    console.log('[SAVE] Owner data saved successfully');
+
+    devLog('[SAVE] Owner data saved successfully:', records.length, 'records');
   } catch (err) {
-    console.error('[SAVE] Save owner data failed:', err);
+    logError('[SAVE] Save owner data failed:', err);
     throw err;
   }
 };
@@ -321,14 +253,14 @@ export const saveGuestData = async (
   flights: Flight[]
 ): Promise<void> => {
   try {
-    console.log('[SAVE] Saving guest data to owner:', ownerId);
+    devLog('[SAVE] Saving guest data to owner:', ownerId);
     
     // Для гостя просто сохраняем рейсы
     await saveOwnerData(ownerId, flights, [], [], []);
     
-    console.log('[SAVE] Guest data saved to owner');
+    devLog('[SAVE] Guest data saved to owner');
   } catch (err) {
-    console.error('[SAVE] Save guest data failed:', err);
+    logError('[SAVE] Save guest data failed:', err);
     throw err;
   }
 };
@@ -344,7 +276,7 @@ export const getSharedSessionsStats = async (ownerId: string) => {
     if (error) throw error;
 
     const now = new Date();
-    let stats = {
+    const stats = {
       total: 0,
       active: 0,
       expired: 0,
@@ -367,7 +299,7 @@ export const getSharedSessionsStats = async (ownerId: string) => {
 
     return stats;
   } catch (err) {
-    console.error('Error getting session stats:', err);
+    logError('Error getting session stats:', err);
     return { total: 0, active: 0, expired: 0, revoked: 0 };
   }
 };
