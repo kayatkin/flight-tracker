@@ -1,6 +1,8 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AutocompleteInput } from '@shared/ui';
 import { useAutocomplete, FlightFormData } from '@shared/hooks';
+import { getAirlineSuggestions } from '@shared/utils/fieldValidation';
 import styles from './AirlineSection.module.css';
 
 const SUGGESTION_LIMIT = 5;
@@ -12,25 +14,31 @@ interface AirlineSectionProps {
   airlines: string[];
 }
 
-const AirlineSection: React.FC<AirlineSectionProps> = ({
-  formData,
-  updateFormData,
-  airlines
-}) => {
-  const airlineAutocomplete = useAutocomplete(formData.airline, airlines, {
+const AirlineSection: React.FC<AirlineSectionProps> = ({ formData, updateFormData, airlines }) => {
+  const { t } = useTranslation();
+
+  const airlineSource = useMemo(
+    () => [...new Set([...airlines, ...getAirlineSuggestions(formData.airline, airlines, 30)])],
+    [formData.airline, airlines]
+  );
+
+  const airlineAutocomplete = useAutocomplete(formData.airline, airlineSource, {
     delay: AUTOCOMPLETE_DELAY,
     maxSuggestions: SUGGESTION_LIMIT,
   });
 
-  const handleAirlineSelect = useCallback((selected: string) => {
-    updateFormData({ airline: selected });
-    airlineAutocomplete.closeSuggestions();
-  }, [updateFormData, airlineAutocomplete]);
+  const handleAirlineSelect = useCallback(
+    (selected: string) => {
+      updateFormData({ airline: selected });
+      airlineAutocomplete.closeSuggestions();
+    },
+    [updateFormData, airlineAutocomplete]
+  );
 
   return (
     <div className={styles.section}>
-      <h4 className={styles.sectionTitle}>✈️ Авиакомпания</h4>
-      
+      <h4 className={styles.sectionTitle}>✈️ {t('airline.title')}</h4>
+
       <div className={styles.inputContainer}>
         <div className={styles.autocompleteInput}>
           <AutocompleteInput
@@ -40,19 +48,13 @@ const AirlineSection: React.FC<AirlineSectionProps> = ({
             isOpen={airlineAutocomplete.isOpen}
             onSelectSuggestion={handleAirlineSelect}
             onCloseSuggestions={airlineAutocomplete.closeSuggestions}
-            placeholder="Аэрофлот, S7, Победа..."
-            label="Авиакомпания"
+            placeholder={t('airline.placeholder')}
+            label={t('airline.label')}
             hideLabel={true}
             required
-            aria-label="Название авиакомпании"
+            aria-label={t('airline.label')}
           />
         </div>
-        {/* УБИРАЕМ ЭТУ ПОДСКАЗКУ - она избыточна */}
-        {/* 
-        <p className={styles.hint}>
-          Введите название авиакомпании: Аэрофлот, S7, Победа, Utair, Nordwind...
-        </p>
-        */}
       </div>
     </div>
   );

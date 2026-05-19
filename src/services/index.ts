@@ -3,3 +3,4 @@ export * from './dataService';
 export * from './appInitService';
 export * from './shareService';
 export * from './authService';
+export * from './subscriptionService';

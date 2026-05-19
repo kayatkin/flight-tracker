@@ -51,6 +51,26 @@
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.loadingText {
+  font-size: 16px;
+  color: var(--tg-text-color, #000);
+}
+
 .title {
   font-size: 24px;
   font-weight: bold;

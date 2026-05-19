@@ -1,0 +1,22 @@
+.wrapper {
+  display: inline-flex;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--tg-hint, rgba(0, 0, 0, 0.12));
+  background: var(--tg-secondary-bg, #f4f4f5);
+}
+
+.btn {
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--tg-text, #000);
+  cursor: pointer;
+}
+
+.btn.active {
+  background: var(--tg-button-color, #3390ec);
+  color: var(--tg-button-text-color, #fff);
+}

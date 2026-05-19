@@ -1,4 +1,4 @@
-import { analyzeFlightPrice, FlightAnalysis } from '../flightAnalysis';
+import { analyzeFlightPrice } from '../flightAnalysis';
 import { Flight } from '../../types';
 
 const makeFlight = (overrides: Partial<Flight> = {}): Flight => ({
@@ -17,82 +17,71 @@ const makeFlight = (overrides: Partial<Flight> = {}): Flight => ({
 });
 
 describe('analyzeFlightPrice', () => {
-  it('сообщает о первом предложении, если нет существующих рейсов', () => {
+  it('returns first-route key when no existing flights', () => {
     const result = analyzeFlightPrice(makeFlight(), []);
     expect(result.type).toBe('good');
-    expect(result.message).toBe('Первое предложение по этому маршруту! Сохранено.');
+    expect(result.messageKey).toBe('priceAnalysis.firstRoute');
   });
 
-  it('сообщает о первом предложении, если нет сопоставимых рейсов (разные города)', () => {
-    const existing = [
-      makeFlight({ origin: 'Paris', destination: 'London' }),
-    ];
+  it('returns first-route key when no comparable flights (different cities)', () => {
+    const existing = [makeFlight({ origin: 'Paris', destination: 'London' })];
     const result = analyzeFlightPrice(makeFlight(), existing);
     expect(result.type).toBe('good');
+    expect(result.messageKey).toBe('priceAnalysis.firstRoute');
   });
 
-  it('сообщает о первом предложении при разном количестве пассажиров', () => {
-    const existing = [
-      makeFlight({ passengers: 2 }),
-    ];
+  it('returns first-route key for different passenger count', () => {
+    const existing = [makeFlight({ passengers: 2 })];
     const result = analyzeFlightPrice(makeFlight({ passengers: 1 }), existing);
-    expect(result.type).toBe('good');
+    expect(result.messageKey).toBe('priceAnalysis.firstRoute');
   });
 
-  it('сообщает о первом предложении при разном типе рейса', () => {
-    const existing = [
-      makeFlight({ type: 'roundTrip' }),
-    ];
+  it('returns first-route key for different trip type', () => {
+    const existing = [makeFlight({ type: 'roundTrip' })];
     const result = analyzeFlightPrice(makeFlight({ type: 'oneWay' }), existing);
-    expect(result.type).toBe('good');
+    expect(result.messageKey).toBe('priceAnalysis.firstRoute');
   });
 
-  it('находит выгодное предложение (дешевле > 500 ₽)', () => {
-    const existing = [
-      makeFlight({ id: 'old', totalPrice: 20000 }),
-    ];
+  it('detects good deal (cheaper by more than threshold)', () => {
+    const existing = [makeFlight({ id: 'old', totalPrice: 20000 })];
     const result = analyzeFlightPrice(makeFlight({ totalPrice: 15000 }), existing);
     expect(result.type).toBe('good');
     expect(result.diff).toBe(-5000);
-    expect(result.message).toContain('5000');
+    expect(result.messageKey).toBe('priceAnalysis.good');
+    expect(result.messageParams?.amount).toBe(5000);
   });
 
-  it('определяет нейтральную цену (разница в пределах 500 ₽)', () => {
-    const existing = [
-      makeFlight({ id: 'old', totalPrice: 15100 }),
-    ];
+  it('detects neutral price (slightly cheaper)', () => {
+    const existing = [makeFlight({ id: 'old', totalPrice: 15100 })];
     const result = analyzeFlightPrice(makeFlight({ totalPrice: 15000 }), existing);
     expect(result.type).toBe('neutral');
-    expect(result.message).toContain('-100');
+    expect(result.messageKey).toBe('priceAnalysis.neutral');
+    expect(result.messageParams?.diff).toBe(-100);
   });
 
-  it('определяет нейтральную цену (дороже в пределах 500 ₽)', () => {
-    const existing = [
-      makeFlight({ id: 'old', totalPrice: 14000 }),
-    ];
+  it('detects neutral price (slightly more expensive)', () => {
+    const existing = [makeFlight({ id: 'old', totalPrice: 14000 })];
     const result = analyzeFlightPrice(makeFlight({ totalPrice: 14400 }), existing);
     expect(result.type).toBe('neutral');
-    expect(result.message).toContain('+400');
+    expect(result.messageParams?.diff).toBe(400);
   });
 
-  it('находит невыгодное предложение (дороже > 500 ₽)', () => {
-    const existing = [
-      makeFlight({ id: 'old', totalPrice: 10000 }),
-    ];
+  it('detects bad deal (more expensive than threshold)', () => {
+    const existing = [makeFlight({ id: 'old', totalPrice: 10000 })];
     const result = analyzeFlightPrice(makeFlight({ totalPrice: 12000 }), existing);
     expect(result.type).toBe('bad');
     expect(result.diff).toBe(2000);
-    expect(result.message).toContain('2000');
+    expect(result.messageKey).toBe('priceAnalysis.bad');
+    expect(result.messageParams?.amount).toBe(2000);
   });
 
-  it('сравнивает с лучшим из нескольких существующих рейсов', () => {
+  it('compares against the best of multiple existing flights', () => {
     const existing = [
       makeFlight({ id: 'a', totalPrice: 18000 }),
       makeFlight({ id: 'b', totalPrice: 12000 }),
       makeFlight({ id: 'c', totalPrice: 15000 }),
     ];
     const result = analyzeFlightPrice(makeFlight({ totalPrice: 13000 }), existing);
-    // Лучший: 12000, diff = +1000 > 500 => bad
     expect(result.type).toBe('bad');
     expect(result.diff).toBe(1000);
   });

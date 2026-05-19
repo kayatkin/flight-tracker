@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Flight } from '@shared/types';
 import styles from './HistoryView.module.css';
 import { PriceChartModal } from '@features/flights';
@@ -18,6 +19,7 @@ interface HistoryViewProps {
   userId?: string;
   isGuest?: boolean;
   guestPermissions?: 'view' | 'edit';
+  chartsEnabled?: boolean;
 }
 
 const HistoryView: React.FC<HistoryViewProps> = ({ 
@@ -27,8 +29,10 @@ const HistoryView: React.FC<HistoryViewProps> = ({
   onJoin,
   userId,
   isGuest = false,
-  guestPermissions = 'view'
+  guestPermissions = 'view',
+  chartsEnabled = true,
 }) => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeDestination, setActiveDestination] = useState<string | null>(null);
   const [chartDestination, setChartDestination] = useState<string | null>(null);
@@ -44,6 +48,17 @@ const HistoryView: React.FC<HistoryViewProps> = ({
     const term = searchTerm.toLowerCase();
     return allDestinations.filter(dest => dest.toLowerCase().includes(term));
   }, [searchTerm, allDestinations]);
+
+  const handleShowChart = useCallback(
+    (destination: string) => {
+      if (!chartsEnabled) {
+        toast(t('paywall.chartsLocked'), 'warning');
+        return;
+      }
+      setChartDestination(destination);
+    },
+    [chartsEnabled, t]
+  );
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -128,7 +143,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({
                 onToggle={() => setActiveDestination(
                   activeDestination === destination ? null : destination
                 )}
-                onShowChart={() => setChartDestination(destination)}
+                onShowChart={() => handleShowChart(destination)}
+                chartsEnabled={chartsEnabled}
                 onDelete={handleDelete}
               />
             );

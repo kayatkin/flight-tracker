@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Flight } from '@shared/types';
 import { FlightCard } from './FlightCard';
 import { getBestFlight, formatPrice, formatDateToDMY } from '../utils/historyViewHelpers';
@@ -13,6 +14,7 @@ interface DestinationGroupProps {
   onToggle: () => void;
   onShowChart: () => void;
   onDelete: (id: string, e: React.MouseEvent) => void;
+  chartsEnabled?: boolean;
 }
 
 export const DestinationGroup: React.FC<DestinationGroupProps> = ({
@@ -24,7 +26,9 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
   onToggle,
   onShowChart,
   onDelete,
+  chartsEnabled = true,
 }) => {
+  const { t } = useTranslation();
   const bestFlight = getBestFlight(flights);
   const otherFlights = flights
     .filter(f => f.id !== bestFlight.id)
@@ -53,11 +57,15 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
               e.stopPropagation();
               onShowChart();
             }}
-            title="График сезонности цен"
+            title={chartsEnabled ? t('history.chartTitle') : t('paywall.chartsLocked')}
             disabled={flights.length < 2}
-            style={flights.length < 2 ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+            style={
+              flights.length < 2 || !chartsEnabled
+                ? { opacity: 0.5, cursor: flights.length < 2 ? 'not-allowed' : 'pointer' }
+                : {}
+            }
           >
-            📈
+            {chartsEnabled ? '📈' : '🔒'}
           </button>
         </div>
 

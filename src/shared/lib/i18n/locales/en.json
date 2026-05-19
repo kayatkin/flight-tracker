@@ -1,0 +1,60 @@
+{
+  "app": {
+    "title": "Flight Tracker",
+    "loading": "Loading...",
+    "greeting": "Hello, <strong>{{name}}</strong>!"
+  },
+  "language": {
+    "label": "Language",
+    "ru": "Русский",
+    "en": "English"
+  },
+  "tabs": {
+    "add": "Add flight",
+    "addViewOnly": "Add flight",
+    "history": "History"
+  },
+  "route": {
+    "title": "Route",
+    "origin": "Origin city",
+    "destination": "Destination city",
+    "originPlaceholder": "London",
+    "destinationPlaceholder": "Barcelona"
+  },
+  "airline": {
+    "title": "Airline",
+    "label": "Airline",
+    "placeholder": "British Airways, Ryanair..."
+  },
+  "validation": {
+    "originDestinationRequired": "Enter origin and destination cities",
+    "sameOriginDestination": "Origin and destination cannot be the same",
+    "invalidOrigin": "Enter a valid origin (pick from suggestions or your history)",
+    "invalidDestination": "Enter a valid destination (pick from suggestions or your history)",
+    "invalidAirline": "Enter a valid airline name (min. 2 characters)",
+    "departureDateRequired": "Enter departure date",
+    "returnDateRequired": "Enter return date",
+    "invalidPrice": "Enter a valid price (numbers only, greater than 0)",
+    "roundTripDatesInvalid": "Return must be after your arrival on the outbound leg"
+  },
+  "plan": {
+    "free": "Free",
+    "pro": "Pro",
+    "destinationsUsed": "Routes: {{used}} / {{max}}"
+  },
+  "history": {
+    "chartTitle": "Seasonal price chart"
+  },
+  "paywall": {
+    "destinationsLimit": "Free plan allows up to {{max}} routes. Upgrade to Pro for unlimited routes.",
+    "flightsLimit": "Free plan allows up to {{max}} flights. Upgrade to Pro for unlimited storage.",
+    "chartsLocked": "Price charts are available on Pro. Upgrade to unlock seasonal trends."
+  },
+  "priceAnalysis": {
+    "firstRoute": "First offer on this route — saved.",
+    "good": "Great deal! {{amount}} ₽ cheaper than your best price so far.",
+    "neutral": "About the same price ({{diff}} ₽ vs best).",
+    "bad": "{{amount}} ₽ more than your best price — probably not worth it.",
+    "diff": "Difference: {{sign}}{{amount}} ₽"
+  }
+}

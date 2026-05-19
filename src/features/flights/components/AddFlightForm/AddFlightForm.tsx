@@ -1,11 +1,11 @@
 import React, { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Flight } from '@shared/types';
 import { useFlightForm } from '@shared/hooks';
 import { validateFlightForm, validateRoundTripDates, analyzeFlightPrice } from '@shared/utils';
-import { toast } from '@shared/ui/Toast';
 import { PriceAnalysis } from '@features/flights';
+import { toast } from '@shared/ui/Toast';
 
-// Импортируем все компоненты
 import RouteSection from './components/RouteSection/RouteSection';
 import FlightTypeSection from './components/FlightTypeSection/FlightTypeSection';
 import DateTimeSection from './components/DateTimeSection/DateTimeSection';
@@ -25,113 +25,96 @@ interface AddFlightFormProps {
   onNavigateToHistory?: () => void;
 }
 
-const AddFlightForm: React.FC<AddFlightFormProps> = ({ 
-  flights, 
-  airlines, 
-  originCities, 
-  destinationCities, 
+const AddFlightForm: React.FC<AddFlightFormProps> = ({
+  flights,
+  airlines,
+  originCities,
+  destinationCities,
   onAdd,
-  onNavigateToHistory 
+  onNavigateToHistory,
 }) => {
+  const { t } = useTranslation();
   const { formData, updateFormData, createFlightObject } = useFlightForm();
   const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeFlightPrice> | null>(null);
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
 
-    const errors = validateFlightForm(formData);
-    if (errors.length > 0) {
-      toast(errors.join('\n'), 'error');
-      return;
-    }
-
-    if (formData.type === 'roundTrip') {
-      const isValidDates = validateRoundTripDates(
-        formData.departureDate,
-        formData.arrivalTime,
-        formData.arrivalNextDay,
-        formData.returnDate,
-        formData.returnDepartureTime
+      const errorKeys = validateFlightForm(
+        { ...formData, airline: formData.airline },
+        {
+          originHistory: originCities,
+          destinationHistory: destinationCities,
+          airlineHistory: airlines,
+        }
       );
-      
-      if (!isValidDates) {
-        toast('Дата и время обратного вылета должны быть позже времени прилёта «туда»', 'warning');
+
+      if (errorKeys.length > 0) {
+        toast(errorKeys.map((key) => t(key)).join('\n'), 'error');
         return;
       }
-    }
 
-    const priceNum = Number(formData.totalPrice);
-    if (!formData.totalPrice || priceNum <= 0) {
-      toast('Укажите корректную стоимость (только цифры, больше 0)', 'error');
-      return;
-    }
+      if (formData.type === 'roundTrip') {
+        const isValidDates = validateRoundTripDates(
+          formData.departureDate,
+          formData.arrivalTime,
+          formData.arrivalNextDay,
+          formData.returnDate,
+          formData.returnDepartureTime
+        );
 
-    const newFlight = createFlightObject();
-    const priceAnalysis = analyzeFlightPrice(newFlight, flights);
-    setAnalysis(priceAnalysis);
+        if (!isValidDates) {
+          toast(t('validation.roundTripDatesInvalid'), 'warning');
+          return;
+        }
+      }
 
-    onAdd(newFlight);
-    
-    setTimeout(() => {
-      setAnalysis(null);
-      onNavigateToHistory?.();
-    }, 1000);
-  }, [formData, createFlightObject, flights, onAdd, onNavigateToHistory]);
+      const priceNum = Number(formData.totalPrice);
+      if (!formData.totalPrice || priceNum <= 0) {
+        toast(t('validation.invalidPrice'), 'error');
+        return;
+      }
+
+      const newFlight = createFlightObject();
+      const priceAnalysis = analyzeFlightPrice(newFlight, flights);
+      setAnalysis(priceAnalysis);
+
+      onAdd(newFlight);
+
+      setTimeout(() => {
+        setAnalysis(null);
+        onNavigateToHistory?.();
+      }, 1000);
+    },
+    [formData, createFlightObject, flights, onAdd, onNavigateToHistory, originCities, destinationCities, airlines, t]
+  );
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
+      <FlightTypeSection formData={formData} updateFormData={updateFormData} />
       <RouteSection
         formData={formData}
         updateFormData={updateFormData}
         originCities={originCities}
         destinationCities={destinationCities}
       />
-
-      <FlightTypeSection
-        formData={formData}
-        updateFormData={updateFormData}
-      />
-
-      <DateTimeSection
-        formData={formData}
-        updateFormData={updateFormData}
-      />
-
-      <LayoverSection
-        formData={formData}
-        updateFormData={updateFormData}
-      />
-
-      <AirlineSection
-        formData={formData}
-        updateFormData={updateFormData}
-        airlines={airlines}
-      />
-
-      <PassengersSection
-        formData={formData}
-        updateFormData={updateFormData}
-      />
-
-      <PriceSection
-        formData={formData}
-        updateFormData={updateFormData}
-      />
+      <DateTimeSection formData={formData} updateFormData={updateFormData} />
+      <LayoverSection formData={formData} updateFormData={updateFormData} />
+      <AirlineSection formData={formData} updateFormData={updateFormData} airlines={airlines} />
+      <PassengersSection formData={formData} updateFormData={updateFormData} />
+      <PriceSection formData={formData} updateFormData={updateFormData} />
 
       {analysis && (
         <PriceAnalysis
           type={analysis.type}
-          message={analysis.message}
+          message={t(analysis.messageKey, analysis.messageParams)}
           diff={analysis.diff}
         />
       )}
 
-      <button 
-        type="submit" 
-        className={styles.submitButton}
-        aria-label="Сохранить билет"
-      >
-        💼 Сохранить билет
+      <button type="submit" className={styles.submitButton}>
+        {t('tabs.add')}
       </button>
     </form>
   );

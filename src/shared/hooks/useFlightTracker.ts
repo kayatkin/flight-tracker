@@ -8,8 +8,13 @@ import {
   clearTokenFromUrl 
 } from '../../services/appInitService';
 import { saveOwnerData, saveGuestData } from '../../services/dataService';
+import { fetchUserSubscription } from '../../services/subscriptionService';
+import type { PlanId } from '@shared/constants/subscription';
+import { PLAN_LIMITS } from '@shared/constants/subscription';
+import { canAddFlightForPlan } from '../utils/subscriptionLimits';
 import { getTelegramUserType } from '../utils/telegramUserType';
 import { toast } from '@shared/ui/Toast';
+import i18n from '@shared/lib/i18n/config';
 import { devLog, logError } from '../utils/logger';
 
 interface UseFlightTrackerResult {
@@ -23,6 +28,8 @@ interface UseFlightTrackerResult {
   destinationCities: string[];
   loading: boolean;
   isCheckingToken: boolean;
+  plan: PlanId;
+  chartsEnabled: boolean;
   
   // Обработчики
   handleAddFlight: (flight: Flight) => void;
@@ -45,6 +52,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
   const [destinationCities, setDestinationCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCheckingToken, setIsCheckingToken] = useState<boolean>(true);
+  const [plan, setPlan] = useState<PlanId>('free');
   
   // Заглушка для setShowShareModal (реализация в App.tsx)
   const setShowShareModal = useCallback((_show: boolean) => {
@@ -73,6 +81,13 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
         setAirlines(initResult.airlines);
         setOriginCities(initResult.originCities);
         setDestinationCities(initResult.destinationCities);
+
+        if (!initResult.appUser.isGuest) {
+          const subscription = await fetchUserSubscription(initResult.userId);
+          setPlan(subscription.plan);
+        } else {
+          setPlan('free');
+        }
       } catch (err) {
         console.error('[HOOK] App initialization failed:', err);
         const fallbackResult = getFallbackInitResult(err);
@@ -123,6 +138,21 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
 
   // Обработчики
   const handleAddFlight = useCallback((newFlight: Flight) => {
+    if (appUser && !appUser.isGuest) {
+      const check = canAddFlightForPlan(plan, flights, newFlight);
+      if (!check.ok) {
+        if (check.reason === 'destinations') {
+          toast(
+            i18n.t('paywall.destinationsLimit', { max: PLAN_LIMITS.free.maxDestinations }),
+            'warning'
+          );
+        } else {
+          toast(i18n.t('paywall.flightsLimit', { max: PLAN_LIMITS.free.maxFlights }), 'warning');
+        }
+        return;
+      }
+    }
+
     console.log('[HOOK] Adding flight:', newFlight);
     setFlights(prev => [...prev, newFlight]);
     
@@ -135,7 +165,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     if (newFlight.destination && !destinationCities.includes(newFlight.destination)) {
       setDestinationCities(prev => [...prev, newFlight.destination]);
     }
-  }, [airlines, originCities, destinationCities]);
+  }, [airlines, originCities, destinationCities, appUser, plan, flights]);
 
   const handleDeleteFlight = useCallback((id: string) => {
     console.log('[HOOK] Deleting flight:', id);
@@ -299,6 +329,8 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     destinationCities,
     loading,
     isCheckingToken,
+    plan,
+    chartsEnabled: PLAN_LIMITS[plan].chartsEnabled,
     
     // Обработчики
     handleAddFlight,

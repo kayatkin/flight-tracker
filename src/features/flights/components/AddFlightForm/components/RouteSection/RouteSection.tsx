@@ -1,9 +1,10 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AutocompleteInput } from '@shared/ui';
 import { useAutocomplete, FlightFormData } from '@shared/hooks';
+import { getCitySuggestions } from '@shared/utils/fieldValidation';
 import styles from './RouteSection.module.css';
 
-// Константы можно вынести в отдельный файл или оставить здесь
 const SUGGESTION_LIMIT = 5;
 const AUTOCOMPLETE_DELAY = 150;
 
@@ -18,36 +19,56 @@ const RouteSection: React.FC<RouteSectionProps> = ({
   formData,
   updateFormData,
   originCities,
-  destinationCities
+  destinationCities,
 }) => {
-  // Автодополнение для города вылета
-  const originAutocomplete = useAutocomplete(formData.origin, originCities, {
+  const { t } = useTranslation();
+
+  const originSource = useMemo(
+    () => [...new Set([...originCities, ...getCitySuggestions(formData.origin, originCities, 30)])],
+    [formData.origin, originCities]
+  );
+
+  const destinationSource = useMemo(
+    () => [
+      ...new Set([
+        ...destinationCities,
+        ...getCitySuggestions(formData.destination, destinationCities, 30),
+      ]),
+    ],
+    [formData.destination, destinationCities]
+  );
+
+  const originAutocomplete = useAutocomplete(formData.origin, originSource, {
     delay: AUTOCOMPLETE_DELAY,
     maxSuggestions: SUGGESTION_LIMIT,
   });
 
-  // Автодополнение для города назначения
-  const destinationAutocomplete = useAutocomplete(formData.destination, destinationCities, {
+  const destinationAutocomplete = useAutocomplete(formData.destination, destinationSource, {
     delay: AUTOCOMPLETE_DELAY,
     maxSuggestions: SUGGESTION_LIMIT,
   });
 
-  const handleOriginSelect = useCallback((selected: string) => {
-    updateFormData({ origin: selected });
-    originAutocomplete.closeSuggestions();
-  }, [updateFormData, originAutocomplete]);
+  const handleOriginSelect = useCallback(
+    (selected: string) => {
+      updateFormData({ origin: selected });
+      originAutocomplete.closeSuggestions();
+    },
+    [updateFormData, originAutocomplete]
+  );
 
-  const handleDestinationSelect = useCallback((selected: string) => {
-    updateFormData({ destination: selected });
-    destinationAutocomplete.closeSuggestions();
-  }, [updateFormData, destinationAutocomplete]);
+  const handleDestinationSelect = useCallback(
+    (selected: string) => {
+      updateFormData({ destination: selected });
+      destinationAutocomplete.closeSuggestions();
+    },
+    [updateFormData, destinationAutocomplete]
+  );
 
   return (
     <div className={styles.section}>
-      <h4 className={styles.sectionTitle}>📍 Маршрут</h4>
-      
+      <h4 className={styles.sectionTitle}>📍 {t('route.title')}</h4>
+
       <div className={styles.inputsContainer}>
-        {/* Обертка с классом для первого автодополнения */}
         <div className={styles.autocompleteInput}>
           <AutocompleteInput
             value={formData.origin}
@@ -56,14 +77,13 @@ const RouteSection: React.FC<RouteSectionProps> = ({
             isOpen={originAutocomplete.isOpen}
             onSelectSuggestion={handleOriginSelect}
             onCloseSuggestions={originAutocomplete.closeSuggestions}
-            placeholder="Москва"
-            label="Город вылета"
+            placeholder={t('route.originPlaceholder')}
+            label={t('route.origin')}
             required
-            aria-label="Город вылета"
+            aria-label={t('route.origin')}
           />
         </div>
 
-        {/* Обертка с классом для второго автодополнения */}
         <div className={styles.autocompleteInput}>
           <AutocompleteInput
             value={formData.destination}
@@ -72,10 +92,10 @@ const RouteSection: React.FC<RouteSectionProps> = ({
             isOpen={destinationAutocomplete.isOpen}
             onSelectSuggestion={handleDestinationSelect}
             onCloseSuggestions={destinationAutocomplete.closeSuggestions}
-            placeholder="Тбилиси"
-            label="Город назначения"
+            placeholder={t('route.destinationPlaceholder')}
+            label={t('route.destination')}
             required
-            aria-label="Город назначения"
+            aria-label={t('route.destination')}
           />
         </div>
       </div>

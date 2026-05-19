@@ -1,22 +1,22 @@
-// src/App.tsx
 import React, { useState } from 'react';
+import { useTranslation, Trans } from 'react-i18next';
 import { AddFlightForm } from '@features/flights';
 import { HistoryView } from '@features/flights';
 import { GuestModeIndicator } from '@features/guest-mode';
 import { ShareFlightModal } from '@features/sharing';
+import { LanguageSwitcher } from '@shared/ui/LanguageSwitcher';
+import { PlanBadge } from '@shared/ui/PlanBadge';
+import { useFlightTracker } from './hooks';
 import styles from './App.module.css';
 
-// Кастомный хук
-import { useFlightTracker } from './hooks';
-
 const App: React.FC = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'add' | 'history'>('add');
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
-  
+
   const {
-    // Состояния
     userName,
-    userId, // Добавлено: получаем userId из хука
+    userId,
     appUser,
     flights,
     airlines,
@@ -24,45 +24,44 @@ const App: React.FC = () => {
     destinationCities,
     loading,
     isCheckingToken,
-    
-    // Обработчики
     handleAddFlight,
     handleDeleteFlight,
     handleJoinSession,
     handleLeaveGuestMode,
+    plan,
+    chartsEnabled,
   } = useFlightTracker();
 
   if (loading || isCheckingToken) {
     return (
       <div className={styles.app} style={{ textAlign: 'center', padding: '40px' }}>
-        <div style={{ 
-          fontSize: '16px', 
-          color: 'var(--tg-text-color, #000)',
-          animation: 'pulse 1.5s infinite'
-        }}>
-          Загрузка данных...
-        </div>
+        <div className={styles.loadingText}>{t('app.loading')}</div>
       </div>
     );
   }
 
   return (
     <div className={styles.app}>
-      {/* Индикатор гостевого режима */}
+      <header className={styles.header}>
+        {!appUser?.isGuest && <PlanBadge plan={plan} flights={flights} />}
+        <div className={styles.headerActions}>
+          <LanguageSwitcher />
+        </div>
+      </header>
+
       {appUser?.isGuest && (
         <GuestModeIndicator
-          ownerName={appUser.ownerName || 'Владельца'}
+          ownerName={appUser.ownerName || 'Owner'}
           permissions={appUser.permissions}
           onLeave={handleLeaveGuestMode}
         />
       )}
 
-      <h2 className={styles.title}>✈️ Flight Tracker</h2>
+      <h2 className={styles.title}>✈️ {t('app.title')}</h2>
       <p className={styles.greeting}>
-        Привет, <strong>{userName}</strong>!
+        <Trans i18nKey="app.greeting" values={{ name: userName }} components={{ strong: <strong /> }} />
       </p>
 
-      {/* Модальное окно для создания ссылки */}
       {showShareModal && appUser && !appUser.isGuest && (
         <ShareFlightModal
           userId={appUser.userId}
@@ -73,17 +72,21 @@ const App: React.FC = () => {
 
       <div className={styles.tabs}>
         <button
+          type="button"
           onClick={() => setActiveTab('add')}
           className={`${styles.tabButton} ${activeTab === 'add' ? styles.active : ''}`}
           disabled={appUser?.isGuest && appUser.permissions === 'view'}
         >
-          {appUser?.isGuest && appUser.permissions === 'view' ? '👁️ Добавить перелет' : '➕ Добавить перелет'}
+          {appUser?.isGuest && appUser.permissions === 'view'
+            ? `👁️ ${t('tabs.addViewOnly')}`
+            : `➕ ${t('tabs.add')}`}
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('history')}
           className={`${styles.tabButton} ${activeTab === 'history' ? styles.active : ''}`}
         >
-          📚 История
+          📚 {t('tabs.history')}
         </button>
       </div>
 
@@ -99,24 +102,27 @@ const App: React.FC = () => {
       )}
 
       {activeTab === 'history' && (
-        <HistoryView 
-          flights={flights} 
+        <HistoryView
+          flights={flights}
           onDelete={handleDeleteFlight}
           onShare={() => setShowShareModal(true)}
           onJoin={handleJoinSession}
-          userId={appUser?.userId || userId} // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: используем userId из хука как fallback
+          userId={appUser?.userId || userId}
           isGuest={appUser?.isGuest || false}
           guestPermissions={appUser?.isGuest ? appUser.permissions : undefined}
+          chartsEnabled={chartsEnabled}
         />
       )}
-      
-      {/* CSS для анимации загрузки */}
+
       <style>
         {`
           @keyframes pulse {
             0% { opacity: 1; }
             50% { opacity: 0.5; }
             100% { opacity: 1; }
+          }
+          .${styles.loadingText} {
+            animation: pulse 1.5s infinite;
           }
         `}
       </style>
@@ -125,3 +131,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+

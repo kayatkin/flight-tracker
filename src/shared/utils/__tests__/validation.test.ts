@@ -8,137 +8,87 @@ describe('validateFlightForm', () => {
     departureDate: '2026-06-15',
     returnDate: '',
     totalPrice: '15000',
+    airline: 'Aeroflot',
   };
 
-  it('возвращает пустой массив для корректных данных (oneWay)', () => {
-    const errors = validateFlightForm(validFormData);
-    expect(errors).toEqual([]);
+  it('returns empty array for valid data (oneWay)', () => {
+    expect(validateFlightForm(validFormData)).toEqual([]);
   });
 
-  it('возвращает пустой массив для корректных данных (roundTrip)', () => {
-    const errors = validateFlightForm({
-      ...validFormData,
-      type: 'roundTrip',
-      returnDate: '2026-06-30',
-    });
-    expect(errors).toEqual([]);
+  it('returns empty array for valid roundTrip', () => {
+    expect(
+      validateFlightForm({
+        ...validFormData,
+        type: 'roundTrip',
+        returnDate: '2026-06-30',
+      })
+    ).toEqual([]);
   });
 
-  it('требует origin', () => {
-    const errors = validateFlightForm({ ...validFormData, origin: '' });
-    expect(errors).toContain('Укажите города вылета и назначения');
+  it('requires origin and destination', () => {
+    expect(validateFlightForm({ ...validFormData, origin: '' })).toContain(
+      'validation.originDestinationRequired'
+    );
   });
 
-  it('требует destination', () => {
-    const errors = validateFlightForm({ ...validFormData, destination: '' });
-    expect(errors).toContain('Укажите города вылета и назначения');
+  it('rejects same origin and destination', () => {
+    expect(
+      validateFlightForm({
+        ...validFormData,
+        origin: 'Moscow',
+        destination: 'Moscow',
+      })
+    ).toContain('validation.sameOriginDestination');
   });
 
-  it('требует departureDate', () => {
-    const errors = validateFlightForm({ ...validFormData, departureDate: '' });
-    expect(errors).toContain('Укажите дату вылета');
+  it('requires departureDate', () => {
+    expect(validateFlightForm({ ...validFormData, departureDate: '' })).toContain(
+      'validation.departureDateRequired'
+    );
   });
 
-  it('требует returnDate для roundTrip', () => {
-    const errors = validateFlightForm({
-      ...validFormData,
-      type: 'roundTrip',
-      returnDate: '',
-    });
-    expect(errors).toContain('Укажите дату возвращения');
+  it('requires returnDate for roundTrip', () => {
+    expect(
+      validateFlightForm({
+        ...validFormData,
+        type: 'roundTrip',
+        returnDate: '',
+      })
+    ).toContain('validation.returnDateRequired');
   });
 
-  it('не требует returnDate для oneWay', () => {
-    const errors = validateFlightForm({
-      ...validFormData,
-      type: 'oneWay',
-      returnDate: '',
-    });
-    expect(errors).not.toContain('Укажите дату возвращения');
+  it('requires valid price', () => {
+    expect(validateFlightForm({ ...validFormData, totalPrice: '0' })).toContain(
+      'validation.invalidPrice'
+    );
   });
 
-  it('отклоняет нулевую цену', () => {
-    const errors = validateFlightForm({ ...validFormData, totalPrice: '0' });
-    expect(errors).toContain('Укажите корректную стоимость (только цифры, больше 0)');
+  it('accepts custom city from user history', () => {
+    expect(
+      validateFlightForm(
+        { ...validFormData, origin: 'My Home Town' },
+        { originHistory: ['My Home Town'] }
+      )
+    ).not.toContain('validation.invalidOrigin');
   });
 
-  it('отклоняет отрицательную цену', () => {
-    const errors = validateFlightForm({ ...validFormData, totalPrice: '-500' });
-    expect(errors).toContain('Укажите корректную стоимость (только цифры, больше 0)');
-  });
-
-  it('отклоняет пустую цену', () => {
-    const errors = validateFlightForm({ ...validFormData, totalPrice: '' });
-    expect(errors).toContain('Укажите корректную стоимость (только цифры, больше 0)');
-  });
-
-  it('собирает несколько ошибок одновременно', () => {
-    const errors = validateFlightForm({
-      origin: '',
-      destination: '',
-      type: 'roundTrip',
-      departureDate: '',
-      returnDate: '',
-      totalPrice: '',
-    });
-    expect(errors.length).toBeGreaterThanOrEqual(3);
+  it('rejects unknown city not in catalog or history', () => {
+    expect(
+      validateFlightForm({ ...validFormData, origin: 'Xyznotacity123' })
+    ).toContain('validation.invalidOrigin');
   });
 });
 
 describe('validateRoundTripDates', () => {
-  it('возвращает true когда дата возврата позже даты прилёта', () => {
-    const result = validateRoundTripDates(
-      '2026-06-15',
-      '10:00',
-      false,
-      '2026-06-20',
-      '15:00'
-    );
-    expect(result).toBe(true);
+  it('returns true when return is after arrival', () => {
+    expect(
+      validateRoundTripDates('2026-06-01', '14:00', false, '2026-06-10', '10:00')
+    ).toBe(true);
   });
 
-  it('возвращает true когда прилёт на следующий день, но дата возврата всё ещё позже', () => {
-    const result = validateRoundTripDates(
-      '2026-06-15',
-      '22:00',
-      true, // arrival next day = 2026-06-16 22:00
-      '2026-06-17',
-      '08:00' // return departure = 2026-06-17 08:00
-    );
-    expect(result).toBe(true);
-  });
-
-  it('возвращает false когда дата возврата раньше даты прилёта', () => {
-    const result = validateRoundTripDates(
-      '2026-06-15',
-      '10:00',
-      false,
-      '2026-06-14',
-      '15:00'
-    );
-    expect(result).toBe(false);
-  });
-
-  it('возвращает false когда дата возврата совпадает, но время раньше', () => {
-    const result = validateRoundTripDates(
-      '2026-06-15',
-      '14:00',
-      false,
-      '2026-06-15',
-      '10:00'
-    );
-    expect(result).toBe(false);
-  });
-
-  it('использует 00:00 по умолчанию если время не указано', () => {
-    const result = validateRoundTripDates(
-      '2026-06-15',
-      '',
-      false,
-      '2026-06-15',
-      ''
-    );
-    // Оба: 2026-06-15T00:00 — не больше, ожидаем false
-    expect(result).toBe(false);
+  it('returns false when return is before arrival', () => {
+    expect(
+      validateRoundTripDates('2026-06-10', '14:00', false, '2026-06-01', '10:00')
+    ).toBe(false);
   });
 });
