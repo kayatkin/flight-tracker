@@ -1,6 +1,6 @@
 import { Flight } from '@shared/types';
+import i18n from '@shared/lib/i18n/config';
 
-// Утилита: YYYY-MM-DD → DD-MM-YYYY
 export const formatDateToDMY = (isoDate: string): string => {
   if (!isoDate) return '';
   const [year, month, day] = isoDate.split('-');
@@ -8,27 +8,28 @@ export const formatDateToDMY = (isoDate: string): string => {
 };
 
 export const formatPrice = (price: number): string => {
-  return new Intl.NumberFormat('ru-RU').format(price) + ' ₽';
+  const locale = i18n.language === 'ru' ? 'ru-RU' : 'en-US';
+  return `${new Intl.NumberFormat(locale).format(price)} ₽`;
 };
 
 export const formatLayover = (flight: Flight): string => {
   const parts: string[] = [];
 
   if (flight.isDirectThere) {
-    parts.push('Туда: прямой');
+    parts.push(i18n.t('history.layoverDirectThere'));
   } else if (flight.layoverCityThere && flight.layoverDurationThere) {
     const h = Math.floor(flight.layoverDurationThere / 60);
     const m = flight.layoverDurationThere % 60;
-    parts.push(`Туда: ${flight.layoverCityThere} (${h}ч ${m}м)`);
+    parts.push(i18n.t('history.layoverThere', { city: flight.layoverCityThere, h, m }));
   }
 
   if (flight.type === 'roundTrip') {
     if (flight.isDirectBack) {
-      parts.push('Обратно: прямой');
+      parts.push(i18n.t('history.layoverDirectBack'));
     } else if (flight.layoverCityBack && flight.layoverDurationBack) {
       const h = Math.floor(flight.layoverDurationBack / 60);
       const m = flight.layoverDurationBack % 60;
-      parts.push(`Обратно: ${flight.layoverCityBack} (${h}ч ${m}м)`);
+      parts.push(i18n.t('history.layoverBack', { city: flight.layoverCityBack, h, m }));
     }
   }
 

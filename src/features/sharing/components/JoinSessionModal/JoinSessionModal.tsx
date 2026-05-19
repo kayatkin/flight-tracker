@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import JoinSessionForm from '../JoinSessionForm/JoinSessionForm';
 import styles from './JoinSessionModal.module.css';
 
@@ -8,6 +9,8 @@ interface JoinSessionModalProps {
 }
 
 const JoinSessionModal: React.FC<JoinSessionModalProps> = ({ onJoin, onClose }) => {
+  const { t } = useTranslation();
+
   const handleJoin = (token: string) => {
     onJoin(token);
     onClose();
@@ -20,7 +23,7 @@ const JoinSessionModal: React.FC<JoinSessionModalProps> = ({ onJoin, onClose }) 
         <button 
           onClick={onClose} 
           className={styles.closeButton}
-          aria-label="Закрыть окно присоединения"
+          aria-label={t('join.closeAria')}
           style={{ position: 'absolute', right: '16px', top: '16px', zIndex: 1 }}
         >
           ✕

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { FlightFormData } from '@shared/hooks';
 import styles from './PassengersSection.module.css';
 
@@ -11,6 +12,8 @@ const PassengersSection: React.FC<PassengersSectionProps> = ({
   formData,
   updateFormData
 }) => {
+  const { t } = useTranslation();
+
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = Number(e.target.value) as 1 | 2 | 3 | 4;
     updateFormData({ passengers: value });
@@ -20,7 +23,7 @@ const PassengersSection: React.FC<PassengersSectionProps> = ({
 
   return (
     <div className={styles.section}>
-      <h4 className={styles.sectionTitle}>👥 Пассажиры</h4>
+      <h4 className={styles.sectionTitle}>👥 {t('form.passengers.title')}</h4>
       
       <div className={styles.selectContainer}>
         <label className={styles.label}>
@@ -29,24 +32,15 @@ const PassengersSection: React.FC<PassengersSectionProps> = ({
             value={formData.passengers}
             onChange={handleChange}
             className={styles.select}
-            aria-label="Количество пассажиров"
+            aria-label={t('form.passengers.label')}
           >
             {passengersOptions.map(num => (
               <option key={num} value={num}>
-                {num} {num === 1 ? 'пассажир' : num < 5 ? 'пассажира' : 'пассажиров'}
+                {t('form.passengers.count', { count: num })}
               </option>
             ))}
           </select>
         </label>
-        
-        {/* УБРАТЬ ЭТОТ БЛОК */}
-        {/* 
-        <div className={styles.passengerIcons}>
-          {Array.from({ length: formData.passengers }).map((_, index) => (
-            <span key={index} className={styles.passengerIcon}>👤</span>
-          ))}
-        </div>
-        */}
       </div>
     </div>
   );

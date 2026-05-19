@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation, Trans } from 'react-i18next';
 import styles from '../HistoryView.module.css';
 
 interface SearchBarProps {
@@ -12,17 +13,18 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   onSearchChange,
   totalFlights,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className={styles.searchContainer}>
       <input
         type="text"
-        placeholder="Поиск по городу..."
+        placeholder={t('history.searchPlaceholder')}
         value={searchTerm}
         onChange={(e) => onSearchChange(e.target.value)}
         className={styles.searchInput}
       />
       <div className={styles.flightCount}>
-        Всего билетов: <strong>{totalFlights}</strong>
+        <Trans i18nKey="history.totalTickets" values={{ count: totalFlights }} components={{ strong: <strong /> }} />
       </div>
     </div>
   );

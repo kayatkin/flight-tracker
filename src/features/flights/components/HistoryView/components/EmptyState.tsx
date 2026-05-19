@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { PlanId } from '@shared/constants/subscription';
 import { Flight } from '@shared/types';
 import { AccessManagement } from './AccessManagement';
@@ -25,6 +26,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   onJoin,
   onUpgradeRequest,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className={styles.container}>
       {/* Аккордеон управления доступом для владельцев */}
@@ -42,8 +44,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 
       {/* Основной контент пустого состояния */}
       <div className={styles.emptyState}>
-        <p>📭 Нет сохранённых билетов.</p>
-        <p>Добавьте первый рейс во вкладке «➕ Добавить перелет»!</p>
+        <p>📭 {t('history.emptyTitle')}</p>
+        <p>{t('history.emptyHint')}</p>
         {/*
         {isGuest && (
           <div className={styles.guestHint}>

@@ -23,7 +23,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({
   onShareCreated,
   onUpgradeRequest,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [permissions, setPermissions] = useState<'view' | 'edit'>('view');
   const [expiryDays, setExpiryDays] = useState<number>(7);
   const [generatedToken, setGeneratedToken] = useState<string>('');
@@ -55,7 +55,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({
         setError(t('paywall.shareLinksLimit', { max: err.maxLinks }));
         return;
       }
-      const message = err instanceof Error ? err.message : 'Ошибка при создании ссылки';
+      const message = err instanceof Error ? err.message : t('share.createError');
       setError(message);
       logError('Error creating share link:', err);
     } finally {
@@ -63,13 +63,13 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({
     }
   };
 
-  // 🔥 ОБНОВЛЕННАЯ ФУНКЦИЯ КОПИРОВАНИЯ
   const handleCopyText = (text: string) => {
     navigator.clipboard.writeText(text)
       .then(() => {
-        const hasInstructions = text.includes('КАК ОТКРЫТЬ') || text.includes('Привет!');
+        const marker = t('share.instructionsMarker');
+        const hasInstructions = text.includes(marker) || text.includes('\n\n');
         toast(
-          hasInstructions ? 'Ссылка с инструкцией скопирована' : 'Ссылка скопирована',
+          hasInstructions ? t('share.copyWithInstructions') : t('share.copyLink'),
           'success'
         );
       })
@@ -77,16 +77,16 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({
   };
 
   const deactivateLink = async () => {
-    if (!window.confirm('Вы уверены, что хотите отозвать доступ? Это действие нельзя отменить.')) {
+    if (!window.confirm(t('share.revokeConfirm'))) {
       return;
     }
 
     try {
       await revokeShareSession(generatedToken);
-      toast('Доступ успешно отозван', 'success');
+      toast(t('share.revoked'), 'success');
       onClose();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Ошибка при отзыве доступа';
+      const message = err instanceof Error ? err.message : t('share.revokeError');
       setError(message);
     }
   };
@@ -94,12 +94,17 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({
   const formatExpiryDate = () => {
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + expiryDays);
-    return expiryDate.toLocaleDateString('ru-RU', {
+    const locale = i18n.language === 'en' ? 'en-US' : 'ru-RU';
+    return expiryDate.toLocaleDateString(locale, {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
     });
   };
+
+  const permissionsLabel = permissions === 'view'
+    ? t('common.permissionsViewLabel')
+    : t('common.permissionsEditLabel');
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
@@ -107,18 +112,17 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({
         
         {!generatedToken ? (
           <>
-            {/* ЭКРАН СОЗДАНИЯ ССЫЛКИ - БЕЗ ИЗМЕНЕНИЙ */}
-            <h3>📤 Поделиться историей перелетов</h3>
+            <h3>📤 {t('share.modalTitle')}</h3>
             
             <div className={styles.hintBox}>
-              <p>Создайте ссылку, чтобы поделиться историей с друзьями</p>
+              <p>{t('share.modalHint')}</p>
               <p className={styles.hintSubtext}>
-                Вы можете дать права только на просмотр или разрешить просмотр и редактирование
+                {t('share.modalSubhint')}
               </p>
             </div>
             
             <div className={styles.formGroup}>
-              <label>Права доступа:</label>
+              <label>{t('share.permissionsLabel')}</label>
               <div className={styles.radioGroup}>
                 <label className={styles.radioLabel}>
                   <input
@@ -128,9 +132,9 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({
                     onChange={(e) => setPermissions(e.target.value as 'view' | 'edit')}
                     className={styles.radioInput}
                   />
-                  👁️ Только просмотр
+                  👁️ {t('share.viewOnly')}
                   <span className={styles.radioDescription}>
-                    Гость сможет просматривать вашу историю в браузере или через Telegram WebApp
+                    {t('share.viewOnlyDesc')}
                   </span>
                 </label>
                 <label className={styles.radioLabel}>
@@ -141,28 +145,28 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({
                     onChange={(e) => setPermissions(e.target.value as 'view' | 'edit')}
                     className={styles.radioInput}
                   />
-                  ✏️ Просмотр и редактирование
+                  ✏️ {t('share.edit')}
                   <span className={styles.radioDescription}>
-                    Гость сможет просматривать и редактировать Вашу историю через Telegram WebApp
+                    {t('share.editDesc')}
                   </span>
                 </label>
               </div>
             </div>
 
             <div className={styles.formGroup}>
-              <label>Срок действия ссылки:</label>
+              <label>{t('share.expiryLabel')}</label>
               <select
                 value={expiryDays}
                 onChange={(e) => setExpiryDays(Number(e.target.value))}
                 className={styles.select}
               >
-                <option value={1}>1 день</option>
-                <option value={7}>7 дней (по умолчанию)</option>
-                <option value={30}>30 дней</option>
-                <option value={365}>1 год</option>
+                <option value={1}>{t('share.expiry1')}</option>
+                <option value={7}>{t('share.expiry7')}</option>
+                <option value={30}>{t('share.expiry30')}</option>
+                <option value={365}>{t('share.expiry365')}</option>
               </select>
               <p className={styles.selectHint}>
-                Ссылка перестанет работать {formatExpiryDate()}
+                {t('share.expiryHint', { date: formatExpiryDate() })}
               </p>
             </div>
 
@@ -170,14 +174,14 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({
 
             <div className={styles.buttonGroup}>
               <button onClick={onClose} className={styles.cancelButton}>
-                Отмена
+                {t('common.cancel')}
               </button>
               <button 
                 onClick={createShareLink} 
                 className={styles.createButton}
                 disabled={loading}
               >
-                {loading ? 'Создание...' : 'Создать ссылку'}
+                {loading ? t('share.creating') : t('share.createLink')}
               </button>
             </div>
             {shareLimitHit && onUpgradeRequest && (
@@ -188,19 +192,18 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({
           </>
         ) : (
           <>
-            {/* ЭКРАН СОЗДАННОЙ ССЫЛКИ - УПРОЩЕННЫЙ */}
             <div className={styles.successMessage}>
-              ✅ Ссылка для совместного доступа создана!
+              ✅ {t('share.success')}
             </div>
             
             <div className={styles.shareInfo}>
               <div className={styles.infoRow}>
                 <span className={styles.infoIcon}>🔒</span>
                 <div>
-                  <strong>Права доступа:</strong> {permissions === 'view' ? 'Только просмотр' : 'Просмотр и редактирование'}
+                  <strong>{t('share.accessLabel')}</strong> {permissionsLabel}
                   {permissions === 'edit' && (
                     <div className={styles.telegramNote}>
-                      📱 Требуется Telegram для редактирования
+                      📱 {t('share.telegramRequired')}
                     </div>
                   )}
                 </div>
@@ -208,17 +211,16 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({
               <div className={styles.infoRow}>
                 <span className={styles.infoIcon}>📅</span>
                 <div>
-                  <strong>Срок действия:</strong> до {formatExpiryDate()}
+                  <strong>{t('share.expiryUntil')}</strong> {formatExpiryDate()}
                 </div>
               </div>
             </div>
 
-            {/* Отображаем ссылку */}
             <div className={styles.urlContainer}>
               <div className={styles.urlLabel}>
                 {permissions === 'edit' 
-                  ? 'Telegram ссылка:' 
-                  : 'Web-ссылка:'}
+                  ? t('share.telegramLink')
+                  : t('share.webLink')}
               </div>
               <input
                 type="text"
@@ -229,7 +231,6 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({
               />
             </div>
 
-            {/* 🔥 ИСПОЛЬЗУЕМ НАШ КОМПОНЕНТ ВМЕСТО СТАРОЙ ЛОГИКИ */}
             <ShareLinkOptions
               shareUrl={shareUrl}
               permissions={permissions}
@@ -238,16 +239,16 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({
             />
 
             <div className={styles.finalHint}>
-              <p>📤 <strong>Что делать:</strong> Используйте кнопки выше чтобы скопировать или поделиться ссылкой</p>
-              <p>⚠️ <strong>Важно:</strong> Делитесь ссылкой только с теми, кому доверяете</p>
+              <p>📤 {t('share.whatToDo')}</p>
+              <p>⚠️ {t('share.trustWarning')}</p>
             </div>
 
             <div className={styles.buttonGroup}>
               <button onClick={deactivateLink} className={styles.deactivateButton}>
-                🔒 Отозвать доступ
+                🔒 {t('share.revoke')}
               </button>
               <button onClick={onClose} className={styles.closeButton}>
-                Готово
+                {t('common.done')}
               </button>
             </div>
           </>

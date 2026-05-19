@@ -70,7 +70,7 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
         </div>
 
         <div className={styles.cardPrice}>
-          💰 {formatPrice(bestFlight.totalPrice / bestFlight.passengers)} на человека
+          💰 {t('history.perPerson', { price: formatPrice(bestFlight.totalPrice / bestFlight.passengers) })}
         </div>
         <div className={styles.cardDate}>
           📅 {formatDateToDMY(bestFlight.departureDate)}
@@ -83,7 +83,7 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
       {isActive && (
         <div className={styles.cardContent}>
           <div className={styles.bestFlightNote}>
-            ⭐ Лучшее предложение по цене за человека
+            ⭐ {t('history.bestOffer')}
           </div>
           <FlightCard
             flight={bestFlight}
@@ -96,7 +96,7 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
           {otherFlights.length > 0 && (
             <>
               <div className={styles.otherFlightsTitle}>
-                Другие предложения ({otherFlights.length}):
+                {t('history.otherOffers', { count: otherFlights.length })}
               </div>
               {otherFlights.map((flight) => (
                 <FlightCard

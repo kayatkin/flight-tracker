@@ -6,7 +6,7 @@ import { GuestModeIndicator } from '@features/guest-mode';
 import { ShareFlightModal } from '@features/sharing';
 import { LanguageSwitcher } from '@shared/ui/LanguageSwitcher';
 import { PlanBadge } from '@shared/ui/PlanBadge';
-import { UpgradeModal } from '@features/subscription';
+import { UpgradeModal, SubscriptionPanel } from '@features/subscription';
 import { useFlightTracker } from './hooks';
 import styles from './App.module.css';
 
@@ -33,6 +33,7 @@ const App: React.FC = () => {
     plan,
     chartsEnabled,
     refreshPlan,
+    planExpiresAt,
   } = useFlightTracker({ onLimitReached: () => setShowUpgradeModal(true) });
 
   if (loading || isCheckingToken) {
@@ -63,6 +64,14 @@ const App: React.FC = () => {
           ownerName={appUser.ownerName || 'Owner'}
           permissions={appUser.permissions}
           onLeave={handleLeaveGuestMode}
+        />
+      )}
+
+      {!appUser?.isGuest && (
+        <SubscriptionPanel
+          plan={plan}
+          expiresAt={planExpiresAt}
+          onUpgrade={() => setShowUpgradeModal(true)}
         />
       )}
 

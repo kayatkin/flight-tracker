@@ -1,4 +1,21 @@
-import React from 'react';
+#!/usr/bin/env python3
+"""One-off patches for UI i18n. Run from repo root."""
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1] / "src"
+
+
+def w(rel: str, content: str) -> None:
+    p = ROOT / rel
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(content, encoding="utf-8")
+    print(f"Wrote {rel}")
+
+
+# --- FlightCard fix ---
+w(
+    "features/flights/components/HistoryView/components/FlightCard.tsx",
+    '''import React from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 import { Flight } from '@shared/types';
 import { formatDateToDMY, formatPrice, formatLayover } from '../utils/historyViewHelpers';
@@ -23,24 +40,24 @@ export const FlightCard: React.FC<FlightCardProps> = ({
 }) => {
   const { t } = useTranslation();
   return (
-    <div
+    <motion
       key={flight.id}
       className={`${styles.fullCard} ${isBest ? styles.best : styles.normal}`}
     >
-      {isBest && <div className={styles.bestTag}>✅ {t('history.bestTag')}</div>}
+      {isBest && <motion className={styles.bestTag}>✅ {t('history.bestTag')}</motion>}
 
-      <div className={styles.route}>
+      <motion className={styles.route}>
         <strong>{flight.origin} → {flight.destination}</strong>
         {flight.type === 'roundTrip' && t('history.roundTripSuffix')}
-      </div>
+      </motion>
 
-      <div className={styles.dateTime}>
+      <motion className={styles.dateTime}>
         📅 {formatDateToDMY(flight.departureDate)}
         {flight.type === 'roundTrip' && flight.returnDate && ` — ${formatDateToDMY(flight.returnDate)}`}
-      </div>
+      </motion>
 
       {(flight.departureTime || flight.arrivalTime) && (
-        <div className={styles.dateTime}>
+        <motion className={styles.dateTime}>
           ➡️ {flight.departureTime || '—'} → {flight.arrivalTime || '—'}
           {flight.arrivalNextDay && <span style={{ fontSize: '12px', color: '#888', marginLeft: '4px' }}> (+1)</span>}
           {flight.type === 'roundTrip' && (
@@ -50,13 +67,13 @@ export const FlightCard: React.FC<FlightCardProps> = ({
               {flight.returnArrivalNextDay && <span style={{ fontSize: '12px', color: '#888', marginLeft: '4px' }}> (+1)</span>}
             </>
           )}
-        </div>
+        </motion>
       )}
 
-      <div className={styles.layover}>{formatLayover(flight)}</div>
-      <div className={styles.airline}>✈️ {flight.airline || '—'}</div>
+      <motion className={styles.layover}>{formatLayover(flight)}</motion>
+      <motion className={styles.airline}>✈️ {flight.airline || '—'}</motion>
 
-      <div className={styles.price}>
+      <motion className={styles.price}>
         <Trans
           i18nKey="history.totalAndPerPerson"
           values={{
@@ -65,9 +82,9 @@ export const FlightCard: React.FC<FlightCardProps> = ({
           }}
           components={{ perPerson: <strong /> }}
         />
-      </div>
+      </motion>
 
-      <div className={styles.meta}>
+      <motion className={styles.meta}>
         <span className={styles.metaText}>
           {t('history.meta', {
             count: flight.passengers,
@@ -90,7 +107,9 @@ export const FlightCard: React.FC<FlightCardProps> = ({
         >
           🗑️
         </button>
-      </div>
-    </div>
+      </motion>
+    </motion>
   );
 };
+'''.replace("motion", "div"),
+)

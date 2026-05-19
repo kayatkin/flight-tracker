@@ -1,5 +1,6 @@
 // src/features/sharing/components/ShareLinkOptions/ShareLinkOptions.tsx
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './ShareLinkOptions.module.css';
 
 interface ShareLinkOptionsProps {
@@ -15,39 +16,18 @@ const ShareLinkOptions: React.FC<ShareLinkOptionsProps> = ({
   token,
   onCopy
 }) => {
+  const { t } = useTranslation();
   const [shareWithInstructions, setShareWithInstructions] = useState<boolean>(true);
   const [instructionsText, setInstructionsText] = useState<string>('');
 
-  // Генерируем текст инструкции
   useEffect(() => {
     if (permissions === 'edit') {
-      setInstructionsText(`Привет! Приглашаю тебя посмотреть мою историю перелётов.
-
-📱 КАК ОТКРЫТЬ:
-1. Нажми на полученную ссылку
-2. Запусти Telegram MiniApp кнопкой "Старт"
-3. Нажми кнопку "RunApp"
-4. Готово! Можешь просматривать и редактировать мою историю перелётов.
-
-🔗 Ссылка: `);
+      setInstructionsText(t('share.instructionsEdit'));
     } else {
-      setInstructionsText(`Привет! Приглашаю тебя посмотреть мою историю перелётов.
-
-🌐 КАК ОТКРЫТЬ:
-Через браузер - 
-1. Просто открой эту ссылку в любом браузере — всё откроется автоматически.
-2. Готово! Можешь просматривать мою историю перелётов.
-Через Telegram MiniApp -
-1. Запусти Telegram MiniApp
-2. Зайди в раздел "История" -> "Присоединиться"
-3. Вставь полученную ссылку в соответствующее поле  
-4. Готово! Можешь просматривать мою историю перелётов.
-
-🔗 Ссылка: `);
+      setInstructionsText(t('share.instructionsView'));
     }
-  }, [permissions]);
+  }, [permissions, t]);
 
-  // Основная функция копирования (зависит от чекбокса)
   const handleCopyPrimary = () => {
     if (shareWithInstructions) {
       const textToCopy = instructionsText + shareUrl;
@@ -57,19 +37,17 @@ const ShareLinkOptions: React.FC<ShareLinkOptionsProps> = ({
     }
   };
 
-  // Копирование только ссылки (всегда, только при включенном чекбоксе)
   const handleCopyLinkOnly = () => {
     onCopy(shareUrl);
   };
 
-  // Нативный шеринг
   const handleShareViaNative = async () => {
     if (navigator.share) {
       try {
         const shareData: ShareData = {
           title: permissions === 'edit' 
-            ? 'Приглашение редактировать историю перелётов ✈️' 
-            : 'Приглашение посмотреть историю перелётов ✈️',
+            ? t('share.shareTitleEdit')
+            : t('share.shareTitleView'),
           text: shareWithInstructions ? instructionsText + shareUrl : shareUrl,
           url: shareWithInstructions ? undefined : shareUrl,
         };
@@ -77,19 +55,16 @@ const ShareLinkOptions: React.FC<ShareLinkOptionsProps> = ({
         await navigator.share(shareData);
       } catch (err) {
         if ((err as Error).name !== 'AbortError') {
-          // Fallback to copy
           handleCopyPrimary();
         }
       }
     } else {
-      // Fallback for desktop
       handleCopyPrimary();
     }
   };
 
   return (
     <div className={styles.container}>
-      {/* Настройки отправки */}
       <div className={styles.optionsSection}>
         <label className={styles.checkboxLabel}>
           <input
@@ -99,20 +74,19 @@ const ShareLinkOptions: React.FC<ShareLinkOptionsProps> = ({
             className={styles.checkboxInput}
           />
           <span className={styles.checkboxCustom}></span>
-          📋 Отправить с инструкцией
+          📋 {t('share.withInstructions')}
         </label>
         <p className={styles.optionHint}>
           {shareWithInstructions 
-            ? 'Ссылка будет отправлена с инструкцией'
-            : 'Будет отправлена только чистая ссылка'}
+            ? t('share.withInstructionsHint')
+            : t('share.linkOnlyHint')}
         </p>
       </div>
 
-      {/* Предпросмотр инструкции */}
       {shareWithInstructions && (
         <div className={styles.previewSection}>
           <div className={styles.previewHeader}>
-            <span>👁️ Предпросмотр сообщения:</span>
+            <span>👁️ {t('share.preview')}</span>
           </div>
           <div className={styles.previewContent}>
             <div className={styles.previewText}>
@@ -123,39 +97,36 @@ const ShareLinkOptions: React.FC<ShareLinkOptionsProps> = ({
         </div>
       )}
 
-      {/* Кнопки действий */}
       <div className={styles.actionsSection}>
         <div className={styles.buttonGroup}>
-          {/* Показываем "Только ссылку" ТОЛЬКО когда чекбокс включен */}
           {shareWithInstructions && (
             <button
               onClick={handleCopyLinkOnly}
               className={styles.copyButtonSecondary}
-              title="Скопировать только ссылку (без инструкции)"
+              title={t('share.copyLinkOnly')}
             >
-              📎 Только ссылка
+              📎 {t('share.copyLinkOnly')}
             </button>
           )}
           
-          {/* Основная кнопка - занимает всю ширину если нет вторичной */}
           <button
             onClick={handleCopyPrimary}
             className={shareWithInstructions ? styles.copyButtonPrimary : styles.copyButtonFull}
             title={shareWithInstructions 
-              ? "Скопировать ссылку с инструкцией" 
-              : "Скопировать ссылку"
+              ? t('share.copyWithInstr')
+              : t('share.copyLinkBtn')
             }
           >
-            📋 {shareWithInstructions ? 'Скопировать с инструкцией' : 'Скопировать ссылку'}
+            📋 {shareWithInstructions ? t('share.copyWithInstr') : t('share.copyLinkBtn')}
           </button>
         </div>
         
         <button
           onClick={handleShareViaNative}
           className={styles.shareNativeButton}
-          title="Поделиться через мессенджеры"
+          title={t('share.shareNative')}
         >
-          📤 Поделиться
+          📤 {t('share.shareNative')}
         </button>
       </div>
     </div>

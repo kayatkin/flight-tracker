@@ -70,11 +70,11 @@ const HistoryView: React.FC<HistoryViewProps> = ({
     e.stopPropagation();
     
     if (isGuest && guestPermissions === 'view') {
-      toast('У вас нет прав для удаления билетов. Только просмотр.', 'warning');
+      toast(t('history.noDeletePermission'), 'warning');
       return;
     }
     
-    if (window.confirm('Удалить этот билет?')) {
+    if (window.confirm(t('common.confirmDeleteFlight'))) {
       onDelete(id);
     }
   };
@@ -135,7 +135,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
 
       {filteredDestinations.length === 0 && searchTerm ? (
         <div className={styles.noResults}>
-          Ничего не найдено по запросу «{searchTerm}»
+          {t('common.noResults', { term: searchTerm })}
         </div>
       ) : (
         <div className={styles.cardList}>

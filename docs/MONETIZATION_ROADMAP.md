@@ -26,6 +26,6 @@ Backup baseline: `v2.0.0-stable` / branch `backup/pre-monetization-2026-05-19`.
 - [ ] Restore purchases / subscription management UI
 - [ ] Analytics (conversion, MRR proxy via Stars)
 - [ ] Localized prices / A-B test star amounts
-- [ ] Full i18n for HistoryView, sharing modals
+- [x] Full i18n for HistoryView, sharing modals, add-flight form
 
 Limits: `src/shared/constants/subscription.ts`.

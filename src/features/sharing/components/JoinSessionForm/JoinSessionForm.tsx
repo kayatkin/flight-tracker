@@ -1,5 +1,6 @@
 // src/features/sharing/components/JoinSessionForm/JoinSessionForm.tsx
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './JoinSessionForm.module.css';
 
 interface JoinSessionFormProps {
@@ -8,6 +9,7 @@ interface JoinSessionFormProps {
 }
 
 const JoinSessionForm: React.FC<JoinSessionFormProps> = ({ onJoin, onCancel }) => {
+  const { t } = useTranslation();
   const [token, setToken] = useState('');
   const [error, setError] = useState('');
 
@@ -15,12 +17,12 @@ const JoinSessionForm: React.FC<JoinSessionFormProps> = ({ onJoin, onCancel }) =
     e.preventDefault();
     
     if (!token.trim()) {
-      setError('Введите токен доступа');
+      setError(t('join.errorEmpty'));
       return;
     }
 
     if (token.length < 10) {
-      setError('Некорректный формат токена');
+      setError(t('join.errorFormat'));
       return;
     }
 
@@ -31,50 +33,48 @@ const JoinSessionForm: React.FC<JoinSessionFormProps> = ({ onJoin, onCancel }) =
     const inputValue = token.trim();
     
     if (!inputValue) {
-      setError('Сначала вставьте URL с токеном в поле выше');
+      setError(t('join.errorPasteUrl'));
       return;
     }
 
-    // Пробуем извлечь токен из URL
     const tokenRegex = /(?:[?&]token=|\btoken=)([^&]+)/i;
     const match = inputValue.match(tokenRegex);
     
     if (match && match[1]) {
       const extractedToken = match[1];
       setToken(extractedToken);
-      setError(''); // Очищаем ошибку при успешном извлечении
+      setError('');
     } else {
-      // Проверяем, если это уже выглядит как токен
       const isLikelyToken = /^[a-zA-Z0-9_-]+$/.test(inputValue) && inputValue.length >= 10;
       
       if (isLikelyToken) {
-        setError('Это уже похоже на токен. Если это URL, проверьте формат.');
+        setError(t('join.errorLooksLikeToken'));
       } else {
-        setError('Не удалось найти токен. Формат: ...?token=ВАШ_ТОКЕН');
+        setError(t('join.errorNotFound'));
       }
     }
   };
 
   return (
     <div className={styles.container}>
-      <h3>🔗 Присоединиться к истории перелетов</h3>
+      <h3>🔗 {t('join.title')}</h3>
       
       <p className={styles.description}>
-        Введите токен доступа, который вам предоставил владелец истории.
+        {t('join.description')}
       </p>
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.inputGroup}>
-          <label htmlFor="token">Токен доступа:</label>
+          <label htmlFor="token">{t('join.tokenLabel')}</label>
           <input
             type="text"
             id="token"
             value={token}
             onChange={(e) => {
               setToken(e.target.value);
-              setError(''); // Очищаем ошибку при изменении
+              setError('');
             }}
-            placeholder="Введите токен или ссылку с токеном..."
+            placeholder={t('join.placeholder')}
             className={styles.input}
           />
           <button 
@@ -82,7 +82,7 @@ const JoinSessionForm: React.FC<JoinSessionFormProps> = ({ onJoin, onCancel }) =
             onClick={extractTokenFromUrl}
             className={styles.extractButton}
           >
-            Извлечь из URL
+            {t('join.extract')}
           </button>
         </div>
 
@@ -90,20 +90,20 @@ const JoinSessionForm: React.FC<JoinSessionFormProps> = ({ onJoin, onCancel }) =
 
         <div className={styles.buttonGroup}>
           <button type="button" onClick={onCancel} className={styles.cancelButton}>
-            Отмена
+            {t('common.cancel')}
           </button>
           <button type="submit" className={styles.joinButton}>
-            Присоединиться
+            {t('join.join')}
           </button>
         </div>
       </form>
 
       <div className={styles.hint}>
-        <strong>Как получить доступ?</strong>
+        <strong>{t('join.howToTitle')}</strong>
         <ol>
-          <li>Попросите у владельца истории ссылку для совместного доступа</li>
-          <li>Скопируйте токен из ссылки или вставьте полную ссылку</li>
-          <li>Нажмите "Извлечь из URL" или введите токен вручную</li>
+          <li>{t('join.howTo1')}</li>
+          <li>{t('join.howTo2')}</li>
+          <li>{t('join.howTo3')}</li>
         </ol>
       </div>
     </div>

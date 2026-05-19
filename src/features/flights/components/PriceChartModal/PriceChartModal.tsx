@@ -1,5 +1,6 @@
 // src/components/PriceChartModal.tsx
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -24,22 +25,23 @@ interface PriceChartModalProps {
 }
 
 const PriceChartModal: React.FC<PriceChartModalProps> = ({ flights, destination, onClose }) => {
+  const { t } = useTranslation();
   const chartData = getSeasonalChartData(flights);
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>
-          <h3>📈 Сезонность цен: {destination}</h3>
-          <button className={styles.closeButton} onClick={onClose}>✕</button>
+          <h3>📈 {t('chart.title', { destination })}</h3>
+          <button className={styles.closeButton} onClick={onClose} aria-label={t('common.close')}>✕</button>
         </div>
         <div className={styles.chartContainer}>
           <Line data={chartData} options={chartOptions} />
         </div>
         <div className={styles.legend}>
-          <div>Красная линия — рейсы «туда»</div>
-          <div>Синяя линия — рейсы «туда-обратно»</div>
-          <div>Точка = минимальная цена в этом месяце</div>
+          <div>{t('chart.legendOneWay')}</div>
+          <div>{t('chart.legendRoundTrip')}</div>
+          <div>{t('chart.legendPoint')}</div>
         </div>
       </div>
     </div>

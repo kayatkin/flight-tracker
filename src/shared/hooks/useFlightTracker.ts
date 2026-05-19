@@ -33,6 +33,7 @@ interface UseFlightTrackerResult {
   loading: boolean;
   isCheckingToken: boolean;
   plan: PlanId;
+  planExpiresAt: string | null;
   chartsEnabled: boolean;
   
   // Обработчики
@@ -49,7 +50,7 @@ interface UseFlightTrackerResult {
 
 export const useFlightTracker = (options?: UseFlightTrackerOptions): UseFlightTrackerResult => {
   const onLimitReached = options?.onLimitReached;
-  const [userName, setUserName] = useState<string>('Гость');
+  const [userName, setUserName] = useState<string>(i18n.t('common.guest'));
   const [userId, setUserId] = useState<string>('');
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [flights, setFlights] = useState<Flight[]>([]);
@@ -59,6 +60,7 @@ export const useFlightTracker = (options?: UseFlightTrackerOptions): UseFlightTr
   const [loading, setLoading] = useState(true);
   const [isCheckingToken, setIsCheckingToken] = useState<boolean>(true);
   const [plan, setPlan] = useState<PlanId>('free');
+  const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
   
   // Заглушка для setShowShareModal (реализация в App.tsx)
   const setShowShareModal = useCallback((_show: boolean) => {
@@ -91,8 +93,10 @@ export const useFlightTracker = (options?: UseFlightTrackerOptions): UseFlightTr
         if (!initResult.appUser.isGuest) {
           const subscription = await fetchUserSubscription(initResult.userId);
           setPlan(subscription.plan);
+          setPlanExpiresAt(subscription.expiresAt);
         } else {
           setPlan('free');
+          setPlanExpiresAt(null);
         }
       } catch (err) {
         console.error('[HOOK] App initialization failed:', err);
@@ -178,6 +182,7 @@ export const useFlightTracker = (options?: UseFlightTrackerOptions): UseFlightTr
     if (!userId || appUser?.isGuest) return;
     const subscription = await fetchUserSubscription(userId);
     setPlan(subscription.plan);
+    setPlanExpiresAt(subscription.expiresAt);
   }, [userId, appUser]);
 
   const handleDeleteFlight = useCallback((id: string) => {
@@ -207,25 +212,27 @@ export const useFlightTracker = (options?: UseFlightTrackerOptions): UseFlightTr
         // 🔥 УЛУЧШЕННАЯ ЛОГИКА: Определяем имя для отображения
         const userType = getTelegramUserType();
         let displayName: string;
+        const permsKey = guestUser.permissions === 'edit'
+          ? 'common.permissionsEdit'
+          : 'common.permissionsView';
+        const perms = i18n.t(permsKey);
         
         switch (userType) {
           case 'real_telegram': {
             const tgUser = window.Telegram!.WebApp!.initDataUnsafe!.user!;
-            displayName = tgUser.first_name || tgUser.username || 'Telegram пользователь';
+            displayName = tgUser.first_name || tgUser.username || i18n.t('common.telegramUser');
             devLog('[HOOK] Real Telegram user joining:', displayName);
             break;
           }
             
           case 'anonymous_telegram':
-            // ⚠️ Аноним в Telegram WebApp
-            displayName = `Анонимный гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
+            displayName = i18n.t('guest.anonymousName', { perms });
             console.log('[HOOK] ⚠️ Anonymous Telegram user joining');
             break;
             
           case 'web_browser':
           default:
-            // 🌐 Веб-браузер
-            displayName = `Веб-гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
+            displayName = i18n.t('guest.webName', { perms });
             console.log('[HOOK] 🌐 Web user joining');
             break;
         }
@@ -247,16 +254,20 @@ export const useFlightTracker = (options?: UseFlightTrackerOptions): UseFlightTr
         }
         
         toast(
-          `Вы присоединились. Права: ${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'}`,
+          i18n.t('guest.joined', {
+            perms: guestUser.permissions === 'edit'
+              ? i18n.t('common.permissionsEditLabel')
+              : i18n.t('common.permissionsViewLabel'),
+          }),
           'success'
         );
       } else {
         devLog('[HOOK] Invalid or expired token');
-        toast('Неверный или просроченный токен', 'error');
+        toast(i18n.t('guest.invalidToken'), 'error');
       }
     } catch (err) {
       logError('[HOOK] Join error:', err);
-      toast('Ошибка при присоединении', 'error');
+      toast(i18n.t('guest.joinError'), 'error');
     } finally {
       setLoading(false);
     }
@@ -343,6 +354,7 @@ export const useFlightTracker = (options?: UseFlightTrackerOptions): UseFlightTr
     loading,
     isCheckingToken,
     plan,
+    planExpiresAt,
     chartsEnabled: PLAN_LIMITS[plan].chartsEnabled,
     
     // Обработчики
