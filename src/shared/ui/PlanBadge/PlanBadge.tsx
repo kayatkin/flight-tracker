@@ -9,13 +9,37 @@ import styles from './PlanBadge.module.css';
 interface PlanBadgeProps {
   plan: PlanId;
   flights: Flight[];
+  onUpgradeClick?: () => void;
 }
 
-export const PlanBadge: React.FC<PlanBadgeProps> = ({ plan, flights }) => {
+export const PlanBadge: React.FC<PlanBadgeProps> = ({ plan, flights, onUpgradeClick }) => {
   const { t } = useTranslation();
   const used = countUniqueRoutes(flights);
   const max = PLAN_LIMITS[plan].maxDestinations;
   const maxLabel = Number.isFinite(max) ? String(max) : '∞';
+
+  const content = (
+    <>
+      <span className={styles.planName}>{plan === 'premium' ? t('plan.pro') : t('plan.free')}</span>
+      <span className={styles.usage}>{t('plan.destinationsUsed', { used, max: maxLabel })}</span>
+      {plan === 'free' && onUpgradeClick && (
+        <span className={styles.upgradeLink}>{t('plan.upgradeCta')}</span>
+      )}
+    </>
+  );
+
+  if (plan === 'free' && onUpgradeClick) {
+    return (
+      <button
+        type="button"
+        className={`${styles.badge} ${styles.badgeButton}`}
+        onClick={onUpgradeClick}
+        title={t('plan.upgradeCta')}
+      >
+        {content}
+      </button>
+    );
+  }
 
   return (
     <div
@@ -23,10 +47,7 @@ export const PlanBadge: React.FC<PlanBadgeProps> = ({ plan, flights }) => {
       title={t('plan.destinationsUsed', { used, max: maxLabel })}
       aria-label={t('plan.destinationsUsed', { used, max: maxLabel })}
     >
-      <span className={styles.planName}>{plan === 'premium' ? t('plan.pro') : t('plan.free')}</span>
-      <span className={styles.usage}>
-        {t('plan.destinationsUsed', { used, max: maxLabel })}
-      </span>
+      {content}
     </div>
   );
 };

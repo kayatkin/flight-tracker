@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   canAddFlightForPlan,
   canUseCharts,
+  canCreateShareLink,
   countUniqueRoutes,
   isNewRoute,
   resolveEffectivePlan,
@@ -66,6 +67,13 @@ describe('subscriptionLimits', () => {
     expect(
       resolveEffectivePlan('premium', 'active', new Date(Date.now() - 1000).toISOString())
     ).toBe('free');
+  });
+
+  it('limits share links on free plan', () => {
+    expect(canCreateShareLink('free', 0)).toBe(true);
+    expect(canCreateShareLink('free', 1)).toBe(false);
+    expect(canCreateShareLink('premium', 4)).toBe(true);
+    expect(canCreateShareLink('premium', 5)).toBe(false);
   });
 
   it('detects new routes', () => {

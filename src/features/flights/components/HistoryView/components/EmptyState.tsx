@@ -1,4 +1,5 @@
 import React from 'react';
+import type { PlanId } from '@shared/constants/subscription';
 import { Flight } from '@shared/types';
 import { AccessManagement } from './AccessManagement';
 import styles from '../HistoryView.module.css';
@@ -8,8 +9,10 @@ interface EmptyStateProps {
   guestPermissions: 'view' | 'edit';
   flights?: Flight[];
   userId?: string;
+  plan?: PlanId;
   onShare?: () => void;
   onJoin?: (token: string) => void;
+  onUpgradeRequest?: () => void;
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({ 
@@ -17,8 +20,10 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   guestPermissions,
   flights = [],
   userId,
+  plan = 'free',
   onShare,
-  onJoin
+  onJoin,
+  onUpgradeRequest,
 }) => {
   return (
     <div className={styles.container}>
@@ -27,8 +32,10 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         <AccessManagement
           flights={flights}
           userId={userId}
+          plan={plan}
           onShare={onShare}
           onJoin={onJoin}
+          onUpgradeRequest={onUpgradeRequest}
           isEmptyState={true}
         />
       )}

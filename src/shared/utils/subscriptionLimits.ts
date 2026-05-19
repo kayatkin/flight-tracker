@@ -60,3 +60,7 @@ export function canAddFlightForPlan(
 export function canUseCharts(plan: PlanId): boolean {
   return PLAN_LIMITS[plan].chartsEnabled;
 }
+
+export function canCreateShareLink(plan: PlanId, activeLinkCount: number): boolean {
+  return activeLinkCount < PLAN_LIMITS[plan].maxShareLinks;
+}

@@ -6,6 +6,7 @@ import { GuestModeIndicator } from '@features/guest-mode';
 import { ShareFlightModal } from '@features/sharing';
 import { LanguageSwitcher } from '@shared/ui/LanguageSwitcher';
 import { PlanBadge } from '@shared/ui/PlanBadge';
+import { UpgradeModal } from '@features/subscription';
 import { useFlightTracker } from './hooks';
 import styles from './App.module.css';
 
@@ -13,6 +14,7 @@ const App: React.FC = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'add' | 'history'>('add');
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
 
   const {
     userName,
@@ -30,7 +32,8 @@ const App: React.FC = () => {
     handleLeaveGuestMode,
     plan,
     chartsEnabled,
-  } = useFlightTracker();
+    refreshPlan,
+  } = useFlightTracker({ onLimitReached: () => setShowUpgradeModal(true) });
 
   if (loading || isCheckingToken) {
     return (
@@ -43,7 +46,13 @@ const App: React.FC = () => {
   return (
     <div className={styles.app}>
       <header className={styles.header}>
-        {!appUser?.isGuest && <PlanBadge plan={plan} flights={flights} />}
+        {!appUser?.isGuest && (
+          <PlanBadge
+            plan={plan}
+            flights={flights}
+            onUpgradeClick={plan === 'free' ? () => setShowUpgradeModal(true) : undefined}
+          />
+        )}
         <div className={styles.headerActions}>
           <LanguageSwitcher />
         </div>
@@ -62,11 +71,24 @@ const App: React.FC = () => {
         <Trans i18nKey="app.greeting" values={{ name: userName }} components={{ strong: <strong /> }} />
       </p>
 
+      {showUpgradeModal && !appUser?.isGuest && (
+        <UpgradeModal
+          plan={plan}
+          onClose={() => setShowUpgradeModal(false)}
+          onActivated={() => void refreshPlan()}
+        />
+      )}
+
       {showShareModal && appUser && !appUser.isGuest && (
         <ShareFlightModal
           userId={appUser.userId}
+          plan={plan}
           onClose={() => setShowShareModal(false)}
           onShareCreated={() => {}}
+          onUpgradeRequest={() => {
+            setShowShareModal(false);
+            setShowUpgradeModal(true);
+          }}
         />
       )}
 
@@ -111,6 +133,8 @@ const App: React.FC = () => {
           isGuest={appUser?.isGuest || false}
           guestPermissions={appUser?.isGuest ? appUser.permissions : undefined}
           chartsEnabled={chartsEnabled}
+          plan={plan}
+          onUpgradeRequest={() => setShowUpgradeModal(true)}
         />
       )}
 

@@ -64,6 +64,7 @@ export interface TelegramWebApp {
   ready(): void;
   expand(): void;
   sendData(data: string): void;
+  openInvoice(url: string, callback?: (status: string) => void): void;
   onEvent<T extends keyof WebAppEvents>(
     eventType: T,
     eventHandler: WebAppEvents[T]

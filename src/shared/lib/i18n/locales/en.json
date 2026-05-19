@@ -40,7 +40,28 @@
   "plan": {
     "free": "Free",
     "pro": "Pro",
-    "destinationsUsed": "Routes: {{used}} / {{max}}"
+    "destinationsUsed": "Routes: {{used}} / {{max}}",
+    "upgradeCta": "Upgrade to Pro"
+  },
+  "upgrade": {
+    "title": "Flight Tracker Pro",
+    "subtitle": "Unlimited routes, flights, charts, and more share links.",
+    "close": "Close",
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "starsPrice": "{{stars}} Telegram Stars",
+    "annualSave": "Save ~58% vs monthly",
+    "cta": "Pay with Telegram Stars",
+    "processing": "Opening payment…",
+    "starsHint": "Payment is processed by Telegram. Pro activates automatically after payment.",
+    "telegramOnly": "Payments work only inside the Telegram mini app. Open the app from the bot.",
+    "success": "Pro activated! Enjoy unlimited access.",
+    "cancelled": "Payment cancelled.",
+    "failed": "Payment did not complete. Try again or use /status in the bot.",
+    "alreadyPro": "You already have Pro.",
+    "featureRoutes": "Unlimited routes and flights",
+    "featureCharts": "Seasonal price charts",
+    "featureShare": "Up to 5 active share links"
   },
   "history": {
     "chartTitle": "Seasonal price chart"
@@ -48,7 +69,9 @@
   "paywall": {
     "destinationsLimit": "Free plan allows up to {{max}} routes. Upgrade to Pro for unlimited routes.",
     "flightsLimit": "Free plan allows up to {{max}} flights. Upgrade to Pro for unlimited storage.",
-    "chartsLocked": "Price charts are available on Pro. Upgrade to unlock seasonal trends."
+    "chartsLocked": "Price charts are available on Pro. Upgrade to unlock seasonal trends.",
+    "shareLinksLimit": "Free plan allows {{max}} active share link. Upgrade to Pro for up to 5 links.",
+    "upgradeButton": "View Pro plans"
   },
   "priceAnalysis": {
     "firstRoute": "First offer on this route — saved.",

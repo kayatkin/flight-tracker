@@ -1,5 +1,6 @@
 // src/features/flights/components/HistoryView/components/AccessManagement.tsx
 import React, { useState } from 'react';
+import type { PlanId } from '@shared/constants/subscription';
 import { Flight } from '@shared/types';
 import { ShareFlightModal } from '@features/sharing';
 import { SharedSessionsList } from '@features/sharing';
@@ -10,16 +11,20 @@ import { toast } from '@shared/ui/Toast';
 interface AccessManagementProps {
   flights: Flight[];
   userId?: string;
+  plan?: PlanId;
   onShare?: () => void;
   onJoin?: (token: string) => void;
+  onUpgradeRequest?: () => void;
   isEmptyState: boolean;
 }
 
 export const AccessManagement: React.FC<AccessManagementProps> = ({
   flights,
   userId,
+  plan = 'free',
   onShare,
   onJoin,
+  onUpgradeRequest,
   isEmptyState,
 }) => {
   const [accessExpanded, setAccessExpanded] = useState<boolean>(false);
@@ -143,8 +148,10 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
       {showShareModal && userId && (
         <ShareFlightModal
           userId={userId}
+          plan={plan}
           onClose={() => setShowShareModal(false)}
           onShareCreated={handleShareCreated}
+          onUpgradeRequest={onUpgradeRequest}
         />
       )}
 

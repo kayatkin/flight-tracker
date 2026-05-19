@@ -4,3 +4,4 @@ export * from './appInitService';
 export * from './shareService';
 export * from './authService';
 export * from './subscriptionService';
+export * from './paymentService';

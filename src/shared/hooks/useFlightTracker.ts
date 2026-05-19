@@ -17,6 +17,10 @@ import { toast } from '@shared/ui/Toast';
 import i18n from '@shared/lib/i18n/config';
 import { devLog, logError } from '../utils/logger';
 
+export interface UseFlightTrackerOptions {
+  onLimitReached?: () => void;
+}
+
 interface UseFlightTrackerResult {
   // Состояния
   userName: string;
@@ -36,13 +40,15 @@ interface UseFlightTrackerResult {
   handleDeleteFlight: (id: string) => void;
   handleJoinSession: (token: string) => Promise<void>;
   handleLeaveGuestMode: () => void;
+  refreshPlan: () => Promise<void>;
   
   // Действия
   setActiveTab: (tab: 'add' | 'history') => void;
   setShowShareModal: (show: boolean) => void;
 }
 
-export const useFlightTracker = (): UseFlightTrackerResult => {
+export const useFlightTracker = (options?: UseFlightTrackerOptions): UseFlightTrackerResult => {
+  const onLimitReached = options?.onLimitReached;
   const [userName, setUserName] = useState<string>('Гость');
   const [userId, setUserId] = useState<string>('');
   const [appUser, setAppUser] = useState<AppUser | null>(null);
@@ -141,6 +147,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     if (appUser && !appUser.isGuest) {
       const check = canAddFlightForPlan(plan, flights, newFlight);
       if (!check.ok) {
+        onLimitReached?.();
         if (check.reason === 'destinations') {
           toast(
             i18n.t('paywall.destinationsLimit', { max: PLAN_LIMITS.free.maxDestinations }),
@@ -165,7 +172,13 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     if (newFlight.destination && !destinationCities.includes(newFlight.destination)) {
       setDestinationCities(prev => [...prev, newFlight.destination]);
     }
-  }, [airlines, originCities, destinationCities, appUser, plan, flights]);
+  }, [airlines, originCities, destinationCities, appUser, plan, flights, onLimitReached]);
+
+  const refreshPlan = useCallback(async () => {
+    if (!userId || appUser?.isGuest) return;
+    const subscription = await fetchUserSubscription(userId);
+    setPlan(subscription.plan);
+  }, [userId, appUser]);
 
   const handleDeleteFlight = useCallback((id: string) => {
     console.log('[HOOK] Deleting flight:', id);
@@ -337,6 +350,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     handleDeleteFlight,
     handleJoinSession,
     handleLeaveGuestMode,
+    refreshPlan,
     
     // Действия
     setActiveTab: () => {}, // Переопределяется в App.tsx

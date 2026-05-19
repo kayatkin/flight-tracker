@@ -1,6 +1,7 @@
 // bot/index.js
 const TelegramBot = require('node-telegram-bot-api');
 const { createClient } = require('@supabase/supabase-js');
+const { activateProSubscription, parseInvoicePayload } = require('./subscriptionPayments');
 require('dotenv').config();
 
 // ========== КОНФИГУРАЦИЯ ==========
@@ -168,6 +169,105 @@ bot.onText(/\/start(.+)?/, async (msg, match) => {
   }
 });
 
+// Telegram Stars: подтверждение оплаты
+bot.on('pre_checkout_query', async (query) => {
+  try {
+    const parsed = parseInvoicePayload(query.invoice_payload);
+    if (!parsed) {
+      await bot.answerPreCheckoutQuery(query.id, false, {
+        error_message: 'Некорректный счёт. Откройте оплату из приложения Flight Tracker.',
+      });
+      return;
+    }
+    await bot.answerPreCheckoutQuery(query.id, true);
+  } catch (err) {
+    console.error('[payment] pre_checkout_query error:', err);
+    await bot.answerPreCheckoutQuery(query.id, false, {
+      error_message: 'Ошибка проверки платежа. Попробуйте позже.',
+    });
+  }
+});
+
+bot.on('message', async (msg) => {
+  const payment = msg.successful_payment;
+  if (!payment) return;
+
+  const chatId = msg.chat.id;
+  const parsed = parseInvoicePayload(payment.invoice_payload);
+
+  if (!parsed) {
+    console.error('[payment] invalid payload:', payment.invoice_payload);
+    await bot.sendMessage(chatId, '❌ Оплата получена, но не удалось активировать Pro. Напишите в поддержку.');
+    return;
+  }
+
+  try {
+    const result = await activateProSubscription(supabase, {
+      userId: parsed.userId,
+      period: parsed.period,
+      chargeId: payment.telegram_payment_charge_id,
+      starsAmount: payment.total_amount,
+    });
+
+    const expiry = result.expiresAt
+      ? new Date(result.expiresAt).toLocaleDateString('ru-RU')
+      : '—';
+
+    await bot.sendMessage(
+      chatId,
+      `✅ *Flight Tracker Pro активирован!*\n\n` +
+        `📅 Действует до: ${expiry}\n\n` +
+        `Перезапустите мини-приложение, чтобы увидеть все функции.`,
+      { parse_mode: 'Markdown' }
+    );
+  } catch (err) {
+    console.error('[payment] successful_payment error:', err);
+    await bot.sendMessage(
+      chatId,
+      '😔 Оплата прошла, но активация задержалась. Напишите /status через минуту или обратитесь в поддержку.'
+    );
+  }
+});
+
+// Статус подписки
+bot.onText(/\/status/, async (msg) => {
+  const chatId = msg.chat.id;
+  const userId = `tg_${msg.from.id}`;
+
+  try {
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('plan, status, expires_at')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!data) {
+      await bot.sendMessage(chatId, '📋 Подписка: *Free* (запись не найдена)', {
+        parse_mode: 'Markdown',
+      });
+      return;
+    }
+
+    const planLabel = data.plan === 'premium' ? 'Pro ⭐' : 'Free';
+    const expiry = data.expires_at
+      ? new Date(data.expires_at).toLocaleString('ru-RU')
+      : 'без срока';
+
+    await bot.sendMessage(
+      chatId,
+      `📋 *Ваш тариф:* ${planLabel}\n` +
+        `📌 Статус: \`${data.status}\`\n` +
+        `📅 Истекает: ${expiry}`,
+      { parse_mode: 'Markdown' }
+    );
+  } catch (err) {
+    console.error('[status] error:', err);
+    await bot.sendMessage(chatId, '😔 Не удалось получить статус подписки.');
+  }
+});
+
 // Обработчик команды /help
 bot.onText(/\/help/, async (msg) => {
   const chatId = msg.chat.id;
@@ -176,6 +276,7 @@ bot.onText(/\/help/, async (msg) => {
     chatId,
     '📋 *Доступные команды:*\n\n' +
     '/start - Начать работу\n' +
+    '/status - Тариф Pro / Free\n' +
     '/help - Эта справка\n\n' +
     '🔗 *Ссылки для доступа:*\n' +
     'Для присоединения к чужой истории используйте ссылку от владельца.\n\n' +

@@ -1,6 +1,30 @@
 import { supabase } from '@shared/lib';
+import { PLAN_LIMITS, type PlanId } from '@shared/constants/subscription';
 import { generateShareToken } from '@shared/utils/id';
+import { canCreateShareLink } from '@shared/utils/subscriptionLimits';
 import { buildShareUrl } from './shareUrls';
+
+export class ShareLimitError extends Error {
+  readonly code = 'SHARE_LIMIT' as const;
+  readonly maxLinks: number;
+
+  constructor(maxLinks: number) {
+    super('SHARE_LIMIT');
+    this.maxLinks = maxLinks;
+  }
+}
+
+export async function countActiveShareSessions(ownerId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('shared_sessions')
+    .select('*', { count: 'exact', head: true })
+    .eq('owner_id', ownerId)
+    .eq('is_active', true)
+    .gt('expires_at', new Date().toISOString());
+
+  if (error) throw error;
+  return count ?? 0;
+}
 
 export type SharePermissions = 'view' | 'edit';
 export { buildShareUrl } from './shareUrls';
@@ -21,7 +45,13 @@ export const createShareSession = async ({
   ownerId,
   permissions,
   expiryDays,
-}: CreateShareSessionParams): Promise<ShareSessionResult> => {
+  plan = 'free',
+}: CreateShareSessionParams & { plan?: PlanId }): Promise<ShareSessionResult> => {
+  const activeCount = await countActiveShareSessions(ownerId);
+  if (!canCreateShareLink(plan, activeCount)) {
+    throw new ShareLimitError(PLAN_LIMITS[plan].maxShareLinks);
+  }
+
   const token = generateShareToken();
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + expiryDays);

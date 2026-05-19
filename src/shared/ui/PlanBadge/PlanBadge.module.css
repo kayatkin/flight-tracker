@@ -17,3 +17,20 @@
 .usage {
   font-size: 11px;
 }
+
+.badgeButton {
+  border: none;
+  cursor: pointer;
+  text-align: right;
+  font: inherit;
+}
+
+.badgeButton:hover .upgradeLink {
+  text-decoration: underline;
+}
+
+.upgradeLink {
+  font-size: 11px;
+  color: var(--tg-link-color, #2481cc);
+  margin-top: 2px;
+}

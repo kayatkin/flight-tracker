@@ -1,6 +1,8 @@
 // src/features/sharing/components/ShareFlightModal/ShareFlightModal.tsx
 import React, { useState } from 'react';
-import { createShareSession, revokeShareSession } from '@services/shareService';
+import { useTranslation } from 'react-i18next';
+import type { PlanId } from '@shared/constants/subscription';
+import { createShareSession, revokeShareSession, ShareLimitError } from '@services/shareService';
 import { toast } from '@shared/ui/Toast';
 import { logError } from '@shared/utils/logger';
 import ShareLinkOptions from '../ShareLinkOptions/ShareLinkOptions';
@@ -8,27 +10,39 @@ import styles from './ShareFlightModal.module.css';
 
 interface ShareFlightModalProps {
   userId: string;
+  plan: PlanId;
   onClose: () => void;
   onShareCreated: (token: string) => void;
+  onUpgradeRequest?: () => void;
 }
 
-const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, onShareCreated }) => {
+const ShareFlightModal: React.FC<ShareFlightModalProps> = ({
+  userId,
+  plan,
+  onClose,
+  onShareCreated,
+  onUpgradeRequest,
+}) => {
+  const { t } = useTranslation();
   const [permissions, setPermissions] = useState<'view' | 'edit'>('view');
   const [expiryDays, setExpiryDays] = useState<number>(7);
   const [generatedToken, setGeneratedToken] = useState<string>('');
   const [shareUrl, setShareUrl] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  const [shareLimitHit, setShareLimitHit] = useState(false);
 
   const createShareLink = async () => {
     try {
       setLoading(true);
       setError('');
+      setShareLimitHit(false);
       
       const { token, url } = await createShareSession({
         ownerId: userId,
         permissions,
         expiryDays,
+        plan,
       });
 
       setShareUrl(url);
@@ -36,6 +50,11 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
       onShareCreated(token);
         
     } catch (err: unknown) {
+      if (err instanceof ShareLimitError) {
+        setShareLimitHit(true);
+        setError(t('paywall.shareLinksLimit', { max: err.maxLinks }));
+        return;
+      }
       const message = err instanceof Error ? err.message : 'Ошибка при создании ссылки';
       setError(message);
       logError('Error creating share link:', err);
@@ -161,6 +180,11 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                 {loading ? 'Создание...' : 'Создать ссылку'}
               </button>
             </div>
+            {shareLimitHit && onUpgradeRequest && (
+              <button type="button" className={styles.createButton} onClick={onUpgradeRequest}>
+                {t('paywall.upgradeButton')}
+              </button>
+            )}
           </>
         ) : (
           <>

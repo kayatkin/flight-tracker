@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { PlanId } from '@shared/constants/subscription';
 import { Flight } from '@shared/types';
 import styles from './HistoryView.module.css';
 import { PriceChartModal } from '@features/flights';
@@ -20,6 +21,8 @@ interface HistoryViewProps {
   isGuest?: boolean;
   guestPermissions?: 'view' | 'edit';
   chartsEnabled?: boolean;
+  plan?: PlanId;
+  onUpgradeRequest?: () => void;
 }
 
 const HistoryView: React.FC<HistoryViewProps> = ({ 
@@ -31,6 +34,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({
   isGuest = false,
   guestPermissions = 'view',
   chartsEnabled = true,
+  plan = 'free',
+  onUpgradeRequest,
 }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
@@ -53,11 +58,12 @@ const HistoryView: React.FC<HistoryViewProps> = ({
     (destination: string) => {
       if (!chartsEnabled) {
         toast(t('paywall.chartsLocked'), 'warning');
+        onUpgradeRequest?.();
         return;
       }
       setChartDestination(destination);
     },
-    [chartsEnabled, t]
+    [chartsEnabled, t, onUpgradeRequest]
   );
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
@@ -91,8 +97,10 @@ const HistoryView: React.FC<HistoryViewProps> = ({
         guestPermissions={guestPermissions}
         flights={flights}
         userId={userId}
+        plan={plan}
         onShare={onShare}
         onJoin={onJoin}
+        onUpgradeRequest={onUpgradeRequest}
       />
     );
   }
@@ -104,8 +112,10 @@ const HistoryView: React.FC<HistoryViewProps> = ({
         <AccessManagement
           flights={flights}
           userId={userId}
+          plan={plan}
           onShare={onShare}
           onJoin={onJoin}
+          onUpgradeRequest={onUpgradeRequest}
           isEmptyState={false}
         />
       )}

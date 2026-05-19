@@ -2,21 +2,30 @@
 
 Backup baseline: `v2.0.0-stable` / branch `backup/pre-monetization-2026-05-19`.
 
-## Phase 1 (current branch)
+## Phase 1 — done
 
 - [x] i18n RU/EN + language switcher
 - [x] City/airline validation catalogs
 - [x] SQL `subscriptions` table
-- [x] `PLAN_LIMITS` constants in code
-- [ ] Wire subscription from Supabase in `subscriptionService`
-- [ ] Enforce 3 destination limit on add flight
-- [ ] Gate charts for premium
-- [ ] Paywall UI + Telegram Stars
+- [x] `PLAN_LIMITS` + enforcement (routes, flights, charts)
+- [x] `subscriptionService` + Plan badge
 
-## Phase 2
+## Phase 2 — done (code)
 
-- Payments webhook, `/status` in bot
-- Annual plan pricing
-- Analytics (conversion, churn)
+- [x] Paywall UI (`UpgradeModal`) + Telegram Stars checkout
+- [x] Edge function `create-pro-invoice`
+- [x] Bot: `pre_checkout_query`, `successful_payment`, `/status`
+- [x] SQL `payment_events` (idempotent charges)
+- [x] Share link limit (free: 1 active, Pro: 5)
 
-See product limits in `src/shared/constants/subscription.ts`.
+**Deploy:** see `docs/PAYMENTS.md`.
+
+## Phase 3 — next
+
+- [ ] Webhook mode for bot (optional, for production scale)
+- [ ] Restore purchases / subscription management UI
+- [ ] Analytics (conversion, MRR proxy via Stars)
+- [ ] Localized prices / A-B test star amounts
+- [ ] Full i18n for HistoryView, sharing modals
+
+Limits: `src/shared/constants/subscription.ts`.
