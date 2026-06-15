@@ -58,13 +58,25 @@ Deno.serve(async (req) => {
     permissions = 'view';
   }
 
+  const secondsUntilSessionExpires = Math.floor(
+    (new Date(session.expires_at).getTime() - Date.now()) / 1000
+  );
+  if (!Number.isFinite(secondsUntilSessionExpires) || secondsUntilSessionExpires <= 0) {
+    return jsonResponse({ error: 'Invalid or expired share token' }, 401);
+  }
+
+  const tokenTtlSeconds = Math.max(1, Math.min(60 * 60 * 24, secondsUntilSessionExpires));
   const guestSub = `guest_${crypto.randomUUID()}`;
-  const access_token = await signAccessToken({
-    sub: guestSub,
-    user_id: session.owner_id,
-    app_role: 'guest',
-    permissions,
-  });
+  const access_token = await signAccessToken(
+    {
+      sub: guestSub,
+      user_id: session.owner_id,
+      app_role: 'guest',
+      permissions,
+      session_token: token,
+    },
+    tokenTtlSeconds
+  );
 
   const { data: ownerRow } = await admin
     .from('users')
@@ -90,6 +102,6 @@ Deno.serve(async (req) => {
       ownerId: session.owner_id,
       ownerName,
     },
-    expires_in: 60 * 60 * 24,
+    expires_in: tokenTtlSeconds,
   });
 });

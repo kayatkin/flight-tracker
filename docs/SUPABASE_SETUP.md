@@ -39,6 +39,7 @@ supabase secrets set ALLOW_DEV_AUTH="true"   # только для staging; в p
 2. Выполните по порядку:
    - `supabase/migrations/001_schema.sql`
    - `supabase/migrations/002_rls.sql`
+   - `supabase/migrations/003_guest_session_and_update_checks.sql`
 
 **Вариант B — CLI:**
 
@@ -122,4 +123,4 @@ GitHub Actions secrets (уже есть `SUPABASE_URL`, `SUPABASE_ANON_KEY`).
   └─ dev userId ► auth-dev ──────┘── JWT (owner) ───────────►│ (только staging)
 ```
 
-JWT содержит `user_id`, `app_role` (`owner` | `guest`), `permissions` (`view` | `edit`).
+JWT содержит `user_id`, `app_role` (`owner` | `guest`), `permissions` (`view` | `edit`) и `session_token` для гостевого доступа.
