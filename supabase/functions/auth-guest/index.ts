@@ -64,6 +64,7 @@ Deno.serve(async (req) => {
     user_id: session.owner_id,
     app_role: 'guest',
     permissions,
+    session_token: token,
   });
 
   const { data: ownerRow } = await admin

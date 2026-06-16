@@ -3,11 +3,14 @@ import { assertEnvConfigured, env } from '../config/env';
 
 assertEnvConfigured();
 
+let appAccessToken: string | null = null;
+
 export const supabase = createClient(env.supabaseUrl, env.supabaseAnonKey, {
+  accessToken: async () => appAccessToken,
   auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
     storage: typeof window !== 'undefined' ? localStorage : undefined,
   },
   global: {
@@ -16,3 +19,8 @@ export const supabase = createClient(env.supabaseUrl, env.supabaseAnonKey, {
     },
   },
 });
+
+export const setSupabaseAccessToken = (accessToken: string | null): void => {
+  appAccessToken = accessToken;
+  supabase.realtime.setAuth(accessToken ?? env.supabaseAnonKey);
+};
