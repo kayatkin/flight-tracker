@@ -39,6 +39,24 @@ AS $$
   SELECT auth.jwt() ->> 'permissions';
 $$;
 
+CREATE OR REPLACE FUNCTION public.guest_session_is_active(required_permission TEXT DEFAULT NULL)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.shared_sessions shared_session
+    WHERE shared_session.token = auth.jwt() ->> 'session_token'
+      AND shared_session.owner_id = public.jwt_user_id()
+      AND shared_session.is_active = TRUE
+      AND shared_session.expires_at > NOW()
+      AND (required_permission IS NULL OR shared_session.permissions = required_permission)
+  );
+$$;
+
 CREATE OR REPLACE FUNCTION public.is_owner()
 RETURNS BOOLEAN
 LANGUAGE sql
@@ -104,22 +122,38 @@ CREATE POLICY "flights_owner_delete"
 CREATE POLICY "flights_guest_select"
   ON user_flights FOR SELECT
   TO authenticated
-  USING (public.is_guest() AND user_id = public.jwt_user_id());
+  USING (
+    public.is_guest()
+    AND user_id = public.jwt_user_id()
+    AND public.guest_session_is_active()
+  );
 
 CREATE POLICY "flights_guest_insert"
   ON user_flights FOR INSERT
   TO authenticated
-  WITH CHECK (public.guest_can_edit() AND user_id = public.jwt_user_id());
+  WITH CHECK (
+    public.guest_can_edit()
+    AND user_id = public.jwt_user_id()
+    AND public.guest_session_is_active('edit')
+  );
 
 CREATE POLICY "flights_guest_update"
   ON user_flights FOR UPDATE
   TO authenticated
-  USING (public.guest_can_edit() AND user_id = public.jwt_user_id());
+  USING (
+    public.guest_can_edit()
+    AND user_id = public.jwt_user_id()
+    AND public.guest_session_is_active('edit')
+  );
 
 CREATE POLICY "flights_guest_delete"
   ON user_flights FOR DELETE
   TO authenticated
-  USING (public.guest_can_edit() AND user_id = public.jwt_user_id());
+  USING (
+    public.guest_can_edit()
+    AND user_id = public.jwt_user_id()
+    AND public.guest_session_is_active('edit')
+  );
 
 -- SHARED SESSIONS — owner only
 CREATE POLICY "sessions_owner_select"

@@ -1,4 +1,4 @@
-import { supabase } from '@lib/supabaseClient';
+import { setSupabaseAccessToken, supabase } from '@lib/supabaseClient';
 import { env } from '@shared/config/env';
 import { getDevelopmentUserId } from '@shared/utils/telegram';
 import { isRealTelegramUser } from '@shared/utils/telegramUserType';
@@ -18,14 +18,8 @@ export interface OwnerAuthResult {
   userName: string;
 }
 
-const applySession = async (accessToken: string, refreshToken: string): Promise<void> => {
-  const { error } = await supabase.auth.setSession({
-    access_token: accessToken,
-    refresh_token: refreshToken,
-  });
-  if (error) {
-    throw error;
-  }
+const applySession = (accessToken: string): void => {
+  setSupabaseAccessToken(accessToken);
 };
 
 const invokeAuth = async <T extends AuthTokensResponse>(
@@ -44,7 +38,7 @@ const invokeAuth = async <T extends AuthTokensResponse>(
     return null;
   }
 
-  await applySession(data.access_token, data.refresh_token ?? data.access_token);
+  applySession(data.access_token);
   devLog(`[AUTH] ${functionName} session applied for`, data.userId);
   return data;
 };
@@ -87,7 +81,7 @@ export const authenticateGuest = async (shareToken: string): Promise<GuestUser |
     return null;
   }
 
-  await applySession(data.access_token, data.refresh_token ?? data.access_token);
+  applySession(data.access_token);
   return data.guestUser;
 };
 
@@ -108,5 +102,5 @@ export const authenticateOwner = async (): Promise<OwnerAuthResult | null> => {
 };
 
 export const signOutAuth = async (): Promise<void> => {
-  await supabase.auth.signOut();
+  setSupabaseAccessToken(null);
 };
