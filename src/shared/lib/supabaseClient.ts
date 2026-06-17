@@ -6,7 +6,7 @@ assertEnvConfigured();
 export const supabase = createClient(env.supabaseUrl, env.supabaseAnonKey, {
   auth: {
     persistSession: true,
-    autoRefreshToken: true,
+    autoRefreshToken: false,
     detectSessionInUrl: true,
     storage: typeof window !== 'undefined' ? localStorage : undefined,
   },
