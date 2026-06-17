@@ -1,4 +1,6 @@
 const encoder = new TextEncoder();
+const TELEGRAM_INIT_DATA_MAX_AGE_SECONDS = 60 * 60 * 24;
+const TELEGRAM_INIT_DATA_FUTURE_SKEW_SECONDS = 60 * 5;
 
 async function importHmacKey(raw: ArrayBuffer): Promise<CryptoKey> {
   return crypto.subtle.importKey('raw', raw, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
@@ -18,6 +20,17 @@ export async function validateTelegramInitData(
   const params = new URLSearchParams(initData);
   const hash = params.get('hash');
   if (!hash) return false;
+
+  const authDate = Number(params.get('auth_date'));
+  const now = Math.floor(Date.now() / 1000);
+  if (
+    !Number.isFinite(authDate) ||
+    authDate <= 0 ||
+    authDate > now + TELEGRAM_INIT_DATA_FUTURE_SKEW_SECONDS ||
+    now - authDate > TELEGRAM_INIT_DATA_MAX_AGE_SECONDS
+  ) {
+    return false;
+  }
 
   params.delete('hash');
 

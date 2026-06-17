@@ -1,11 +1,13 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Flight } from '../../shared/types';
 import { AppUser } from '../../shared/types';
 import { 
   initializeApp, 
   getFallbackInitResult, 
   initGuestMode,
-  clearTokenFromUrl 
+  clearTokenFromUrl,
+  clearIgnoredInvitationToken,
+  ignoreInvitationTokenForSession
 } from '../../services/appInitService';
 import { saveOwnerData, saveGuestData } from '../../services/dataService';
 import { getTelegramUserType } from '../utils/telegramUserType';
@@ -45,6 +47,13 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
   const [destinationCities, setDestinationCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCheckingToken, setIsCheckingToken] = useState<boolean>(true);
+  const hasUnsavedChangesRef = useRef(false);
+  const changeVersionRef = useRef(0);
+  
+  const markDataChanged = useCallback(() => {
+    hasUnsavedChangesRef.current = true;
+    changeVersionRef.current += 1;
+  }, []);
   
   // Заглушка для setShowShareModal (реализация в App.tsx)
   const setShowShareModal = useCallback((_show: boolean) => {
@@ -95,7 +104,8 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
 
   // Автосохранение данных
   useEffect(() => {
-    if (loading || !userId || !appUser) return;
+    if (loading || !userId || !appUser || !hasUnsavedChangesRef.current) return;
+    const versionToSave = changeVersionRef.current;
     
     const saveData = async () => {
       try {
@@ -112,6 +122,10 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
           await saveOwnerData(userId, flights, airlines, originCities, destinationCities);
           console.log('[HOOK] Owner data saved');
         }
+        
+        if (changeVersionRef.current === versionToSave) {
+          hasUnsavedChangesRef.current = false;
+        }
       } catch (err) {
         console.error('[HOOK] Save error:', err);
       }
@@ -124,6 +138,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
   // Обработчики
   const handleAddFlight = useCallback((newFlight: Flight) => {
     console.log('[HOOK] Adding flight:', newFlight);
+    markDataChanged();
     setFlights(prev => [...prev, newFlight]);
     
     if (newFlight.airline && !airlines.includes(newFlight.airline)) {
@@ -135,20 +150,21 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     if (newFlight.destination && !destinationCities.includes(newFlight.destination)) {
       setDestinationCities(prev => [...prev, newFlight.destination]);
     }
-  }, [airlines, originCities, destinationCities]);
+  }, [airlines, originCities, destinationCities, markDataChanged]);
 
   const handleDeleteFlight = useCallback((id: string) => {
     console.log('[HOOK] Deleting flight:', id);
+    markDataChanged();
     setFlights(prev => prev.filter(f => f.id !== id));
-  }, []);
+  }, [markDataChanged]);
 
   const handleJoinSession = useCallback(async (token: string) => {
     try {
       console.log('[HOOK] Joining session with token:', token);
       setLoading(true);
       
-      // 🔥 ОЧИЩАЕМ ПРЕДЫДУЩИЙ ФЛАГ ОБРАБОТКИ
-      sessionStorage.removeItem('processed_invitation_token');
+      // A manual join should be able to reuse a token ignored after leaving.
+      clearIgnoredInvitationToken();
       
       const guestResult = await initGuestMode(token);
       
@@ -231,6 +247,9 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     try {
       // 🔥 КЛЮЧЕВОЕ: Определяем тип пользователя
       const userType = getTelegramUserType();
+      if (userType !== 'web_browser') {
+        ignoreInvitationTokenForSession(appUser?.isGuest ? appUser.sessionToken : null);
+      }
       
       // 1. Очищаем токен из URL (всегда делаем это)
       clearTokenFromUrl();
