@@ -5,7 +5,9 @@ import {
   initializeApp, 
   getFallbackInitResult, 
   initGuestMode,
-  clearTokenFromUrl 
+  clearTokenFromUrl,
+  clearIgnoredInvitationToken,
+  ignoreInvitationTokenForSession
 } from '../../services/appInitService';
 import { saveOwnerData, saveGuestData } from '../../services/dataService';
 import { getTelegramUserType } from '../utils/telegramUserType';
@@ -161,8 +163,8 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
       console.log('[HOOK] Joining session with token:', token);
       setLoading(true);
       
-      // 🔥 ОЧИЩАЕМ ПРЕДЫДУЩИЙ ФЛАГ ОБРАБОТКИ
-      sessionStorage.removeItem('processed_invitation_token');
+      // A manual join should be able to reuse a token ignored after leaving.
+      clearIgnoredInvitationToken();
       
       const guestResult = await initGuestMode(token);
       
@@ -245,6 +247,9 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     try {
       // 🔥 КЛЮЧЕВОЕ: Определяем тип пользователя
       const userType = getTelegramUserType();
+      if (userType !== 'web_browser') {
+        ignoreInvitationTokenForSession(appUser?.isGuest ? appUser.sessionToken : null);
+      }
       
       // 1. Очищаем токен из URL (всегда делаем это)
       clearTokenFromUrl();
