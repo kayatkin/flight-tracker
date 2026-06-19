@@ -316,9 +316,10 @@ export const initializeApp = async (): Promise<AppInitResult> => {
       alreadyProcessed: hasProcessedToken()
     });
     
-    // 🔥 Обрабатываем токен только если он ещё не был обработан
-    if (token && !hasProcessedToken()) {
-      console.log('[INIT] Token found and not yet processed, initializing guest mode...');
+    // Revalidate share tokens on every startup so reloads keep the guest context
+    // and revoked/expired sessions are rejected by the auth function.
+    if (token) {
+      console.log('[INIT] Token found, initializing guest mode...');
       const guestResult = await initGuestMode(token);
       
       if (guestResult) {
@@ -391,8 +392,6 @@ export const initializeApp = async (): Promise<AppInitResult> => {
       } else {
         console.log('[INIT] Guest mode initialization failed or redirected');
       }
-    } else if (token && hasProcessedToken()) {
-      console.log('[INIT] Token already processed in this session, skipping guest mode');
     }
     
     devLog('[INIT] Initializing as owner');
