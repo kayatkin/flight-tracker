@@ -1,4 +1,5 @@
 const encoder = new TextEncoder();
+const DEFAULT_MAX_INIT_DATA_AGE_SECONDS = 60 * 60 * 24;
 
 async function importHmacKey(raw: ArrayBuffer): Promise<CryptoKey> {
   return crypto.subtle.importKey('raw', raw, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
@@ -13,11 +14,17 @@ async function getTelegramSecretKey(botToken: string): Promise<CryptoKey> {
 /** @see https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app */
 export async function validateTelegramInitData(
   initData: string,
-  botToken: string
+  botToken: string,
+  maxAgeSeconds = DEFAULT_MAX_INIT_DATA_AGE_SECONDS
 ): Promise<boolean> {
   const params = new URLSearchParams(initData);
   const hash = params.get('hash');
   if (!hash) return false;
+
+  const authDate = Number(params.get('auth_date'));
+  const now = Math.floor(Date.now() / 1000);
+  if (!Number.isFinite(authDate) || authDate <= 0) return false;
+  if (authDate > now + 60 || now - authDate > maxAgeSeconds) return false;
 
   params.delete('hash');
 

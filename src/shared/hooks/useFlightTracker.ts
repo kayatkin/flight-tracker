@@ -8,6 +8,7 @@ import {
   clearTokenFromUrl 
 } from '../../services/appInitService';
 import { saveOwnerData, saveGuestData } from '../../services/dataService';
+import { signOutAuth } from '../../services/authService';
 import { getTelegramUserType } from '../utils/telegramUserType';
 import { toast } from '@shared/ui/Toast';
 import { devLog, logError } from '../utils/logger';
@@ -220,7 +221,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
   }, []);
 
   // 🔥 ИСПРАВЛЕННАЯ функция выхода из гостевого режима
-  const handleLeaveGuestMode = useCallback(() => {
+  const handleLeaveGuestMode = useCallback(async () => {
     console.log('[EXIT] Leaving guest mode...', {
       isGuest: appUser?.isGuest,
       userType: getTelegramUserType(),
@@ -232,10 +233,14 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
       // 🔥 КЛЮЧЕВОЕ: Определяем тип пользователя
       const userType = getTelegramUserType();
       
-      // 1. Очищаем токен из URL (всегда делаем это)
+      // 1. Clear the persisted Supabase guest JWT before leaving the shared context.
+      await signOutAuth();
+      sessionStorage.removeItem('processed_invitation_token');
+
+      // 2. Очищаем токен из URL (всегда делаем это)
       clearTokenFromUrl();
       
-      // 2. Определяем правильное действие в зависимости от типа пользователя
+      // 3. Определяем правильное действие в зависимости от типа пользователя
       switch (userType) {
         case 'real_telegram':
           // ✅ СЦЕНАРИЙ 1: Реальный Telegram пользователь
@@ -284,6 +289,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
       console.error('[EXIT] Error leaving guest mode:', error);
       // Аварийный fallback
       clearTokenFromUrl();
+      sessionStorage.removeItem('processed_invitation_token');
       window.location.reload();
     }
   }, [appUser]);

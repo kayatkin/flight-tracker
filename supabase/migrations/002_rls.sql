@@ -39,6 +39,14 @@ AS $$
   SELECT auth.jwt() ->> 'permissions';
 $$;
 
+CREATE OR REPLACE FUNCTION public.jwt_share_token()
+RETURNS TEXT
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT auth.jwt() ->> 'share_token';
+$$;
+
 CREATE OR REPLACE FUNCTION public.is_owner()
 RETURNS BOOLEAN
 LANGUAGE sql
@@ -55,12 +63,36 @@ AS $$
   SELECT public.jwt_app_role() = 'guest';
 $$;
 
+CREATE OR REPLACE FUNCTION public.guest_session_valid(required_permission TEXT DEFAULT NULL)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.shared_sessions
+    WHERE token = public.jwt_share_token()
+      AND owner_id = public.jwt_user_id()
+      AND is_active = TRUE
+      AND expires_at > NOW()
+      AND (
+        required_permission IS NULL
+        OR permissions = required_permission
+      )
+  );
+$$;
+
 CREATE OR REPLACE FUNCTION public.guest_can_edit()
 RETURNS BOOLEAN
 LANGUAGE sql
 STABLE
 AS $$
-  SELECT public.is_guest() AND public.jwt_permissions() = 'edit';
+  SELECT
+    public.is_guest()
+    AND public.jwt_permissions() = 'edit'
+    AND public.guest_session_valid('edit');
 $$;
 
 -- USERS
@@ -104,7 +136,7 @@ CREATE POLICY "flights_owner_delete"
 CREATE POLICY "flights_guest_select"
   ON user_flights FOR SELECT
   TO authenticated
-  USING (public.is_guest() AND user_id = public.jwt_user_id());
+  USING (public.is_guest() AND user_id = public.jwt_user_id() AND public.guest_session_valid());
 
 CREATE POLICY "flights_guest_insert"
   ON user_flights FOR INSERT
