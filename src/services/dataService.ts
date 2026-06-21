@@ -72,8 +72,7 @@ export const loadUserData = async (targetUserId: string): Promise<LoadUserDataRe
       .order('departure_date', { ascending: true });
     
     if (error) {
-      logError('[LOAD] Error loading flights:', error);
-      return { flights: [], airlines: [], originCities: [], destinationCities: [] };
+      throw error;
     }
     
     if (flightRecords && flightRecords.length > 0) {
@@ -145,8 +144,8 @@ export const loadUserData = async (targetUserId: string): Promise<LoadUserDataRe
       return { flights: [], airlines: [], originCities: [], destinationCities: [] };
     }
   } catch (err) {
-    logError('[LOAD] Load crashed:', err);
-    return { flights: [], airlines: [], originCities: [], destinationCities: [] };
+    logError('[LOAD] Failed to load user data:', err);
+    throw err;
   }
 };
 

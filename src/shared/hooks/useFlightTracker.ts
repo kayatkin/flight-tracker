@@ -45,6 +45,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
   const [destinationCities, setDestinationCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCheckingToken, setIsCheckingToken] = useState<boolean>(true);
+  const [canAutoSave, setCanAutoSave] = useState(false);
   
   // Заглушка для setShowShareModal (реализация в App.tsx)
   const setShowShareModal = useCallback((_show: boolean) => {
@@ -73,6 +74,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
         setAirlines(initResult.airlines);
         setOriginCities(initResult.originCities);
         setDestinationCities(initResult.destinationCities);
+        setCanAutoSave(true);
       } catch (err) {
         console.error('[HOOK] App initialization failed:', err);
         const fallbackResult = getFallbackInitResult(err);
@@ -84,6 +86,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
         setAirlines(fallbackResult.airlines);
         setOriginCities(fallbackResult.originCities);
         setDestinationCities(fallbackResult.destinationCities);
+        setCanAutoSave(false);
       } finally {
         setLoading(false);
         setIsCheckingToken(false);
@@ -95,7 +98,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
 
   // Автосохранение данных
   useEffect(() => {
-    if (loading || !userId || !appUser) return;
+    if (loading || !canAutoSave || !userId || !appUser) return;
     
     const saveData = async () => {
       try {
@@ -119,7 +122,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     
     const timer = setTimeout(saveData, 2000);
     return () => clearTimeout(timer);
-  }, [flights, airlines, originCities, destinationCities, loading, userId, appUser]);
+  }, [flights, airlines, originCities, destinationCities, loading, canAutoSave, userId, appUser]);
 
   // Обработчики
   const handleAddFlight = useCallback((newFlight: Flight) => {
@@ -195,6 +198,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
         setAirlines(ownerData.airlines);
         setOriginCities(ownerData.originCities);
         setDestinationCities(ownerData.destinationCities);
+        setCanAutoSave(true);
         
         // 🔥 Обновляем URL только для веб-браузера (не для Telegram)
         if (userType === 'web_browser') {
