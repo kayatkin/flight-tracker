@@ -3,6 +3,7 @@ export interface AppJwtClaims {
   user_id: string;
   app_role: 'owner' | 'guest';
   permissions?: 'view' | 'edit';
+  share_session_id?: string;
   name?: string;
 }
 

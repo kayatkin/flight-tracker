@@ -154,24 +154,15 @@ export const loadUserData = async (targetUserId: string): Promise<LoadUserDataRe
 export const saveOwnerData = async (
   userId: string,
   flights: Flight[],
-  airlines: string[],
-  originCities: string[],
-  destinationCities: string[]
+  _airlines: string[],
+  _originCities: string[],
+  _destinationCities: string[]
 ): Promise<void> => {
   try {
     devLog('[SAVE] Saving owner data for:', userId, 'flights:', flights.length);
 
     if (flights.length === 0) {
-      const { error: clearError } = await supabase
-        .from('user_flights')
-        .delete()
-        .eq('user_id', userId);
-
-      if (clearError) {
-        logError('[SAVE] Failed to clear flights:', clearError);
-        throw clearError;
-      }
-      devLog('[SAVE] Cleared all flights for user');
+      devLog('[SAVE] No flights to upsert');
       return;
     }
     
@@ -229,20 +220,33 @@ export const saveOwnerData = async (
       throw upsertError;
     }
 
-    const flightIds = records.map((r) => r.flight_id);
-    const { error: pruneError } = await supabase
-      .from('user_flights')
-      .delete()
-      .eq('user_id', userId)
-      .not('flight_id', 'in', `(${flightIds.join(',')})`);
-
-    if (pruneError) {
-      logError('[SAVE] Prune removed flights warning:', pruneError);
-    }
-
     devLog('[SAVE] Owner data saved successfully:', records.length, 'records');
   } catch (err) {
     logError('[SAVE] Save owner data failed:', err);
+    throw err;
+  }
+};
+
+export const deleteFlightData = async (userId: string, flightId: string): Promise<void> => {
+  try {
+    if (!isValidUUID(flightId)) {
+      throw new Error(`Invalid flight id for delete: ${flightId}`);
+    }
+
+    const { error } = await supabase
+      .from('user_flights')
+      .delete()
+      .eq('user_id', userId)
+      .eq('flight_id', flightId);
+
+    if (error) {
+      logError('[DELETE] Failed to delete flight:', error);
+      throw error;
+    }
+
+    devLog('[DELETE] Flight deleted:', flightId);
+  } catch (err) {
+    logError('[DELETE] Delete flight failed:', err);
     throw err;
   }
 };
