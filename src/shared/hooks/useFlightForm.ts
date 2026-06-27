@@ -1,6 +1,7 @@
 // src/shared/hooks/useFlightForm.ts
 import { useState, useCallback } from 'react';
 import { Flight } from '../../shared/types';
+import { generateUUID } from '../utils/id';
 
 // ДОБАВЛЯЕМ export!
 export interface FlightFormData {
@@ -85,7 +86,7 @@ export const useFlightForm = (initialDate?: string) => {
     const priceNum = Number(formData.totalPrice);
 
     return {
-      id: Date.now().toString(),
+      id: generateUUID(),
       origin: formData.origin.trim(),
       destination: formData.destination.trim(),
       type: formData.type,

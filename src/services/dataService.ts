@@ -12,6 +12,25 @@ export interface LoadUserDataResult {
   destinationCities: string[];
 }
 
+const legacyFlightIds = new Map<string, string>();
+
+const getPersistedFlightId = (flightId: string): string => {
+  if (flightId && isValidUUID(flightId)) {
+    return flightId;
+  }
+
+  const legacyKey = flightId || '__empty__';
+  const existingId = legacyFlightIds.get(legacyKey);
+  if (existingId) {
+    return existingId;
+  }
+
+  const generatedId = generateUUID();
+  legacyFlightIds.set(legacyKey, generatedId);
+  devLog(`[SAVE] Generated UUID for flight: ${generatedId} (was: ${flightId})`);
+  return generatedId;
+};
+
 // 🔥 Новая функция: получение читаемого имени владельца
 const getReadableOwnerName = async (ownerId: string): Promise<string> => {
   if (!ownerId) return 'Владельца';
@@ -73,7 +92,7 @@ export const loadUserData = async (targetUserId: string): Promise<LoadUserDataRe
     
     if (error) {
       logError('[LOAD] Error loading flights:', error);
-      return { flights: [], airlines: [], originCities: [], destinationCities: [] };
+      throw error;
     }
     
     if (flightRecords && flightRecords.length > 0) {
@@ -146,7 +165,7 @@ export const loadUserData = async (targetUserId: string): Promise<LoadUserDataRe
     }
   } catch (err) {
     logError('[LOAD] Load crashed:', err);
-    return { flights: [], airlines: [], originCities: [], destinationCities: [] };
+    throw err;
   }
 };
 
@@ -162,30 +181,14 @@ export const saveOwnerData = async (
     devLog('[SAVE] Saving owner data for:', userId, 'flights:', flights.length);
 
     if (flights.length === 0) {
-      const { error: clearError } = await supabase
-        .from('user_flights')
-        .delete()
-        .eq('user_id', userId);
-
-      if (clearError) {
-        logError('[SAVE] Failed to clear flights:', clearError);
-        throw clearError;
-      }
-      devLog('[SAVE] Cleared all flights for user');
+      devLog('[SAVE] No flights to upsert; skipping destructive clear');
       return;
     }
     
     // Преобразуем Flight объекты в записи базы данных
     const records = flights.map(flight => {
       // Генерируем правильный UUID для flight_id
-      let flightId = flight.id;
-      
-      // Проверяем, является ли ID валидным UUID
-      if (!flightId || !isValidUUID(flightId)) {
-        // Если ID не валидный UUID, генерируем новый
-        flightId = generateUUID();
-        devLog(`[SAVE] Generated UUID for flight: ${flightId} (was: ${flight.id})`);
-      }
+      const flightId = getPersistedFlightId(flight.id);
       
       // Для каждого рейса создаем запись в таблице user_flights
       const record = {
@@ -229,20 +232,31 @@ export const saveOwnerData = async (
       throw upsertError;
     }
 
-    const flightIds = records.map((r) => r.flight_id);
-    const { error: pruneError } = await supabase
-      .from('user_flights')
-      .delete()
-      .eq('user_id', userId)
-      .not('flight_id', 'in', `(${flightIds.join(',')})`);
-
-    if (pruneError) {
-      logError('[SAVE] Prune removed flights warning:', pruneError);
-    }
-
     devLog('[SAVE] Owner data saved successfully:', records.length, 'records');
   } catch (err) {
     logError('[SAVE] Save owner data failed:', err);
+    throw err;
+  }
+};
+
+export const deleteFlightData = async (userId: string, flightId: string): Promise<void> => {
+  try {
+    const persistedFlightId = getPersistedFlightId(flightId);
+    const { error } = await supabase
+      .from('user_flights')
+      .delete()
+      .eq('user_id', userId)
+      .eq('flight_id', persistedFlightId);
+
+    if (error) {
+      logError('[SAVE] Delete flight failed:', error);
+      throw error;
+    }
+
+    legacyFlightIds.delete(flightId || '__empty__');
+    devLog('[SAVE] Deleted flight:', persistedFlightId);
+  } catch (err) {
+    logError('[SAVE] Delete flight crashed:', err);
     throw err;
   }
 };
