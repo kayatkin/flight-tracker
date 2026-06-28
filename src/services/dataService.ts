@@ -169,7 +169,7 @@ export const saveOwnerData = async (
     // Преобразуем Flight объекты в записи базы данных
     const records = flights.map(flight => {
       // Генерируем правильный UUID для flight_id
-      let flightId = flight.id;
+      const flightId = flight.id;
       
       if (!flightId || !isValidUUID(flightId)) {
         throw new Error(`[SAVE] Flight has invalid UUID: ${flight.id}`);
