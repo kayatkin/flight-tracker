@@ -3,6 +3,8 @@ import { handleOptions, jsonResponse } from '../_shared/cors.ts';
 import { signAccessToken } from '../_shared/jwt.ts';
 import { parseTelegramUser, validateTelegramInitData } from '../_shared/telegram.ts';
 
+const MAX_GUEST_TOKEN_SECONDS = 60 * 60 * 24;
+
 Deno.serve(async (req) => {
   const options = handleOptions(req);
   if (options) return options;
@@ -59,12 +61,18 @@ Deno.serve(async (req) => {
   }
 
   const guestSub = `guest_${crypto.randomUUID()}`;
+  const secondsUntilSessionExpiry = Math.max(
+    1,
+    Math.floor((new Date(session.expires_at).getTime() - Date.now()) / 1000)
+  );
+  const expiresIn = Math.min(secondsUntilSessionExpiry, MAX_GUEST_TOKEN_SECONDS);
   const access_token = await signAccessToken({
     sub: guestSub,
     user_id: session.owner_id,
     app_role: 'guest',
     permissions,
-  });
+    share_token: token,
+  }, expiresIn);
 
   const { data: ownerRow } = await admin
     .from('users')
@@ -90,6 +98,6 @@ Deno.serve(async (req) => {
       ownerId: session.owner_id,
       ownerName,
     },
-    expires_in: 60 * 60 * 24,
+    expires_in: expiresIn,
   });
 });

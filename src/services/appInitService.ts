@@ -295,15 +295,6 @@ export const initializeApp = async (): Promise<AppInitResult> => {
     // Даем время для загрузки Telegram WebApp
     await new Promise(resolve => setTimeout(resolve, 300));
     
-    // 🔥 ЗАЩИТА ОТ ПОВТОРНОЙ ОБРАБОТКИ ТОКЕНА
-    const hasProcessedToken = (): boolean => {
-      return sessionStorage.getItem('processed_invitation_token') === 'true';
-    };
-
-    const markTokenAsProcessed = (): void => {
-      sessionStorage.setItem('processed_invitation_token', 'true');
-    };
-
     // Проверяем токен в URL
     const token = getTokenFromUrl();
     
@@ -313,17 +304,13 @@ export const initializeApp = async (): Promise<AppInitResult> => {
       startParam: window.Telegram?.WebApp?.initDataUnsafe?.start_param,
       user: window.Telegram?.WebApp?.initDataUnsafe?.user,
       location: window.location.href,
-      alreadyProcessed: hasProcessedToken()
     });
     
-    // 🔥 Обрабатываем токен только если он ещё не был обработан
-    if (token && !hasProcessedToken()) {
-      console.log('[INIT] Token found and not yet processed, initializing guest mode...');
+    if (token) {
+      console.log('[INIT] Token found, initializing guest mode...');
       const guestResult = await initGuestMode(token);
       
       if (guestResult) {
-        markTokenAsProcessed(); // 🔥 Запоминаем, что токен уже использован
-        
         const { guestUser, ownerData } = guestResult;
         
         // Определяем тип доступа
@@ -391,8 +378,6 @@ export const initializeApp = async (): Promise<AppInitResult> => {
       } else {
         console.log('[INIT] Guest mode initialization failed or redirected');
       }
-    } else if (token && hasProcessedToken()) {
-      console.log('[INIT] Token already processed in this session, skipping guest mode');
     }
     
     devLog('[INIT] Initializing as owner');
