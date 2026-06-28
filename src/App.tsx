@@ -46,6 +46,20 @@ const App: React.FC = () => {
     );
   }
 
+  if (!appUser) {
+    return (
+      <div className={styles.app} style={{ textAlign: 'center', padding: '40px' }}>
+        <h2 className={styles.title}>✈️ Flight Tracker</h2>
+        <p className={styles.greeting}>
+          Не удалось загрузить данные. Проверьте подключение и перезагрузите приложение.
+        </p>
+        <button className={styles.tabButton} onClick={() => window.location.reload()}>
+          Перезагрузить
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.app}>
       {/* Индикатор гостевого режима */}

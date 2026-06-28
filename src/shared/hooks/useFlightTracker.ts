@@ -3,11 +3,11 @@ import { Flight } from '../../shared/types';
 import { AppUser } from '../../shared/types';
 import { 
   initializeApp, 
-  getFallbackInitResult, 
   initGuestMode,
   clearTokenFromUrl 
 } from '../../services/appInitService';
-import { saveOwnerData, saveGuestData } from '../../services/dataService';
+import { saveOwnerData, saveGuestData, deleteFlightData } from '../../services/dataService';
+import { signOutAuth } from '../../services/authService';
 import { getTelegramUserType } from '../utils/telegramUserType';
 import { toast } from '@shared/ui/Toast';
 import { devLog, logError } from '../utils/logger';
@@ -75,15 +75,14 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
         setDestinationCities(initResult.destinationCities);
       } catch (err) {
         console.error('[HOOK] App initialization failed:', err);
-        const fallbackResult = getFallbackInitResult(err);
-        
-        setUserName(fallbackResult.userName);
-        setUserId(fallbackResult.userId);
-        setAppUser(fallbackResult.appUser);
-        setFlights(fallbackResult.flights);
-        setAirlines(fallbackResult.airlines);
-        setOriginCities(fallbackResult.originCities);
-        setDestinationCities(fallbackResult.destinationCities);
+        toast('Не удалось загрузить данные. Проверьте подключение и перезагрузите приложение.', 'error');
+        setUserName('Ошибка загрузки');
+        setUserId('');
+        setAppUser(null);
+        setFlights([]);
+        setAirlines([]);
+        setOriginCities([]);
+        setDestinationCities([]);
       } finally {
         setLoading(false);
         setIsCheckingToken(false);
@@ -139,8 +138,26 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
 
   const handleDeleteFlight = useCallback((id: string) => {
     console.log('[HOOK] Deleting flight:', id);
+    const deletedIndex = flights.findIndex((flight) => flight.id === id);
+    const deletedFlight = deletedIndex >= 0 ? flights[deletedIndex] : undefined;
     setFlights(prev => prev.filter(f => f.id !== id));
-  }, []);
+
+    const ownerId = appUser?.isGuest ? appUser.ownerId : userId;
+    if (!ownerId || !appUser) return;
+
+    deleteFlightData(ownerId, id).catch((err) => {
+      logError('[HOOK] Delete error:', err);
+      if (deletedFlight) {
+        setFlights((prev) => {
+          if (prev.some((flight) => flight.id === id)) return prev;
+          const restored = [...prev];
+          restored.splice(Math.min(deletedIndex, restored.length), 0, deletedFlight);
+          return restored;
+        });
+      }
+      toast('Не удалось удалить билет', 'error');
+    });
+  }, [appUser, flights, userId]);
 
   const handleJoinSession = useCallback(async (token: string) => {
     try {
@@ -220,7 +237,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
   }, []);
 
   // 🔥 ИСПРАВЛЕННАЯ функция выхода из гостевого режима
-  const handleLeaveGuestMode = useCallback(() => {
+  const handleLeaveGuestMode = useCallback(async () => {
     console.log('[EXIT] Leaving guest mode...', {
       isGuest: appUser?.isGuest,
       userType: getTelegramUserType(),
@@ -231,6 +248,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     try {
       // 🔥 КЛЮЧЕВОЕ: Определяем тип пользователя
       const userType = getTelegramUserType();
+      await signOutAuth();
       
       // 1. Очищаем токен из URL (всегда делаем это)
       clearTokenFromUrl();
