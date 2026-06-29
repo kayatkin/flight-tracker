@@ -7,7 +7,7 @@ import {
   initGuestMode,
   clearTokenFromUrl 
 } from '../../services/appInitService';
-import { saveOwnerData, saveGuestData } from '../../services/dataService';
+import { saveOwnerData, saveGuestData, deleteFlightData } from '../../services/dataService';
 import { getTelegramUserType } from '../utils/telegramUserType';
 import { toast } from '@shared/ui/Toast';
 import { devLog, logError } from '../utils/logger';
@@ -198,7 +198,14 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
   const handleDeleteFlight = useCallback((id: string) => {
     console.log('[HOOK] Deleting flight:', id);
     setFlights(prev => prev.filter(f => f.id !== id));
-  }, []);
+    const targetUserId = appUser?.isGuest ? appUser.ownerId : userId;
+    if (!targetUserId) return;
+
+    void deleteFlightData(targetUserId, id).catch((err) => {
+      logError('[HOOK] Delete error:', err);
+      toast('Ошибка при удалении рейса', 'error');
+    });
+  }, [appUser, userId]);
 
   const handleJoinSession = useCallback(async (token: string) => {
     try {
