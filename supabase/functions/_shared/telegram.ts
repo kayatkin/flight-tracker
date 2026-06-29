@@ -13,11 +13,14 @@ async function getTelegramSecretKey(botToken: string): Promise<CryptoKey> {
 /** @see https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app */
 export async function validateTelegramInitData(
   initData: string,
-  botToken: string
+  botToken: string,
+  maxAgeSeconds = 60 * 60 * 24
 ): Promise<boolean> {
   const params = new URLSearchParams(initData);
   const hash = params.get('hash');
+  const authDateRaw = params.get('auth_date');
   if (!hash) return false;
+  if (!authDateRaw) return false;
 
   params.delete('hash');
 
@@ -32,7 +35,14 @@ export async function validateTelegramInitData(
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
 
-  return calculated === hash;
+  if (calculated !== hash) return false;
+
+  const authDate = Number(authDateRaw);
+  if (!Number.isFinite(authDate)) return false;
+
+  const now = Math.floor(Date.now() / 1000);
+  if (authDate > now + 60) return false;
+  return now - authDate <= maxAgeSeconds;
 }
 
 export interface TelegramWebAppUser {

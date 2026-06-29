@@ -73,7 +73,7 @@ export const loadUserData = async (targetUserId: string): Promise<LoadUserDataRe
     
     if (error) {
       logError('[LOAD] Error loading flights:', error);
-      return { flights: [], airlines: [], originCities: [], destinationCities: [] };
+      throw error;
     }
     
     if (flightRecords && flightRecords.length > 0) {
@@ -146,7 +146,7 @@ export const loadUserData = async (targetUserId: string): Promise<LoadUserDataRe
     }
   } catch (err) {
     logError('[LOAD] Load crashed:', err);
-    return { flights: [], airlines: [], originCities: [], destinationCities: [] };
+    throw err;
   }
 };
 

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Flight } from '../../shared/types';
 import { AppUser } from '../../shared/types';
 import { 
@@ -35,6 +35,15 @@ interface UseFlightTrackerResult {
   setShowShareModal: (show: boolean) => void;
 }
 
+interface SaveSnapshot {
+  userId: string;
+  appUser: AppUser;
+  flights: Flight[];
+  airlines: string[];
+  originCities: string[];
+  destinationCities: string[];
+}
+
 export const useFlightTracker = (): UseFlightTrackerResult => {
   const [userName, setUserName] = useState<string>('Гость');
   const [userId, setUserId] = useState<string>('');
@@ -45,6 +54,9 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
   const [destinationCities, setDestinationCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCheckingToken, setIsCheckingToken] = useState<boolean>(true);
+  const latestSaveRef = useRef<SaveSnapshot | null>(null);
+  const saveInFlightRef = useRef(false);
+  const saveQueuedRef = useRef(false);
   
   // Заглушка для setShowShareModal (реализация в App.tsx)
   const setShowShareModal = useCallback((_show: boolean) => {
@@ -93,33 +105,79 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     initApp();
   }, []);
 
+  const persistSnapshot = useCallback(async (snapshot: SaveSnapshot) => {
+    const {
+      userId: snapshotUserId,
+      appUser: snapshotAppUser,
+      flights: snapshotFlights,
+      airlines: snapshotAirlines,
+      originCities: snapshotOriginCities,
+      destinationCities: snapshotDestinationCities,
+    } = snapshot;
+
+    console.log('[HOOK] Auto-saving data...', {
+      isGuest: snapshotAppUser.isGuest,
+      hasEditPermission: snapshotAppUser.isGuest && snapshotAppUser.permissions === 'edit',
+      flightsCount: snapshotFlights.length
+    });
+
+    if (snapshotAppUser.isGuest && snapshotAppUser.permissions === 'edit') {
+      await saveGuestData(snapshotAppUser.ownerId, snapshotFlights);
+      console.log('[HOOK] Guest data saved to owner:', snapshotAppUser.ownerId);
+    } else if (!snapshotAppUser.isGuest) {
+      await saveOwnerData(
+        snapshotUserId,
+        snapshotFlights,
+        snapshotAirlines,
+        snapshotOriginCities,
+        snapshotDestinationCities
+      );
+      console.log('[HOOK] Owner data saved');
+    }
+  }, []);
+
+  const flushSaveQueue = useCallback(async () => {
+    if (saveInFlightRef.current) {
+      saveQueuedRef.current = true;
+      return;
+    }
+
+    saveInFlightRef.current = true;
+    try {
+      do {
+        saveQueuedRef.current = false;
+        const snapshot = latestSaveRef.current;
+        if (!snapshot) return;
+        await persistSnapshot(snapshot);
+      } while (saveQueuedRef.current);
+    } catch (err) {
+      console.error('[HOOK] Save error:', err);
+    } finally {
+      saveInFlightRef.current = false;
+      if (saveQueuedRef.current) {
+        void flushSaveQueue();
+      }
+    }
+  }, [persistSnapshot]);
+
   // Автосохранение данных
   useEffect(() => {
     if (loading || !userId || !appUser) return;
-    
-    const saveData = async () => {
-      try {
-        console.log('[HOOK] Auto-saving data...', {
-          isGuest: appUser.isGuest,
-          hasEditPermission: appUser.isGuest && appUser.permissions === 'edit',
-          flightsCount: flights.length
-        });
-        
-        if (appUser.isGuest && appUser.permissions === 'edit') {
-          await saveGuestData(appUser.ownerId, flights);
-          console.log('[HOOK] Guest data saved to owner:', appUser.ownerId);
-        } else if (!appUser.isGuest) {
-          await saveOwnerData(userId, flights, airlines, originCities, destinationCities);
-          console.log('[HOOK] Owner data saved');
-        }
-      } catch (err) {
-        console.error('[HOOK] Save error:', err);
-      }
+
+    latestSaveRef.current = {
+      userId,
+      appUser,
+      flights,
+      airlines,
+      originCities,
+      destinationCities
     };
-    
-    const timer = setTimeout(saveData, 2000);
+
+    const timer = setTimeout(() => {
+      void flushSaveQueue();
+    }, 2000);
     return () => clearTimeout(timer);
-  }, [flights, airlines, originCities, destinationCities, loading, userId, appUser]);
+  }, [flights, airlines, originCities, destinationCities, loading, userId, appUser, flushSaveQueue]);
 
   // Обработчики
   const handleAddFlight = useCallback((newFlight: Flight) => {
