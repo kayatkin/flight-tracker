@@ -118,8 +118,7 @@ export const initGuestMode = async (token: string): Promise<GuestInitResult | nu
     return { guestUser, ownerData };
   } catch (error) {
     logError('[GUEST] Guest mode initialization failed:', error);
-    clearTokenFromUrl();
-    return null;
+    throw error;
   }
 };
 
@@ -316,9 +315,10 @@ export const initializeApp = async (): Promise<AppInitResult> => {
       alreadyProcessed: hasProcessedToken()
     });
     
-    // 🔥 Обрабатываем токен только если он ещё не был обработан
-    if (token && !hasProcessedToken()) {
-      console.log('[INIT] Token found and not yet processed, initializing guest mode...');
+    // A token in the current URL/start parameter is the active navigation target.
+    // Re-authenticate on refresh so the app does not fall through to the viewer's own account.
+    if (token) {
+      console.log('[INIT] Token found, initializing guest mode...');
       const guestResult = await initGuestMode(token);
       
       if (guestResult) {
@@ -391,8 +391,6 @@ export const initializeApp = async (): Promise<AppInitResult> => {
       } else {
         console.log('[INIT] Guest mode initialization failed or redirected');
       }
-    } else if (token && hasProcessedToken()) {
-      console.log('[INIT] Token already processed in this session, skipping guest mode');
     }
     
     devLog('[INIT] Initializing as owner');
@@ -430,7 +428,7 @@ export const getFallbackInitResult = (error: any): AppInitResult => {
   
   return {
     userName: 'Гость',
-    userId: 'error_user',
+    userId: '',
     appUser: createAppUser('error_user', 'Гость', false, false),
     flights: [],
     airlines: [],
