@@ -118,8 +118,7 @@ export const initGuestMode = async (token: string): Promise<GuestInitResult | nu
     return { guestUser, ownerData };
   } catch (error) {
     logError('[GUEST] Guest mode initialization failed:', error);
-    clearTokenFromUrl();
-    return null;
+    throw error;
   }
 };
 
