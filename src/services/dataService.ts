@@ -168,14 +168,10 @@ export const saveOwnerData = async (
     
     // Преобразуем Flight объекты в записи базы данных
     const records = flights.map(flight => {
-      // Генерируем правильный UUID для flight_id
-      let flightId = flight.id;
-      
-      // Проверяем, является ли ID валидным UUID
+      const flightId = flight.id;
+
       if (!flightId || !isValidUUID(flightId)) {
-        // Если ID не валидный UUID, генерируем новый
-        flightId = generateUUID();
-        devLog(`[SAVE] Generated UUID for flight: ${flightId} (was: ${flight.id})`);
+        throw new Error(`Invalid flight id cannot be persisted: ${flight.id}`);
       }
       
       // Для каждого рейса создаем запись в таблице user_flights
