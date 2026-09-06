@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useId } from 'react';
 import styles from './AutocompleteInput.module.css';
 
 interface AutocompleteInputProps {
@@ -34,6 +34,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listboxId = useId();
 
   // Закрытие подсказок при клике вне компонента
   useEffect(() => {
@@ -111,13 +112,13 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
           aria-autocomplete="list"
           aria-expanded={isOpen}
           aria-haspopup="listbox"
-          aria-controls={isOpen ? "autocomplete-suggestions" : undefined}
+          aria-controls={isOpen ? listboxId : undefined}
           role="combobox"
         />
         
         {isOpen && suggestions.length > 0 && (
           <div 
-            id="autocomplete-suggestions"
+            id={listboxId}
             className={styles.suggestionsList}
             role="listbox"
             aria-label="Предложения"

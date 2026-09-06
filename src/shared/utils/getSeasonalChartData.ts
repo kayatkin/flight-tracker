@@ -1,6 +1,7 @@
 // src/utils/getSeasonalChartData.ts
 import { Flight } from '../../shared/types';
 import { ChartData, ChartOptions } from 'chart.js';
+import { monthIndexFromISODate } from './date';
 
 const MONTHS = [
   'Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн',
@@ -14,8 +15,12 @@ export const getSeasonalChartData = (flights: Flight[]): ChartData<'line'> => {
 
   // Обрабатываем каждый билет
   flights.forEach(flight => {
-    const pricePerPerson = flight.totalPrice / flight.passengers;
-    const departureMonth = new Date(flight.departureDate).getMonth(); // 0 = Jan
+    const departureMonth = monthIndexFromISODate(flight.departureDate);
+    const passengers = Number(flight.passengers);
+    const pricePerPerson = flight.totalPrice / passengers;
+    if (departureMonth === null || passengers < 1 || !Number.isFinite(pricePerPerson)) {
+      return;
+    }
 
     if (flight.type === 'oneWay') {
       oneWay[departureMonth] = Math.min(oneWay[departureMonth] ?? Infinity, pricePerPerson);

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Flight } from '../../shared/types';
 import { AppUser } from '../../shared/types';
 import { 
@@ -45,20 +45,48 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
   const [destinationCities, setDestinationCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCheckingToken, setIsCheckingToken] = useState<boolean>(true);
-  
-  // Заглушка для setShowShareModal (реализация в App.tsx)
+
+  const hydratedRef = useRef(false);
+  const skipNextSaveRef = useRef(true);
+  const knownFlightIdsRef = useRef<string[]>([]);
+  const saveGenerationRef = useRef(0);
+
   const setShowShareModal = useCallback((_show: boolean) => {
     // Реализация будет в App.tsx
+  }, []);
+
+  const applyInitResult = useCallback((
+    result: {
+      userName: string;
+      userId: string;
+      appUser: AppUser;
+      flights: Flight[];
+      airlines: string[];
+      originCities: string[];
+      destinationCities: string[];
+    },
+    hydrated: boolean
+  ) => {
+    setUserName(result.userName);
+    setUserId(result.userId);
+    setAppUser(result.appUser);
+    setFlights(result.flights);
+    setAirlines(result.airlines);
+    setOriginCities(result.originCities);
+    setDestinationCities(result.destinationCities);
+    hydratedRef.current = hydrated;
+    skipNextSaveRef.current = true;
+    knownFlightIdsRef.current = result.flights.map((flight) => flight.id);
   }, []);
 
   // Инициализация приложения
   useEffect(() => {
     const initApp = async () => {
       try {
-        console.log('[HOOK] Starting app initialization...');
+        devLog('[HOOK] Starting app initialization...');
         const initResult = await initializeApp();
         
-        console.log('[HOOK] App initialized:', {
+        devLog('[HOOK] App initialized:', {
           userName: initResult.userName,
           userId: initResult.userId,
           isGuest: initResult.appUser.isGuest,
@@ -66,24 +94,10 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
           userType: getTelegramUserType()
         });
         
-        setUserName(initResult.userName);
-        setUserId(initResult.userId);
-        setAppUser(initResult.appUser);
-        setFlights(initResult.flights);
-        setAirlines(initResult.airlines);
-        setOriginCities(initResult.originCities);
-        setDestinationCities(initResult.destinationCities);
+        applyInitResult(initResult, true);
       } catch (err) {
-        console.error('[HOOK] App initialization failed:', err);
-        const fallbackResult = getFallbackInitResult(err);
-        
-        setUserName(fallbackResult.userName);
-        setUserId(fallbackResult.userId);
-        setAppUser(fallbackResult.appUser);
-        setFlights(fallbackResult.flights);
-        setAirlines(fallbackResult.airlines);
-        setOriginCities(fallbackResult.originCities);
-        setDestinationCities(fallbackResult.destinationCities);
+        logError('[HOOK] App initialization failed:', err);
+        applyInitResult(getFallbackInitResult(err), false);
       } finally {
         setLoading(false);
         setIsCheckingToken(false);
@@ -91,29 +105,36 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     };
     
     initApp();
-  }, []);
+  }, [applyInitResult]);
 
-  // Автосохранение данных
+  // Автосохранение данных — только после успешной загрузки и локальных изменений
   useEffect(() => {
-    if (loading || !userId || !appUser) return;
+    if (loading || !userId || !appUser || !hydratedRef.current) return;
+    if (skipNextSaveRef.current) {
+      skipNextSaveRef.current = false;
+      return;
+    }
+    if (appUser.isGuest && appUser.permissions !== 'edit') return;
     
+    const generation = ++saveGenerationRef.current;
+    const snapshot = flights;
+    const knownIds = knownFlightIdsRef.current;
+
     const saveData = async () => {
+      if (generation !== saveGenerationRef.current) return;
       try {
-        console.log('[HOOK] Auto-saving data...', {
-          isGuest: appUser.isGuest,
-          hasEditPermission: appUser.isGuest && appUser.permissions === 'edit',
-          flightsCount: flights.length
-        });
-        
+        const options = { knownFlightIds: knownIds };
         if (appUser.isGuest && appUser.permissions === 'edit') {
-          await saveGuestData(appUser.ownerId, flights);
-          console.log('[HOOK] Guest data saved to owner:', appUser.ownerId);
+          await saveGuestData(appUser.ownerId, snapshot, options);
         } else if (!appUser.isGuest) {
-          await saveOwnerData(userId, flights, airlines, originCities, destinationCities);
-          console.log('[HOOK] Owner data saved');
+          await saveOwnerData(userId, snapshot, airlines, originCities, destinationCities, options);
+        }
+        if (generation === saveGenerationRef.current) {
+          knownFlightIdsRef.current = snapshot.map((flight) => flight.id);
         }
       } catch (err) {
-        console.error('[HOOK] Save error:', err);
+        logError('[HOOK] Save error:', err);
+        toast('Не удалось сохранить изменения. Проверьте соединение.', 'error');
       }
     };
     
@@ -123,7 +144,11 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
 
   // Обработчики
   const handleAddFlight = useCallback((newFlight: Flight) => {
-    console.log('[HOOK] Adding flight:', newFlight);
+    if (appUser?.isGuest && appUser.permissions === 'view') {
+      toast('У вас нет прав для добавления билетов. Только просмотр.', 'warning');
+      return;
+    }
+    devLog('[HOOK] Adding flight:', newFlight.id);
     setFlights(prev => [...prev, newFlight]);
     
     if (newFlight.airline && !airlines.includes(newFlight.airline)) {
@@ -135,33 +160,31 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     if (newFlight.destination && !destinationCities.includes(newFlight.destination)) {
       setDestinationCities(prev => [...prev, newFlight.destination]);
     }
-  }, [airlines, originCities, destinationCities]);
+  }, [airlines, originCities, destinationCities, appUser]);
 
   const handleDeleteFlight = useCallback((id: string) => {
-    console.log('[HOOK] Deleting flight:', id);
+    if (appUser?.isGuest && appUser.permissions === 'view') {
+      toast('У вас нет прав для удаления билетов. Только просмотр.', 'warning');
+      return;
+    }
+    devLog('[HOOK] Deleting flight');
     setFlights(prev => prev.filter(f => f.id !== id));
-  }, []);
+  }, [appUser]);
 
   const handleJoinSession = useCallback(async (token: string) => {
     try {
-      console.log('[HOOK] Joining session with token:', token);
+      devLog('[HOOK] Joining session');
       setLoading(true);
-      
-      // 🔥 ОЧИЩАЕМ ПРЕДЫДУЩИЙ ФЛАГ ОБРАБОТКИ
-      sessionStorage.removeItem('processed_invitation_token');
       
       const guestResult = await initGuestMode(token);
       
       if (guestResult) {
         const { guestUser, ownerData } = guestResult;
+        if (!ownerData.ok) {
+          toast('Не удалось загрузить историю владельца', 'error');
+          return;
+        }
         
-        console.log('[HOOK] Guest result:', {
-          permissions: guestUser.permissions,
-          ownerId: guestUser.ownerId,
-          flightsCount: ownerData.flights.length
-        });
-        
-        // 🔥 УЛУЧШЕННАЯ ЛОГИКА: Определяем имя для отображения
         const userType = getTelegramUserType();
         let displayName: string;
         
@@ -169,39 +192,30 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
           case 'real_telegram': {
             const tgUser = window.Telegram!.WebApp!.initDataUnsafe!.user!;
             displayName = tgUser.first_name || tgUser.username || 'Telegram пользователь';
-            devLog('[HOOK] Real Telegram user joining:', displayName);
             break;
           }
             
           case 'anonymous_telegram':
-            // ⚠️ Аноним в Telegram WebApp
             displayName = `Анонимный гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
-            console.log('[HOOK] ⚠️ Anonymous Telegram user joining');
             break;
             
           case 'web_browser':
           default:
-            // 🌐 Веб-браузер
             displayName = `Веб-гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
-            console.log('[HOOK] 🌐 Web user joining');
             break;
         }
         
-        // Обновляем состояние
-        setAppUser(guestUser);
-        setUserId(guestUser.ownerId);
-        setUserName(displayName);
-        setFlights(ownerData.flights);
-        setAirlines(ownerData.airlines);
-        setOriginCities(ownerData.originCities);
-        setDestinationCities(ownerData.destinationCities);
-        
-        // 🔥 Обновляем URL только для веб-браузера (не для Telegram)
-        if (userType === 'web_browser') {
-          const newUrl = `${window.location.origin}${window.location.pathname}?token=${token}`;
-          window.history.pushState({}, '', newUrl);
-          console.log('[HOOK] URL updated with token (web only)');
-        }
+        applyInitResult({
+          userName: displayName,
+          userId: guestUser.ownerId,
+          appUser: guestUser,
+          flights: ownerData.flights,
+          airlines: ownerData.airlines,
+          originCities: ownerData.originCities,
+          destinationCities: ownerData.destinationCities,
+        }, true);
+
+        clearTokenFromUrl();
         
         toast(
           `Вы присоединились. Права: ${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'}`,
@@ -217,79 +231,50 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [applyInitResult]);
 
-  // 🔥 ИСПРАВЛЕННАЯ функция выхода из гостевого режима
   const handleLeaveGuestMode = useCallback(() => {
-    console.log('[EXIT] Leaving guest mode...', {
-      isGuest: appUser?.isGuest,
-      userType: getTelegramUserType(),
-      hasTelegramWebApp: !!window.Telegram?.WebApp,
-      currentUrl: window.location.href
-    });
-    
     try {
-      // 🔥 КЛЮЧЕВОЕ: Определяем тип пользователя
       const userType = getTelegramUserType();
-      
-      // 1. Очищаем токен из URL (всегда делаем это)
       clearTokenFromUrl();
       
-      // 2. Определяем правильное действие в зависимости от типа пользователя
       switch (userType) {
         case 'real_telegram':
-          // ✅ СЦЕНАРИЙ 1: Реальный Telegram пользователь
-          console.log('[EXIT] ✅ Real Telegram user in guest mode - reloading (staying in Mini App)...');
-          
-          // Telegram пользователь должен остаться в Mini App
-          // Просто перезагружаем страницу - он останется авторизованным
           setTimeout(() => {
             window.location.reload();
           }, 100);
           break;
           
         case 'anonymous_telegram':
-          // ⚠️ СЦЕНАРИЙ 2: Аноним в Telegram WebApp
-          console.log('[EXIT] ⚠️ Anonymous Telegram user - closing Mini App...');
-          
-          // Анонимного пользователя закрываем (ему нечего терять)
           setTimeout(() => {
             try {
               window.Telegram!.WebApp!.close();
             } catch (closeError) {
-              console.error('[EXIT] Failed to close WebApp:', closeError);
+              logError('[EXIT] Failed to close WebApp:', closeError);
               window.location.reload();
             }
           }, 100);
           break;
           
         case 'web_browser':
-          // 🌐 СЦЕНАРИЙ 3: Веб-браузер
-          console.log('[EXIT] 🌐 Web browser - redirecting to main page...');
-          
-          // Веб-версия: редирект на главную без токена
           setTimeout(() => {
             window.location.href = window.location.origin + window.location.pathname;
           }, 100);
           break;
           
         default:
-          // 🔧 СЦЕНАРИЙ 4: Запасной вариант
-          console.log('[EXIT] 🔧 Fallback - reloading...');
           window.location.reload();
           break;
       }
       
     } catch (error) {
-      console.error('[EXIT] Error leaving guest mode:', error);
-      // Аварийный fallback
+      logError('[EXIT] Error leaving guest mode:', error);
       clearTokenFromUrl();
       window.location.reload();
     }
-  }, [appUser]);
+  }, []);
 
   return {
-    // Состояния
     userName,
     userId,
     appUser,
@@ -299,15 +284,11 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     destinationCities,
     loading,
     isCheckingToken,
-    
-    // Обработчики
     handleAddFlight,
     handleDeleteFlight,
     handleJoinSession,
     handleLeaveGuestMode,
-    
-    // Действия
-    setActiveTab: () => {}, // Переопределяется в App.tsx
+    setActiveTab: () => {},
     setShowShareModal,
   };
 };

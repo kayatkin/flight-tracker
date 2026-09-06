@@ -41,11 +41,15 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
 
-  await admin.from('users').upsert({
+  const { error: upsertError } = await admin.from('users').upsert({
     user_id: userId,
     name,
     updated_at: new Date().toISOString(),
   });
+
+  if (upsertError) {
+    return jsonResponse({ error: 'Failed to persist user profile' }, 500);
+  }
 
   const access_token = await signAccessToken({
     sub: userId,

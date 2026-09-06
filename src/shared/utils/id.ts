@@ -30,8 +30,11 @@ export const generateUUID = (): string => {
 
 /** URL-safe token for shared session links (32 hex chars). */
 export const generateShareToken = (): string => {
+  if (!globalThis.crypto?.getRandomValues) {
+    throw new Error('Secure random generator is required to create share tokens');
+  }
   const bytes = new Uint8Array(16);
-  getRandomValues(bytes);
+  globalThis.crypto.getRandomValues(bytes);
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 };
 

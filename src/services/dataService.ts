@@ -2,7 +2,13 @@
 import { supabase } from '../lib/supabaseClient';
 import { Flight } from '../shared/types/types';
 import { generateUUID, isValidUUID } from '../shared/utils/id';
+import { toLocalISODate } from '../shared/utils/date';
 import { devLog, logError } from '../shared/utils/logger';
+
+export interface SaveOwnerDataOptions {
+  /** IDs known to this client; only these may be pruned when missing locally. */
+  knownFlightIds?: string[];
+}
 
 // Интерфейсы для ответов
 export interface LoadUserDataResult {
@@ -10,6 +16,7 @@ export interface LoadUserDataResult {
   airlines: string[];
   originCities: string[];
   destinationCities: string[];
+  ok: boolean;
 }
 
 // 🔥 Новая функция: получение читаемого имени владельца
@@ -73,7 +80,7 @@ export const loadUserData = async (targetUserId: string): Promise<LoadUserDataRe
     
     if (error) {
       logError('[LOAD] Error loading flights:', error);
-      return { flights: [], airlines: [], originCities: [], destinationCities: [] };
+      return { flights: [], airlines: [], originCities: [], destinationCities: [], ok: false };
     }
     
     if (flightRecords && flightRecords.length > 0) {
@@ -86,13 +93,13 @@ export const loadUserData = async (targetUserId: string): Promise<LoadUserDataRe
           origin: record.origin || '',
           destination: record.destination || '',
           type: (record.flight_type as 'oneWay' | 'roundTrip'),
-          departureDate: record.departure_date || new Date().toISOString().split('T')[0],
+          departureDate: record.departure_date || toLocalISODate(),
           isDirectThere: record.is_direct_there || false,
           isDirectBack: record.is_direct_back || false,
           airline: record.airline || 'Unknown',
           passengers: (Math.min(Math.max(record.passengers || 1, 1), 4) as 1 | 2 | 3 | 4),
           totalPrice: record.total_price || 0,
-          dateFound: record.date_found || new Date().toISOString().split('T')[0],
+          dateFound: record.date_found || toLocalISODate(),
           // Опциональные поля
           returnDate: record.return_date || undefined,
           departureTime: record.departure_time || undefined,
@@ -138,15 +145,16 @@ export const loadUserData = async (targetUserId: string): Promise<LoadUserDataRe
         flights,
         airlines,
         originCities,
-        destinationCities
+        destinationCities,
+        ok: true,
       };
     } else {
       devLog('[LOAD] No data found for this user');
-      return { flights: [], airlines: [], originCities: [], destinationCities: [] };
+      return { flights: [], airlines: [], originCities: [], destinationCities: [], ok: true };
     }
   } catch (err) {
     logError('[LOAD] Load crashed:', err);
-    return { flights: [], airlines: [], originCities: [], destinationCities: [] };
+    return { flights: [], airlines: [], originCities: [], destinationCities: [], ok: false };
   }
 };
 
@@ -154,24 +162,33 @@ export const loadUserData = async (targetUserId: string): Promise<LoadUserDataRe
 export const saveOwnerData = async (
   userId: string,
   flights: Flight[],
-  airlines: string[],
-  originCities: string[],
-  destinationCities: string[]
+  _airlines: string[] = [],
+  _originCities: string[] = [],
+  _destinationCities: string[] = [],
+  options: SaveOwnerDataOptions = {}
 ): Promise<void> => {
   try {
     devLog('[SAVE] Saving owner data for:', userId, 'flights:', flights.length);
+    const knownFlightIds = options.knownFlightIds;
 
     if (flights.length === 0) {
+      const idsToClear = knownFlightIds ?? [];
+      if (idsToClear.length === 0) {
+        devLog('[SAVE] Skip clearing flights: empty snapshot without known ids');
+        return;
+      }
+
       const { error: clearError } = await supabase
         .from('user_flights')
         .delete()
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .in('flight_id', idsToClear);
 
       if (clearError) {
         logError('[SAVE] Failed to clear flights:', clearError);
         throw clearError;
       }
-      devLog('[SAVE] Cleared all flights for user');
+      devLog('[SAVE] Cleared known flights for user');
       return;
     }
     
@@ -229,15 +246,18 @@ export const saveOwnerData = async (
       throw upsertError;
     }
 
-    const flightIds = records.map((r) => r.flight_id);
-    const { error: pruneError } = await supabase
-      .from('user_flights')
-      .delete()
-      .eq('user_id', userId)
-      .not('flight_id', 'in', `(${flightIds.join(',')})`);
+    const currentIds = records.map((r) => r.flight_id);
+    const idsToDelete = (knownFlightIds ?? []).filter((id) => !currentIds.includes(id));
+    if (idsToDelete.length > 0) {
+      const { error: pruneError } = await supabase
+        .from('user_flights')
+        .delete()
+        .eq('user_id', userId)
+        .in('flight_id', idsToDelete);
 
-    if (pruneError) {
-      logError('[SAVE] Prune removed flights warning:', pruneError);
+      if (pruneError) {
+        logError('[SAVE] Prune removed flights warning:', pruneError);
+      }
     }
 
     devLog('[SAVE] Owner data saved successfully:', records.length, 'records');
@@ -250,13 +270,14 @@ export const saveOwnerData = async (
 // Функция для сохранения данных гостя
 export const saveGuestData = async (
   ownerId: string,
-  flights: Flight[]
+  flights: Flight[],
+  options: SaveOwnerDataOptions = {}
 ): Promise<void> => {
   try {
     devLog('[SAVE] Saving guest data to owner:', ownerId);
     
     // Для гостя просто сохраняем рейсы
-    await saveOwnerData(ownerId, flights, [], [], []);
+    await saveOwnerData(ownerId, flights, [], [], [], options);
     
     devLog('[SAVE] Guest data saved to owner');
   } catch (err) {

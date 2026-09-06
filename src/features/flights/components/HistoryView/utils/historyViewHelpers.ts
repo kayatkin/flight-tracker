@@ -46,7 +46,7 @@ export const getBestFlight = (flightList: Flight[]): Flight => {
 export const groupFlightsByDestination = (flights: Flight[]): Record<string, Flight[]> => {
   const groups: Record<string, Flight[]> = {};
   flights.forEach((flight) => {
-    const key = flight.destination;
+    const key = `${flight.origin} → ${flight.destination}`;
     if (!groups[key]) groups[key] = [];
     groups[key].push(flight);
   });

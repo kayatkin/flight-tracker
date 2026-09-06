@@ -70,6 +70,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({
           onClick={(e) => onDelete(flight.id, e)}
           className={styles.deleteButton}
           title={canDelete ? "Удалить билет" : "Нет прав для удаления"}
+          aria-label={canDelete ? "Удалить билет" : "Нет прав для удаления"}
           disabled={!canDelete}
           style={!canDelete ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
         >

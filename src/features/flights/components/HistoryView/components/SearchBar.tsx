@@ -17,6 +17,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       <input
         type="text"
         placeholder="Поиск по городу..."
+        aria-label="Поиск по городам и авиакомпаниям"
         value={searchTerm}
         onChange={(e) => onSearchChange(e.target.value)}
         className={styles.searchInput}

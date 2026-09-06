@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AddFlightForm } from '@features/flights';
 import { HistoryView } from '@features/flights';
 import { GuestModeIndicator } from '@features/guest-mode';
@@ -31,6 +31,14 @@ const App: React.FC = () => {
     handleJoinSession,
     handleLeaveGuestMode,
   } = useFlightTracker();
+
+  const isViewGuest = Boolean(appUser?.isGuest && appUser.permissions === 'view');
+
+  useEffect(() => {
+    if (isViewGuest) {
+      setActiveTab('history');
+    }
+  }, [isViewGuest]);
 
   if (loading || isCheckingToken) {
     return (
@@ -75,7 +83,7 @@ const App: React.FC = () => {
         <button
           onClick={() => setActiveTab('add')}
           className={`${styles.tabButton} ${activeTab === 'add' ? styles.active : ''}`}
-          disabled={appUser?.isGuest && appUser.permissions === 'view'}
+          disabled={isViewGuest}
         >
           {appUser?.isGuest && appUser.permissions === 'view' ? '👁️ Добавить перелет' : '➕ Добавить перелет'}
         </button>
@@ -87,7 +95,7 @@ const App: React.FC = () => {
         </button>
       </div>
 
-      {activeTab === 'add' && (
+      {activeTab === 'add' && !isViewGuest && (
         <AddFlightForm
           flights={flights}
           airlines={airlines}

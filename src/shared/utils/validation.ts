@@ -7,11 +7,14 @@ export const validateFlightForm = (
       departureDate: string;
       returnDate: string;
       totalPrice: string;
+      airline?: string;
     }
   ): string[] => {
     const errors: string[] = [];
+    const origin = (formData.origin ?? '').trim();
+    const destination = (formData.destination ?? '').trim();
   
-    if (!formData.origin || !formData.destination) {
+    if (!origin || !destination) {
       errors.push('Укажите города вылета и назначения');
     }
     
@@ -19,12 +22,16 @@ export const validateFlightForm = (
       errors.push('Укажите дату вылета');
     }
   
-    if (formData.type === 'roundTrip' && !formData.returnDate) {
+    if (formData.type === 'roundTrip' && !(formData.returnDate ?? '').trim()) {
       errors.push('Укажите дату возвращения');
+    }
+
+    if (formData.airline !== undefined && !formData.airline.trim()) {
+      errors.push('Укажите авиакомпанию');
     }
   
     const priceNum = Number(formData.totalPrice);
-    if (!formData.totalPrice || priceNum <= 0) {
+    if (!(formData.totalPrice ?? '').trim() || !Number.isFinite(priceNum) || priceNum <= 0) {
       errors.push('Укажите корректную стоимость (только цифры, больше 0)');
     }
   

@@ -4,8 +4,8 @@ import { Flight } from '@shared/types';
 import { ShareFlightModal } from '@features/sharing';
 import { SharedSessionsList } from '@features/sharing';
 import { JoinSessionModal } from '@features/sharing';
-import styles from '../HistoryView.module.css';
 import { toast } from '@shared/ui/Toast';
+import styles from '../HistoryView.module.css';
 
 interface AccessManagementProps {
   flights: Flight[];
@@ -33,9 +33,8 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
     }
   };
 
-  const handleShareCreated = (token: string) => {
-    console.log('Share created with token:', token);
-    // Можно добавить логику, например показать уведомление
+  const handleShareCreated = () => {
+    // Список сессий сам обновится при следующем открытии
   };
 
   return (

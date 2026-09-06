@@ -1,6 +1,8 @@
 // src/shared/hooks/useFlightForm.ts
 import { useState, useCallback } from 'react';
 import { Flight } from '../../shared/types';
+import { generateUUID } from '../utils/id';
+import { toLocalISODate } from '../utils/date';
 
 // ДОБАВЛЯЕМ export!
 export interface FlightFormData {
@@ -27,7 +29,7 @@ export interface FlightFormData {
 }
 
 export const useFlightForm = (initialDate?: string) => {
-  const today = initialDate || new Date().toISOString().split('T')[0];
+  const today = initialDate || toLocalISODate();
 
   const [formData, setFormData] = useState<FlightFormData>({
     origin: '',
@@ -85,7 +87,7 @@ export const useFlightForm = (initialDate?: string) => {
     const priceNum = Number(formData.totalPrice);
 
     return {
-      id: Date.now().toString(),
+      id: generateUUID(),
       origin: formData.origin.trim(),
       destination: formData.destination.trim(),
       type: formData.type,
@@ -108,7 +110,7 @@ export const useFlightForm = (initialDate?: string) => {
       airline: formData.airline.trim(),
       passengers: formData.passengers,
       totalPrice: priceNum,
-      dateFound: new Date().toISOString().split('T')[0],
+      dateFound: toLocalISODate(),
       arrivalNextDay: formData.arrivalNextDay,
       returnArrivalNextDay: formData.type === 'roundTrip' ? formData.returnArrivalNextDay : undefined,
     };

@@ -1,5 +1,6 @@
 // src/features/sharing/components/JoinSessionForm/JoinSessionForm.tsx
 import React, { useState } from 'react';
+import { extractShareToken } from '@shared/utils/shareToken';
 import styles from './JoinSessionForm.module.css';
 
 interface JoinSessionFormProps {
@@ -14,17 +15,19 @@ const JoinSessionForm: React.FC<JoinSessionFormProps> = ({ onJoin, onCancel }) =
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!token.trim()) {
+    const resolvedToken = extractShareToken(token) ?? token.trim();
+
+    if (!resolvedToken) {
       setError('Введите токен доступа');
       return;
     }
 
-    if (token.length < 10) {
+    if (resolvedToken.length < 10) {
       setError('Некорректный формат токена');
       return;
     }
 
-    onJoin(token.trim());
+    onJoin(resolvedToken);
   };
 
   const extractTokenFromUrl = () => {
@@ -35,23 +38,13 @@ const JoinSessionForm: React.FC<JoinSessionFormProps> = ({ onJoin, onCancel }) =
       return;
     }
 
-    // Пробуем извлечь токен из URL
-    const tokenRegex = /(?:[?&]token=|\btoken=)([^&]+)/i;
-    const match = inputValue.match(tokenRegex);
+    const extractedToken = extractShareToken(inputValue);
     
-    if (match && match[1]) {
-      const extractedToken = match[1];
+    if (extractedToken) {
       setToken(extractedToken);
-      setError(''); // Очищаем ошибку при успешном извлечении
+      setError('');
     } else {
-      // Проверяем, если это уже выглядит как токен
-      const isLikelyToken = /^[a-zA-Z0-9_-]+$/.test(inputValue) && inputValue.length >= 10;
-      
-      if (isLikelyToken) {
-        setError('Это уже похоже на токен. Если это URL, проверьте формат.');
-      } else {
-        setError('Не удалось найти токен. Формат: ...?token=ВАШ_ТОКЕН');
-      }
+      setError('Не удалось найти токен. Вставьте ссылку или сам токен.');
     }
   };
 

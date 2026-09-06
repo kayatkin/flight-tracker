@@ -59,12 +59,16 @@ Deno.serve(async (req) => {
   }
 
   const guestSub = `guest_${crypto.randomUUID()}`;
+  const remainingMs = new Date(session.expires_at).getTime() - Date.now();
+  const remainingSeconds = Number.isFinite(remainingMs) ? Math.floor(remainingMs / 1000) : 60;
+  const expiresIn = Math.max(60, Math.min(60 * 60 * 24, remainingSeconds));
   const access_token = await signAccessToken({
     sub: guestSub,
     user_id: session.owner_id,
     app_role: 'guest',
     permissions,
-  });
+    share_session_id: session.id,
+  }, expiresIn);
 
   const { data: ownerRow } = await admin
     .from('users')
@@ -90,6 +94,6 @@ Deno.serve(async (req) => {
       ownerId: session.owner_id,
       ownerName,
     },
-    expires_in: 60 * 60 * 24,
+    expires_in: expiresIn,
   });
 });

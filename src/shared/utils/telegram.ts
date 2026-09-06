@@ -4,6 +4,8 @@ import { applyTelegramTheme } from './theme';
 import { generateShortId } from './id';
 import { devLog, logError } from './logger';
 
+let memoryDevUserId: string | null = null;
+
 export const getTelegramWebApp = (): TelegramWebApp | null => {
   if (typeof window === 'undefined') return null;
   
@@ -45,17 +47,22 @@ export const getTelegramUser = (): {id: string, first_name: string} | null => {
 };
 
 export const getDevelopmentUserId = (): string => {
-  let devUserId = localStorage.getItem('flight_tracker_dev_user_id');
-  
-  if (!devUserId) {
-    devUserId = 'dev_user_' + generateShortId(9);
-    localStorage.setItem('flight_tracker_dev_user_id', devUserId);
-    devLog('[DEVELOPMENT] Created new dev user_id:', devUserId);
-  } else {
-    devLog('[DEVELOPMENT] Using existing dev user_id:', devUserId);
+  try {
+    let devUserId = localStorage.getItem('flight_tracker_dev_user_id');
+
+    if (!devUserId) {
+      devUserId = 'dev_user_' + generateShortId(9);
+      localStorage.setItem('flight_tracker_dev_user_id', devUserId);
+      devLog('[DEVELOPMENT] Created new dev user_id:', devUserId);
+    } else {
+      devLog('[DEVELOPMENT] Using existing dev user_id:', devUserId);
+    }
+
+    return devUserId;
+  } catch {
+    memoryDevUserId ??= 'dev_user_' + generateShortId(9);
+    return memoryDevUserId;
   }
-  
-  return devUserId;
 };
 
 export const initTelegramWebApp = (webApp: TelegramWebApp): void => {
