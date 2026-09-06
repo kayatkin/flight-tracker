@@ -42,8 +42,15 @@ const HistoryView: React.FC<HistoryViewProps> = ({
   const filteredDestinations = useMemo(() => {
     if (!searchTerm.trim()) return allDestinations;
     const term = searchTerm.toLowerCase();
-    return allDestinations.filter(dest => dest.toLowerCase().includes(term));
-  }, [searchTerm, allDestinations]);
+    return allDestinations.filter((dest) => {
+      if (dest.toLowerCase().includes(term)) return true;
+      return grouped[dest]?.some((flight) =>
+        flight.origin.toLowerCase().includes(term) ||
+        flight.destination.toLowerCase().includes(term) ||
+        flight.airline.toLowerCase().includes(term)
+      );
+    });
+  }, [searchTerm, allDestinations, grouped]);
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();

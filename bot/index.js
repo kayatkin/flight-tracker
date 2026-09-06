@@ -51,11 +51,11 @@ async function validateShareToken(token) {
       .single();
 
     if (error || !data) {
-      console.log(`❌ Токен не найден или истек: ${token}`);
+      console.log('❌ Токен не найден или истек');
       return null;
     }
 
-    console.log(`✅ Токен валиден: ${token}`);
+    console.log('✅ Токен валиден');
     return data;
   } catch (error) {
     console.error('Ошибка проверки токена:', error);
@@ -92,7 +92,7 @@ bot.onText(/\/start(.+)?/, async (msg, match) => {
   const chatId = msg.chat.id;
   const args = match[1] ? match[1].trim() : '';
   
-  console.log(`📩 /start от ${chatId} (${msg.from.first_name}), args: "${args}"`);
+  console.log(`📩 /start от ${chatId} (${msg.from.first_name}), hasShareArgs: ${args.startsWith('share_')}`);
 
   try {
     // Если есть токен в формате share_токен
@@ -133,7 +133,7 @@ bot.onText(/\/start(.+)?/, async (msg, match) => {
         disable_web_page_preview: true
       });
 
-      console.log(`✅ Отправлена кнопка WebApp для токена: ${token}`);
+      console.log('✅ Отправлена кнопка WebApp для приглашения');
 
     } else {
       // Обычный /start без токена

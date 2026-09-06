@@ -9,3 +9,12 @@ major_version = 17
 
 [functions]
 # Edge functions live in supabase/functions/
+
+[functions.auth-telegram]
+verify_jwt = false
+
+[functions.auth-guest]
+verify_jwt = false
+
+[functions.auth-dev]
+verify_jwt = false

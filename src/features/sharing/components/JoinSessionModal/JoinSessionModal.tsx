@@ -3,19 +3,25 @@ import JoinSessionForm from '../JoinSessionForm/JoinSessionForm';
 import styles from './JoinSessionModal.module.css';
 
 interface JoinSessionModalProps {
-  onJoin: (token: string) => void;
+  onJoin: (token: string) => void | Promise<void>;
   onClose: () => void;
 }
 
 const JoinSessionModal: React.FC<JoinSessionModalProps> = ({ onJoin, onClose }) => {
-  const handleJoin = (token: string) => {
-    onJoin(token);
+  const handleJoin = async (token: string) => {
+    await onJoin(token);
     onClose();
   };
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+    <div className={styles.modalOverlay} onClick={onClose} role="presentation">
+      <div
+        className={styles.modalContent}
+        onClick={e => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Присоединиться к истории"
+      >
         {/* Только кнопка закрытия в углу */}
         <button 
           onClick={onClose} 

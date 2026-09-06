@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Flight } from '@shared/types';
 import { useFlightForm } from '@shared/hooks';
 import { validateFlightForm, validateRoundTripDates, analyzeFlightPrice } from '@shared/utils';
@@ -33,8 +33,15 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
   onAdd,
   onNavigateToHistory 
 }) => {
-  const { formData, updateFormData, createFlightObject } = useFlightForm();
+  const { formData, updateFormData, createFlightObject, resetForm } = useFlightForm();
   const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeFlightPrice> | null>(null);
+  const navigateTimerRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => () => {
+    if (navigateTimerRef.current) {
+      window.clearTimeout(navigateTimerRef.current);
+    }
+  }, []);
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -71,12 +78,16 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
     setAnalysis(priceAnalysis);
 
     onAdd(newFlight);
+    resetForm();
     
-    setTimeout(() => {
+    if (navigateTimerRef.current) {
+      window.clearTimeout(navigateTimerRef.current);
+    }
+    navigateTimerRef.current = window.setTimeout(() => {
       setAnalysis(null);
       onNavigateToHistory?.();
     }, 1000);
-  }, [formData, createFlightObject, flights, onAdd, onNavigateToHistory]);
+  }, [formData, createFlightObject, flights, onAdd, onNavigateToHistory, resetForm]);
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>

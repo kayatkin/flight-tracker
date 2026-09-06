@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@shared/lib';
+import { buildShareUrl } from '@services/shareUrls';
+import { logError } from '@shared/utils/logger';
 import styles from './SharedSessionsList.module.css';
 import { SharedSession } from '@shared/types';
 import {
@@ -101,7 +103,7 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Неизвестная ошибка';
       setError(message || 'Ошибка загрузки приглашений');
-      console.error('Error loading shared sessions:', err);
+      logError('Error loading shared sessions:', err);
     } finally {
       setLoading(false);
     }
@@ -129,7 +131,7 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Неизвестная ошибка';
         setError(message || 'Ошибка при отзыве доступа');
-        console.error('Error deactivating session:', err);
+        logError('Error deactivating session:', err);
       }
     },
     [loadSessions, onSessionDeactivated]
@@ -137,31 +139,18 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
 
   // 🔥 ИСПРАВЛЕНО: Правильная генерация ссылок в зависимости от прав
   const copyToken = useCallback(async (token: string, permissions: 'view' | 'edit') => {
-    let url: string;
-    let linkType: string;
-    
-    if (permissions === 'edit') {
-      // Telegram ссылка для редактирования
-      url = `https://t.me/my_flight_tracker1_bot?startapp=${token}`;
-      linkType = 'Telegram ссылка для редактирования';
-    } else {
-      // Веб-ссылка для просмотра
-      url = `${window.location.origin}${window.location.pathname}?token=${token}`;
-      linkType = 'Веб-ссылка для просмотра';
-    }
-    
-    console.log(`[COPY] ${linkType}:`, url);
+    const url = buildShareUrl(token, permissions);
+    const linkType = permissions === 'edit' ? 'Telegram ссылка для редактирования' : 'Веб-ссылка для просмотра';
     
     try {
       await navigator.clipboard.writeText(url);
       setCopiedToken(token);
       
-      // Сбрасываем состояние через 2 секунды
-      setTimeout(() => {
+      window.setTimeout(() => {
         setCopiedToken(null);
       }, 2000);
     } catch (err) {
-      console.error('Не удалось скопировать ссылку:', err);
+      logError(`Не удалось скопировать ${linkType}:`, err);
       setError('Не удалось скопировать ссылку');
     }
   }, []);

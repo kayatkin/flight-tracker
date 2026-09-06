@@ -4,6 +4,7 @@ export interface AppJwtClaims {
   app_role: 'owner' | 'guest';
   permissions?: 'view' | 'edit';
   name?: string;
+  share_session_id?: string;
 }
 
 function base64UrlEncode(data: Uint8Array): string {
@@ -44,12 +45,12 @@ export async function signAccessToken(
   const now = Math.floor(Date.now() / 1000);
   const header = { alg: 'HS256', typ: 'JWT' };
   const payload = {
+    ...claims,
     aud: 'authenticated',
     exp: now + expiresInSeconds,
     iat: now,
     iss: 'supabase',
     role: 'authenticated',
-    ...claims,
   };
 
   const encodedHeader = base64UrlEncodeJson(header);

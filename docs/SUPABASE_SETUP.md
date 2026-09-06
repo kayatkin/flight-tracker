@@ -26,8 +26,10 @@ supabase link --project-ref YOUR_PROJECT_REF
 ```bash
 supabase secrets set BOT_TOKEN="ваш_токен_от_BotFather"
 supabase secrets set JWT_SECRET="ваш_jwt_secret_из_dashboard"
-supabase secrets set ALLOW_DEV_AUTH="true"   # только для staging; в production — false
+supabase secrets set ALLOW_DEV_AUTH="false"
 ```
+
+Для staging-окружения (не production) можно отдельно включить `ALLOW_DEV_AUTH=true` и задеплоить `auth-dev` через `DEPLOY_AUTH_DEV=true`.
 
 `BOT_TOKEN` и `SUPABASE_*` подставляются автоматически при деплое функций.
 
@@ -37,8 +39,9 @@ supabase secrets set ALLOW_DEV_AUTH="true"   # только для staging; в p
 
 1. Откройте Supabase → SQL Editor.
 2. Выполните по порядку:
-   - `supabase/migrations/001_schema.sql`
-   - `supabase/migrations/002_rls.sql`
+    - `supabase/migrations/001_schema.sql`
+    - `supabase/migrations/002_rls.sql`
+    - `supabase/migrations/003_guest_session_rls.sql`
 
 **Вариант B — CLI:**
 
@@ -52,12 +55,17 @@ supabase db push
 npm run supabase:deploy
 ```
 
+`auth-dev` по умолчанию **не деплоится**. Для staging:
+
+```bash
+DEPLOY_AUTH_DEV=true npm run supabase:deploy
+```
+
 Или вручную:
 
 ```bash
 supabase functions deploy auth-telegram --no-verify-jwt
 supabase functions deploy auth-guest --no-verify-jwt
-supabase functions deploy auth-dev --no-verify-jwt
 ```
 
 `--no-verify-jwt` нужен, потому что клиент ещё не авторизован при вызове auth-*.
@@ -97,11 +105,13 @@ GitHub Actions secrets (уже есть `SUPABASE_URL`, `SUPABASE_ANON_KEY`).
 
 | Шаг | Действие |
 |-----|----------|
-| RLS | Миграция `002_rls.sql` применена |
+| RLS | Миграции `002_rls.sql` и `003_guest_session_rls.sql` применены |
 | Anon key | Нет прямого доступа к таблицам без JWT |
 | `ALLOW_DEV_AUTH` | `false` |
+| `auth-dev` | Не задеплоен в production |
 | `JWT_SECRET` | Установлен в secrets |
 | `BOT_TOKEN` | Совпадает с ботом Mini App |
+| Отзыв шаринга | После revoke гостевой JWT с `share_session_id` теряет доступ |
 
 ## Устранение проблем
 
@@ -122,4 +132,4 @@ GitHub Actions secrets (уже есть `SUPABASE_URL`, `SUPABASE_ANON_KEY`).
   └─ dev userId ► auth-dev ──────┘── JWT (owner) ───────────►│ (только staging)
 ```
 
-JWT содержит `user_id`, `app_role` (`owner` | `guest`), `permissions` (`view` | `edit`).
+JWT содержит `user_id`, `app_role` (`owner` | `guest`), `permissions` (`view` | `edit`) и для гостей `share_session_id`.

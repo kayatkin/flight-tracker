@@ -15,12 +15,12 @@ export const env = {
   isProd: import.meta.env.PROD,
 } as const;
 
+export const isSupabaseConfigured = Boolean(env.supabaseUrl && env.supabaseAnonKey);
+
 export const assertEnvConfigured = (): void => {
-  if (!env.isDev) return;
-  if (!env.supabaseUrl || !env.supabaseAnonKey) {
-    console.warn('⚠️ Supabase environment variables are not set');
-    console.warn('Add to .env.local:');
-    console.warn('VITE_SUPABASE_URL=https://your-project.supabase.co');
-    console.warn('VITE_SUPABASE_ANON_KEY=your_anon_key_here');
-  }
+  if (isSupabaseConfigured) return;
+  console.warn('⚠️ Supabase environment variables are not set');
+  console.warn('Add to .env.local:');
+  console.warn('VITE_SUPABASE_URL=https://your-project.supabase.co');
+  console.warn('VITE_SUPABASE_ANON_KEY=your_anon_key_here');
 };

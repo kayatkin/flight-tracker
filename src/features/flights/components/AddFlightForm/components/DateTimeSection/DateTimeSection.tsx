@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { FlightFormData } from '@shared/hooks';
+import { toLocalISODate } from '@shared/utils/date';
 import styles from './DateTimeSection.module.css';
 
 interface DateTimeSectionProps {
@@ -12,7 +13,7 @@ const DateTimeSection: React.FC<DateTimeSectionProps> = ({
   updateFormData
 }) => {
   // Сегодняшняя дата для ограничения выбора
-  const today = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const today = useMemo(() => toLocalISODate(), []);
 
   // Минимальная дата для обратного рейса
   const minReturnDate = formData.departureDate || today;

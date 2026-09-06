@@ -8,6 +8,7 @@ describe('validateFlightForm', () => {
     departureDate: '2026-06-15',
     returnDate: '',
     totalPrice: '15000',
+    airline: 'S7',
   };
 
   it('возвращает пустой массив для корректных данных (oneWay)', () => {
@@ -70,6 +71,21 @@ describe('validateFlightForm', () => {
   it('отклоняет пустую цену', () => {
     const errors = validateFlightForm({ ...validFormData, totalPrice: '' });
     expect(errors).toContain('Укажите корректную стоимость (только цифры, больше 0)');
+  });
+
+  it('отклоняет города из одних пробелов', () => {
+    const errors = validateFlightForm({ ...validFormData, origin: '   ' });
+    expect(errors).toContain('Укажите города вылета и назначения');
+  });
+
+  it('отклоняет Infinity как цену', () => {
+    const errors = validateFlightForm({ ...validFormData, totalPrice: 'Infinity' });
+    expect(errors).toContain('Укажите корректную стоимость (только цифры, больше 0)');
+  });
+
+  it('требует авиакомпанию, если поле передано', () => {
+    const errors = validateFlightForm({ ...validFormData, airline: '  ' });
+    expect(errors).toContain('Укажите авиакомпанию');
   });
 
   it('собирает несколько ошибок одновременно', () => {

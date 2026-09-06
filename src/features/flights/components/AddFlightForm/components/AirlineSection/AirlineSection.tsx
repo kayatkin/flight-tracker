@@ -43,7 +43,6 @@ const AirlineSection: React.FC<AirlineSectionProps> = ({
             placeholder="Аэрофлот, S7, Победа..."
             label="Авиакомпания"
             hideLabel={true}
-            required
             aria-label="Название авиакомпании"
           />
         </div>
