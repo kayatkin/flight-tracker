@@ -58,7 +58,6 @@ const RouteSection: React.FC<RouteSectionProps> = ({
             onCloseSuggestions={originAutocomplete.closeSuggestions}
             placeholder="Москва"
             label="Город вылета"
-            required
             aria-label="Город вылета"
           />
         </div>
@@ -74,7 +73,6 @@ const RouteSection: React.FC<RouteSectionProps> = ({
             onCloseSuggestions={destinationAutocomplete.closeSuggestions}
             placeholder="Тбилиси"
             label="Город назначения"
-            required
             aria-label="Город назначения"
           />
         </div>
