@@ -5,7 +5,6 @@ import { validateFlightForm, validateRoundTripDates, analyzeFlightPrice } from '
 import { toast } from '@shared/ui/Toast';
 import { PriceAnalysis } from '@features/flights';
 
-// Импортируем все компоненты
 import RouteSection from './components/RouteSection/RouteSection';
 import FlightTypeSection from './components/FlightTypeSection/FlightTypeSection';
 import DateTimeSection from './components/DateTimeSection/DateTimeSection';
@@ -22,26 +21,40 @@ interface AddFlightFormProps {
   originCities: string[];
   destinationCities: string[];
   onAdd: (flight: Flight) => void;
+  onUpdate?: (flight: Flight) => void;
+  onCancelEdit?: () => void;
   onNavigateToHistory?: () => void;
+  editingFlight?: Flight | null;
 }
 
-const AddFlightForm: React.FC<AddFlightFormProps> = ({ 
-  flights, 
-  airlines, 
-  originCities, 
-  destinationCities, 
+const AddFlightForm: React.FC<AddFlightFormProps> = ({
+  flights,
+  airlines,
+  originCities,
+  destinationCities,
   onAdd,
-  onNavigateToHistory 
+  onUpdate,
+  onCancelEdit,
+  onNavigateToHistory,
+  editingFlight = null,
 }) => {
-  const { formData, updateFormData, createFlightObject, resetForm } = useFlightForm();
+  const { formData, updateFormData, createFlightObject, resetForm, hydrateFromFlight } = useFlightForm();
   const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeFlightPrice> | null>(null);
   const navigateTimerRef = useRef<number | undefined>(undefined);
+  const isEditing = Boolean(editingFlight);
 
   useEffect(() => () => {
     if (navigateTimerRef.current) {
       window.clearTimeout(navigateTimerRef.current);
     }
   }, []);
+
+  useEffect(() => {
+    if (editingFlight) {
+      hydrateFromFlight(editingFlight);
+      setAnalysis(null);
+    }
+  }, [editingFlight, hydrateFromFlight]);
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +73,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
         formData.returnDate,
         formData.returnDepartureTime
       );
-      
+
       if (!isValidDates) {
         toast('Дата и время обратного вылета должны быть позже времени прилёта «туда»', 'warning');
         return;
@@ -73,13 +86,36 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
       return;
     }
 
-    const newFlight = createFlightObject();
-    const priceAnalysis = analyzeFlightPrice(newFlight, flights);
-    setAnalysis(priceAnalysis);
+    const savedFlight = createFlightObject(
+      editingFlight
+        ? { id: editingFlight.id, dateFound: editingFlight.dateFound }
+        : undefined
+    );
 
-    onAdd(newFlight);
-    resetForm();
-    
+    const flightsForAnalysis = editingFlight
+      ? flights.filter((flight) => flight.id !== editingFlight.id)
+      : flights;
+    const hasComparable = flightsForAnalysis.some((flight) =>
+      flight.origin === savedFlight.origin &&
+      flight.destination === savedFlight.destination &&
+      flight.passengers === savedFlight.passengers &&
+      flight.type === savedFlight.type
+    );
+
+    if (!editingFlight || hasComparable) {
+      setAnalysis(analyzeFlightPrice(savedFlight, flightsForAnalysis));
+    } else {
+      setAnalysis(null);
+    }
+
+    if (editingFlight) {
+      onUpdate?.(savedFlight);
+      toast('Изменения сохранены', 'success');
+    } else {
+      onAdd(savedFlight);
+      resetForm();
+    }
+
     if (navigateTimerRef.current) {
       window.clearTimeout(navigateTimerRef.current);
     }
@@ -87,7 +123,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
       setAnalysis(null);
       onNavigateToHistory?.();
     }, 1000);
-  }, [formData, createFlightObject, flights, onAdd, onNavigateToHistory, resetForm]);
+  }, [formData, createFlightObject, flights, onAdd, onUpdate, onNavigateToHistory, resetForm, editingFlight]);
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
@@ -137,13 +173,25 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
         />
       )}
 
-      <button 
-        type="submit" 
-        className={styles.submitButton}
-        aria-label="Сохранить билет"
-      >
-        💼 Сохранить билет
-      </button>
+      <div className={styles.formActions}>
+        <button
+          type="submit"
+          className={styles.submitButton}
+          aria-label={isEditing ? 'Сохранить изменения' : 'Сохранить билет'}
+        >
+          {isEditing ? '💾 Сохранить изменения' : '💼 Сохранить билет'}
+        </button>
+        {isEditing && (
+          <button
+            type="button"
+            className={styles.cancelButton}
+            onClick={onCancelEdit}
+            aria-label="Отменить редактирование"
+          >
+            Отмена
+          </button>
+        )}
+      </div>
     </form>
   );
 };

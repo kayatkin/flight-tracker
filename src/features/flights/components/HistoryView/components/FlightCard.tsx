@@ -7,7 +7,9 @@ interface FlightCardProps {
   flight: Flight;
   isBest?: boolean;
   onDelete: (id: string, e: React.MouseEvent) => void;
-  canDelete: boolean;
+  onEdit: (flight: Flight, e: React.MouseEvent) => void;
+  onDuplicate: (flight: Flight, e: React.MouseEvent) => void;
+  canMutate: boolean;
   isGuest: boolean;
   guestPermissions: 'view' | 'edit';
 }
@@ -16,7 +18,9 @@ export const FlightCard: React.FC<FlightCardProps> = ({
   flight,
   isBest = false,
   onDelete,
-  canDelete,
+  onEdit,
+  onDuplicate,
+  canMutate,
   isGuest,
   guestPermissions,
 }) => {
@@ -66,16 +70,38 @@ export const FlightCard: React.FC<FlightCardProps> = ({
             {guestPermissions === 'edit' ? '✏️ Редактирование' : '👁️ Только просмотр'}
           </span>}
         </span>
-        <button
-          onClick={(e) => onDelete(flight.id, e)}
-          className={styles.deleteButton}
-          title={canDelete ? "Удалить билет" : "Нет прав для удаления"}
-          aria-label={canDelete ? "Удалить билет" : "Нет прав для удаления"}
-          disabled={!canDelete}
-          style={!canDelete ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
-        >
-          🗑️
-        </button>
+        <div className={styles.actionButtons}>
+          <button
+            type="button"
+            onClick={(e) => onEdit(flight, e)}
+            className={styles.editButton}
+            title={canMutate ? 'Изменить билет' : 'Нет прав для изменения'}
+            aria-label={canMutate ? 'Изменить билет' : 'Нет прав для изменения'}
+            disabled={!canMutate}
+          >
+            ✏️
+          </button>
+          <button
+            type="button"
+            onClick={(e) => onDuplicate(flight, e)}
+            className={styles.duplicateButton}
+            title={canMutate ? 'Дублировать билет' : 'Нет прав для копирования'}
+            aria-label={canMutate ? 'Дублировать билет' : 'Нет прав для копирования'}
+            disabled={!canMutate}
+          >
+            📄
+          </button>
+          <button
+            type="button"
+            onClick={(e) => onDelete(flight.id, e)}
+            className={styles.deleteButton}
+            title={canMutate ? 'Удалить билет' : 'Нет прав для удаления'}
+            aria-label={canMutate ? 'Удалить билет' : 'Нет прав для удаления'}
+            disabled={!canMutate}
+          >
+            🗑️
+          </button>
+        </div>
       </div>
     </div>
   );

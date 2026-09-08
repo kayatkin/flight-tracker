@@ -13,6 +13,8 @@ interface DestinationGroupProps {
   onToggle: () => void;
   onShowChart: () => void;
   onDelete: (id: string, e: React.MouseEvent) => void;
+  onEdit: (flight: Flight, e: React.MouseEvent) => void;
+  onDuplicate: (flight: Flight, e: React.MouseEvent) => void;
 }
 
 export const DestinationGroup: React.FC<DestinationGroupProps> = ({
@@ -24,13 +26,15 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
   onToggle,
   onShowChart,
   onDelete,
+  onEdit,
+  onDuplicate,
 }) => {
   const bestFlight = getBestFlight(flights);
   const otherFlights = flights
     .filter(f => f.id !== bestFlight.id)
     .sort((a, b) => a.totalPrice / a.passengers - b.totalPrice / b.passengers);
   
-  const canDelete = !isGuest || (isGuest && guestPermissions === 'edit');
+  const canMutate = !isGuest || guestPermissions === 'edit';
 
   return (
     <div
@@ -78,10 +82,13 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
             ⭐ Лучшее предложение по цене за человека
           </div>
           <FlightCard
+            key={bestFlight.id}
             flight={bestFlight}
             isBest={true}
             onDelete={onDelete}
-            canDelete={canDelete}
+            onEdit={onEdit}
+            onDuplicate={onDuplicate}
+            canMutate={canMutate}
             isGuest={isGuest}
             guestPermissions={guestPermissions}
           />
@@ -96,7 +103,9 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
                   flight={flight}
                   isBest={false}
                   onDelete={onDelete}
-                  canDelete={canDelete}
+                  onEdit={onEdit}
+                  onDuplicate={onDuplicate}
+                  canMutate={canMutate}
                   isGuest={isGuest}
                   guestPermissions={guestPermissions}
                 />

@@ -191,7 +191,7 @@
   font-size: 18px;
   font-weight: bold;
   cursor: pointer;
-  margin-top: 16px;
+  margin-top: 0;
   width: 100%;
   box-sizing: border-box;
   transition: opacity 0.2s, transform 0.1s;
@@ -203,6 +203,30 @@
 
 .submitButton:active {
   transform: scale(0.98);
+}
+
+.formActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.cancelButton {
+  padding: 12px;
+  background: transparent;
+  color: var(--tg-theme-text-color, #333);
+  border: 1px solid var(--tg-theme-hint-color, #ccc);
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cancelButton:hover {
+  background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
 }
 
 /* Ошибки и успех */
@@ -251,7 +275,8 @@
     font-size: 15px;
   }
   
-  .submitButton {
+  .submitButton,
+  .cancelButton {
     padding: 14px;
     font-size: 16px;
   }

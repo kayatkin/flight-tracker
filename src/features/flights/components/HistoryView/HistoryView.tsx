@@ -13,6 +13,8 @@ import { toast } from '@shared/ui/Toast';
 interface HistoryViewProps {
   flights: Flight[];
   onDelete: (id: string) => void;
+  onEdit?: (flight: Flight) => void;
+  onDuplicate?: (flight: Flight) => void;
   onShare?: () => void;
   onJoin?: (token: string) => void;
   userId?: string;
@@ -20,9 +22,11 @@ interface HistoryViewProps {
   guestPermissions?: 'view' | 'edit';
 }
 
-const HistoryView: React.FC<HistoryViewProps> = ({ 
-  flights, 
-  onDelete, 
+const HistoryView: React.FC<HistoryViewProps> = ({
+  flights,
+  onDelete,
+  onEdit,
+  onDuplicate,
   onShare,
   onJoin,
   userId,
@@ -54,15 +58,37 @@ const HistoryView: React.FC<HistoryViewProps> = ({
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     if (isGuest && guestPermissions === 'view') {
       toast('У вас нет прав для удаления билетов. Только просмотр.', 'warning');
       return;
     }
-    
+
     if (window.confirm('Удалить этот билет?')) {
       onDelete(id);
     }
+  };
+
+  const handleEdit = (flight: Flight, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (isGuest && guestPermissions === 'view') {
+      toast('У вас нет прав для изменения билетов. Только просмотр.', 'warning');
+      return;
+    }
+
+    onEdit?.(flight);
+  };
+
+  const handleDuplicate = (flight: Flight, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (isGuest && guestPermissions === 'view') {
+      toast('У вас нет прав для добавления билетов. Только просмотр.', 'warning');
+      return;
+    }
+
+    onDuplicate?.(flight);
   };
 
   // Показываем состояние пустой истории через секунду после загрузки
@@ -113,6 +139,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         totalFlights={flights.length}
+        flights={flights}
       />
 
       {filteredDestinations.length === 0 && searchTerm ? (
@@ -137,6 +164,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({
                 )}
                 onShowChart={() => setChartDestination(destination)}
                 onDelete={handleDelete}
+                onEdit={handleEdit}
+                onDuplicate={handleDuplicate}
               />
             );
           })}

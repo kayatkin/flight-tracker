@@ -1,22 +1,23 @@
-// src/App.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AddFlightForm } from '@features/flights';
 import { HistoryView } from '@features/flights';
 import { GuestModeIndicator } from '@features/guest-mode';
 import { ShareFlightModal } from '@features/sharing';
+import { Flight } from '@shared/types';
+import { KNOWN_AIRLINES, KNOWN_CITIES } from '@shared/data';
+import { mergeSuggestions } from '@shared/utils';
 import styles from './App.module.css';
 
-// Кастомный хук
 import { useFlightTracker } from './hooks';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'add' | 'history'>('add');
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
-  
+  const [editingFlight, setEditingFlight] = useState<Flight | null>(null);
+
   const {
-    // Состояния
     userName,
-    userId, // Добавлено: получаем userId из хука
+    userId,
     appUser,
     flights,
     airlines,
@@ -24,27 +25,59 @@ const App: React.FC = () => {
     destinationCities,
     loading,
     isCheckingToken,
-    
-    // Обработчики
     handleAddFlight,
+    handleUpdateFlight,
+    handleDuplicateFlight,
     handleDeleteFlight,
     handleJoinSession,
     handleLeaveGuestMode,
   } = useFlightTracker();
 
   const isViewGuest = Boolean(appUser?.isGuest && appUser.permissions === 'view');
+  const originSuggestions = useMemo(
+    () => mergeSuggestions(originCities, KNOWN_CITIES),
+    [originCities]
+  );
+  const destinationSuggestions = useMemo(
+    () => mergeSuggestions(destinationCities, KNOWN_CITIES),
+    [destinationCities]
+  );
+  const airlineSuggestions = useMemo(
+    () => mergeSuggestions(airlines, KNOWN_AIRLINES),
+    [airlines]
+  );
 
   useEffect(() => {
     if (isViewGuest) {
       setActiveTab('history');
+      setEditingFlight(null);
     }
   }, [isViewGuest]);
+
+  const handleEditFlight = (flight: Flight) => {
+    setEditingFlight(flight);
+    setActiveTab('add');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingFlight(null);
+    setActiveTab('history');
+  };
+
+  const handleFlightUpdated = (flight: Flight) => {
+    handleUpdateFlight(flight);
+  };
+
+  const handleNavigateToHistory = () => {
+    setEditingFlight(null);
+    setActiveTab('history');
+  };
 
   if (loading || isCheckingToken) {
     return (
       <div className={styles.app} style={{ textAlign: 'center', padding: '40px' }}>
-        <div style={{ 
-          fontSize: '16px', 
+        <div style={{
+          fontSize: '16px',
           color: 'var(--tg-text-color, #000)',
           animation: 'pulse 1.5s infinite'
         }}>
@@ -56,7 +89,6 @@ const App: React.FC = () => {
 
   return (
     <div className={styles.app}>
-      {/* Индикатор гостевого режима */}
       {appUser?.isGuest && (
         <GuestModeIndicator
           ownerName={appUser.ownerName || 'Владельца'}
@@ -70,7 +102,6 @@ const App: React.FC = () => {
         Привет, <strong>{userName}</strong>!
       </p>
 
-      {/* Модальное окно для создания ссылки */}
       {showShareModal && appUser && !appUser.isGuest && (
         <ShareFlightModal
           userId={appUser.userId}
@@ -81,11 +112,17 @@ const App: React.FC = () => {
 
       <div className={styles.tabs}>
         <button
-          onClick={() => setActiveTab('add')}
+          onClick={() => {
+            if (!isViewGuest) setActiveTab('add');
+          }}
           className={`${styles.tabButton} ${activeTab === 'add' ? styles.active : ''}`}
           disabled={isViewGuest}
         >
-          {appUser?.isGuest && appUser.permissions === 'view' ? '👁️ Добавить перелет' : '➕ Добавить перелет'}
+          {isViewGuest
+            ? '👁️ Добавить перелет'
+            : editingFlight
+              ? '✏️ Изменить перелет'
+              : '➕ Добавить перелет'}
         </button>
         <button
           onClick={() => setActiveTab('history')}
@@ -97,28 +134,33 @@ const App: React.FC = () => {
 
       {activeTab === 'add' && !isViewGuest && (
         <AddFlightForm
+          key={editingFlight?.id ?? 'new'}
           flights={flights}
-          airlines={airlines}
-          originCities={originCities}
-          destinationCities={destinationCities}
+          airlines={airlineSuggestions}
+          originCities={originSuggestions}
+          destinationCities={destinationSuggestions}
+          editingFlight={editingFlight}
           onAdd={handleAddFlight}
-          onNavigateToHistory={() => setActiveTab('history')}
+          onUpdate={handleFlightUpdated}
+          onCancelEdit={handleCancelEdit}
+          onNavigateToHistory={handleNavigateToHistory}
         />
       )}
 
       {activeTab === 'history' && (
-        <HistoryView 
-          flights={flights} 
+        <HistoryView
+          flights={flights}
           onDelete={handleDeleteFlight}
+          onEdit={handleEditFlight}
+          onDuplicate={handleDuplicateFlight}
           onShare={() => setShowShareModal(true)}
           onJoin={handleJoinSession}
-          userId={appUser?.userId || userId} // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: используем userId из хука как fallback
+          userId={appUser?.userId || userId}
           isGuest={appUser?.isGuest || false}
           guestPermissions={appUser?.isGuest ? appUser.permissions : undefined}
         />
       )}
-      
-      {/* CSS для анимации загрузки */}
+
       <style>
         {`
           @keyframes pulse {

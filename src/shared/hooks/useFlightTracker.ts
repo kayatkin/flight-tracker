@@ -9,6 +9,7 @@ import {
 } from '../../services/appInitService';
 import { saveOwnerData, saveGuestData } from '../../services/dataService';
 import { getTelegramUserType } from '../utils/telegramUserType';
+import { duplicateFlight } from '../utils/flightFormMapping';
 import { toast } from '@shared/ui/Toast';
 import { devLog, logError } from '../utils/logger';
 
@@ -26,6 +27,8 @@ interface UseFlightTrackerResult {
   
   // Обработчики
   handleAddFlight: (flight: Flight) => void;
+  handleUpdateFlight: (flight: Flight) => void;
+  handleDuplicateFlight: (flight: Flight) => void;
   handleDeleteFlight: (id: string) => void;
   handleJoinSession: (token: string) => Promise<void>;
   handleLeaveGuestMode: () => void;
@@ -142,34 +145,69 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     return () => clearTimeout(timer);
   }, [flights, airlines, originCities, destinationCities, loading, userId, appUser]);
 
-  // Обработчики
-  const handleAddFlight = useCallback((newFlight: Flight) => {
+  const canMutate = useCallback(() => {
     if (appUser?.isGuest && appUser.permissions === 'view') {
+      return false;
+    }
+    return true;
+  }, [appUser]);
+
+  const rememberFlightLookups = useCallback((flight: Flight) => {
+    if (flight.airline) {
+      setAirlines((prev) => (prev.includes(flight.airline) ? prev : [...prev, flight.airline]));
+    }
+    if (flight.origin) {
+      setOriginCities((prev) => (prev.includes(flight.origin) ? prev : [...prev, flight.origin]));
+    }
+    if (flight.destination) {
+      setDestinationCities((prev) => (
+        prev.includes(flight.destination) ? prev : [...prev, flight.destination]
+      ));
+    }
+  }, []);
+
+  const handleAddFlight = useCallback((newFlight: Flight) => {
+    if (!canMutate()) {
       toast('У вас нет прав для добавления билетов. Только просмотр.', 'warning');
       return;
     }
     devLog('[HOOK] Adding flight:', newFlight.id);
     setFlights(prev => [...prev, newFlight]);
-    
-    if (newFlight.airline && !airlines.includes(newFlight.airline)) {
-      setAirlines(prev => [...prev, newFlight.airline]);
+    rememberFlightLookups(newFlight);
+  }, [canMutate, rememberFlightLookups]);
+
+  const handleUpdateFlight = useCallback((updatedFlight: Flight) => {
+    if (!canMutate()) {
+      toast('У вас нет прав для изменения билетов. Только просмотр.', 'warning');
+      return;
     }
-    if (newFlight.origin && !originCities.includes(newFlight.origin)) {
-      setOriginCities(prev => [...prev, newFlight.origin]);
+    devLog('[HOOK] Updating flight:', updatedFlight.id);
+    setFlights((prev) => prev.map((flight) => (
+      flight.id === updatedFlight.id ? updatedFlight : flight
+    )));
+    rememberFlightLookups(updatedFlight);
+  }, [canMutate, rememberFlightLookups]);
+
+  const handleDuplicateFlight = useCallback((flight: Flight) => {
+    if (!canMutate()) {
+      toast('У вас нет прав для добавления билетов. Только просмотр.', 'warning');
+      return;
     }
-    if (newFlight.destination && !destinationCities.includes(newFlight.destination)) {
-      setDestinationCities(prev => [...prev, newFlight.destination]);
-    }
-  }, [airlines, originCities, destinationCities, appUser]);
+    const cloned = duplicateFlight(flight);
+    devLog('[HOOK] Duplicating flight:', flight.id, '->', cloned.id);
+    setFlights((prev) => [...prev, cloned]);
+    rememberFlightLookups(cloned);
+    toast('Копия билета сохранена', 'success');
+  }, [canMutate, rememberFlightLookups]);
 
   const handleDeleteFlight = useCallback((id: string) => {
-    if (appUser?.isGuest && appUser.permissions === 'view') {
+    if (!canMutate()) {
       toast('У вас нет прав для удаления билетов. Только просмотр.', 'warning');
       return;
     }
     devLog('[HOOK] Deleting flight');
     setFlights(prev => prev.filter(f => f.id !== id));
-  }, [appUser]);
+  }, [canMutate]);
 
   const handleJoinSession = useCallback(async (token: string) => {
     try {
@@ -285,6 +323,8 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     loading,
     isCheckingToken,
     handleAddFlight,
+    handleUpdateFlight,
+    handleDuplicateFlight,
     handleDeleteFlight,
     handleJoinSession,
     handleLeaveGuestMode,
