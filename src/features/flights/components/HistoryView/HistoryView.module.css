@@ -260,7 +260,6 @@
 .card.active {
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--tg-link);
-  transform: scale(1.01);
 }
 
 .cardHeader {
