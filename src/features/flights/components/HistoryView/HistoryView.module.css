@@ -249,7 +249,7 @@
   overflow: hidden;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--tg-hint);
-  cursor: pointer;
+  cursor: default;
   transition: all var(--transition-fast);
 }
 
@@ -260,13 +260,18 @@
 .card.active {
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--tg-link);
-  transform: scale(1.01);
 }
 
 .cardHeader {
   padding: var(--space-3) var(--space-4);
   background-color: var(--tg-bg);
   border-bottom: 1px solid var(--tg-hint);
+  cursor: pointer;
+}
+
+.cardHeader:focus-visible {
+  outline: 2px solid var(--tg-link);
+  outline-offset: -2px;
 }
 
 .cardTitleWithMeta {
@@ -319,6 +324,7 @@
   padding: var(--space-4);
   padding-top: var(--space-3);
   background-color: var(--tg-card-bg);
+  cursor: default;
 }
 
 .otherFlightsTitle {
@@ -402,6 +408,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
   font-size: var(--font-size-xs);
   color: var(--tg-hint);
   margin-top: var(--space-2);
@@ -410,13 +418,23 @@
 }
 
 .metaText {
-  flex: 1;
+  flex: 1 1 140px;
+  min-width: 0;
 }
 
+.actionButtons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.editButton,
+.duplicateButton,
 .deleteButton {
   background: none;
   border: none;
-  color: var(--color-error);
   font-size: var(--font-size-md);
   cursor: pointer;
   padding: var(--space-1) var(--space-2);
@@ -425,9 +443,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 36px;
-  min-height: 36px;
-  margin-left: var(--space-2);
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.deleteButton {
+  color: var(--color-error);
+  margin-left: 0;
+}
+
+.editButton:hover,
+.duplicateButton:hover {
+  background-color: var(--tg-active-bg);
+  transform: scale(1.05);
 }
 
 .deleteButton:hover {
@@ -529,8 +557,17 @@
 }
 
 /* Счетчик билетов */
-.flightCount {
+.searchToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
   margin-top: var(--space-2);
+}
+
+.flightCount {
+  margin-top: 0;
+  flex: 1;
   font-size: var(--font-size-sm);
   color: var(--tg-hint);
   text-align: center;
@@ -542,6 +579,29 @@
 .flightCount strong {
   color: var(--tg-text);
   font-size: var(--font-size-lg);
+}
+
+.exportButton {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--tg-hint);
+  border-radius: var(--radius-lg);
+  background-color: var(--tg-card-bg);
+  color: var(--tg-text);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 36px;
+}
+
+.exportButton:hover {
+  background-color: var(--tg-active-bg);
+  border-color: var(--tg-link);
+}
+
+.exportButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Улучшенные стили для карточек */
@@ -557,11 +617,15 @@
 }
 
 /* Стили для неактивных кнопок */
+.editButton:disabled,
+.duplicateButton:disabled,
 .deleteButton:disabled {
   opacity: 0.5;
   cursor: not-allowed !important;
 }
 
+.editButton:disabled:hover,
+.duplicateButton:disabled:hover,
 .deleteButton:disabled:hover {
   background: var(--tg-border) !important;
   transform: none !important;
@@ -660,11 +724,11 @@
     font-size: 11px; /* Можно добавить --font-size-2xs в токены */
   }
   
+  .editButton,
+  .duplicateButton,
   .deleteButton {
-    font-size: var(--font-size-sm);
-    padding: 2px var(--space-1);
-    min-width: 32px;
-    min-height: 32px;
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 

@@ -59,10 +59,9 @@ Flight Tracker — это Telegram Mini App (React SPA), которое рабо
 
 **HistoryView** подкомпоненты:
 
-- `SearchBar` — поиск по городам/авиакомпаниям
-- `DestinationGroup` — группировка рейсов по направлению
-- `FlightCard` — карточка одного рейса (в стиле iOS Wallet)
-- `GuestIndicator` — индикатор гостевого режима
+- `SearchBar` — поиск и экспорт CSV видимых билетов
+- `DestinationGroup` — группа маршрута, раскрытие по заголовку
+- `FlightCard` — карточка рейса: правка, копия, удаление
 - `AccessManagement` — управление доступом (для владельца)
 
 #### `features/sharing/` — совместный доступ
@@ -77,7 +76,7 @@ Flight Tracker — это Telegram Mini App (React SPA), которое рабо
 
 #### `features/guest-mode/` — гостевой режим
 
-- `GuestModeIndicator` — визуальный индикатор, что данные хранятся локально
+- `GuestModeIndicator` — индикатор чужой истории (права view/edit)
 
 ### `shared/` — переиспользуемый код
 
@@ -85,7 +84,7 @@ Flight Tracker — это Telegram Mini App (React SPA), которое рабо
 
 | Хук | Назначение |
 |-----|-----------|
-| `useFlightTracker` | Главный хук: управление списком рейсов, добавление/удаление |
+| `useFlightTracker` | Главный хук: список рейсов, add/update/duplicate/delete, autosave |
 | `useFlightForm` | Состояние формы добавления рейса, валидация |
 | `useAutocomplete` | Автозаполнение городов/авиакомпаний |
 
@@ -99,7 +98,9 @@ Flight Tracker — это Telegram Mini App (React SPA), которое рабо
 | `telegramUtils.ts` | Проверка окружения Telegram, извлечение токенов |
 | `telegramTokens.ts` | Управление токенами для совместного доступа |
 | `telegram.ts` | Инициализация Telegram SDK |
-| `theme.ts` | Управление темой (светлая/тёмная) |
+| `flightCsv.ts` | Сборка и скачивание CSV истории |
+| `flightFormMapping.ts` | Билет → поля формы, дублирование с новым UUID |
+| `suggestions.ts` | Слияние сохранённых значений с каталогом |
 
 #### `shared/types/` — типы TypeScript
 
@@ -130,14 +131,15 @@ Flight Tracker — это Telegram Mini App (React SPA), которое рабо
 
 ## Потоки данных
 
-### Добавление рейса
+### Добавление и правка рейса
 
 ```
 AddFlightForm
-  → useFlightForm (валидация: validation.ts)
-    → PriceAnalysis (анализ: flightAnalysis.ts)
-      → useFlightTracker (сохранение)
-        → dataService.ts → Supabase
+  → useFlightForm (hydrateFromFlight при правке)
+    → validation.ts
+      → PriceAnalysis (кроме единственного редактируемого билета)
+        → useFlightTracker add | update
+          → dataService.ts → Supabase
 ```
 
 ### Загрузка приложения
@@ -189,70 +191,52 @@ CSS-переменные определены в `src/styles/tokens.css`:
 
 ## Тестирование
 
-Тесты используют Jest (встроен в CRA). Расположение:
+Тесты — Vitest + jsdom. Файлы рядом с модулем: `src/**/__tests__/*.test.ts`.
 
-```
-src/shared/utils/__tests__/
-├── validation.test.ts
-├── flightAnalysis.test.ts
-└── getSeasonalChartData.test.ts
-```
-
-Тестируются чистые функции (unit-тесты):
-
-- Валидация: проверка всех полей формы, граничные случаи
-- Анализ цены: пороги, фильтрация сопоставимых рейсов
-- График: расчёт цены на человека, выбор минимальной, правильные месяцы
-
-Запуск: `npm test`
+Запуск: `npm test`. Перед релизом: `npm run lint && npm run typecheck && npm test && npm run build`.
 
 ## CI/CD (GitHub Actions)
 
-Файл: `.github/workflows/deploy.yml`
+- `.github/workflows/ci.yml` — на PR в `main`: lint, typecheck, test, build
+- `.github/workflows/deploy.yml` — пуш в `main`: сборка Vite и GitHub Pages
 
-При пуше в `main`:
-1. Установка Node.js 18
-2. `npm ci`
-3. Проверка секретов (SUPABASE_URL, SUPABASE_ANON_KEY, BOT_TOKEN)
-4. `npm run build` с подстановкой ENV
-5. Деплой на GitHub Pages
+Node 20. Секреты Pages: `SUPABASE_URL`, `SUPABASE_ANON_KEY`. Username бота — `vars.TELEGRAM_BOT_USERNAME`.
 
 ## Конфигурация сборки
 
-### CRACO (`craco.config.js`)
+### Vite (`vite.config.ts`)
 
-Настроены alias'ы для импортов:
+`base: '/flight-tracker/'`. Алиасы:
 
-```js
-'@' → src/
-'@features' → src/features/
-'@shared' → src/shared/
-'@services' → src/services/
-'@hooks' → src/hooks/
-'@utils' → src/utils/
-'@types' → src/types/
-'@lib' → src/lib/
 ```
+@ → src/
+@features → src/features/
+@shared → src/shared/
+@services → src/services/
+```
+
+Клиентские переменные: `VITE_*` (legacy `REACT_APP_*` ещё читается).
 
 ### TypeScript (`tsconfig.json`)
 
 - Strict mode
 - JSX: react-jsx
 - Базовый путь: `src`
-- Path aliases синхронизированы с CRACO
+- Path aliases синхронизированы с Vite
 
 ## Переменные окружения
 
 | Переменная | Клиент/Сервер | Назначение |
 |-----------|---------------|------------|
-| `REACT_APP_SUPABASE_URL` | Клиент | URL проекта Supabase |
-| `REACT_APP_SUPABASE_ANON_KEY` | Клиент | Анонимный ключ Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | Сервер (бот) | Сервисный ключ для операций от имени сервера |
-| `BOT_TOKEN` | Сервер (бот) | Токен Telegram бота |
-| `WEBAPP_URL` | Сервер (бот) | URL WebApp (для deep-link) |
-| `NODE_ENV` | Оба | Окружение (development/production) |
+| `VITE_SUPABASE_URL` | Клиент | URL проекта Supabase |
+| `VITE_SUPABASE_ANON_KEY` | Клиент | Anon key (RLS обязателен) |
+| `VITE_TELEGRAM_BOT_USERNAME` | Клиент | Username бота для share-ссылок |
+| `SUPABASE_SERVICE_ROLE_KEY` | Сервер (бот) | Только бот, не фронт |
+| `BOT_TOKEN` | Сервер (бот + Edge Functions) | Токен BotFather |
+| `WEBAPP_URL` | Сервер (бот) | URL Mini App |
+| `JWT_SECRET` | Edge Functions | Подпись гостевых/owner JWT |
 
-Клиентские переменные должны начинаться с `REACT_APP_` (требование CRA).
+Шаблон: `.env.example`. Живые значения — [docs/SECURITY.md](./docs/SECURITY.md).
 
 ## Telegram бот (`bot/`)
 

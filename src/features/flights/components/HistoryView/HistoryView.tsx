@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Flight } from '@shared/types';
 import styles from './HistoryView.module.css';
 import { PriceChartModal } from '@features/flights';
@@ -7,12 +7,14 @@ import { SearchBar } from './components/SearchBar';
 import { AccessManagement } from './components/AccessManagement';
 // import { GuestIndicator } from './components/GuestIndicator';
 import { EmptyState } from './components/EmptyState';
-import { groupFlightsByDestination } from './utils/historyViewHelpers';
+import { groupFlightsByDestination, textMatchesQuery } from './utils/historyViewHelpers';
 import { toast } from '@shared/ui/Toast';
 
 interface HistoryViewProps {
   flights: Flight[];
   onDelete: (id: string) => void;
+  onEdit?: (flight: Flight) => void;
+  onDuplicate?: (flight: Flight) => void;
   onShare?: () => void;
   onJoin?: (token: string) => void;
   userId?: string;
@@ -20,9 +22,11 @@ interface HistoryViewProps {
   guestPermissions?: 'view' | 'edit';
 }
 
-const HistoryView: React.FC<HistoryViewProps> = ({ 
-  flights, 
-  onDelete, 
+const HistoryView: React.FC<HistoryViewProps> = ({
+  flights,
+  onDelete,
+  onEdit,
+  onDuplicate,
   onShare,
   onJoin,
   userId,
@@ -41,28 +45,56 @@ const HistoryView: React.FC<HistoryViewProps> = ({
 
   const filteredDestinations = useMemo(() => {
     if (!searchTerm.trim()) return allDestinations;
-    const term = searchTerm.toLowerCase();
     return allDestinations.filter((dest) => {
-      if (dest.toLowerCase().includes(term)) return true;
+      if (textMatchesQuery(dest, searchTerm)) return true;
       return grouped[dest]?.some((flight) =>
-        flight.origin.toLowerCase().includes(term) ||
-        flight.destination.toLowerCase().includes(term) ||
-        flight.airline.toLowerCase().includes(term)
+        textMatchesQuery(flight.origin, searchTerm) ||
+        textMatchesQuery(flight.destination, searchTerm) ||
+        textMatchesQuery(flight.airline, searchTerm)
       );
     });
   }, [searchTerm, allDestinations, grouped]);
 
+  const visibleFlights = useMemo(
+    () => filteredDestinations.flatMap((destination) => grouped[destination] ?? []),
+    [filteredDestinations, grouped]
+  );
+
+  const closeChart = useCallback(() => setChartDestination(null), []);
+
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     if (isGuest && guestPermissions === 'view') {
       toast('У вас нет прав для удаления билетов. Только просмотр.', 'warning');
       return;
     }
-    
+
     if (window.confirm('Удалить этот билет?')) {
       onDelete(id);
     }
+  };
+
+  const handleEdit = (flight: Flight, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (isGuest && guestPermissions === 'view') {
+      toast('У вас нет прав для изменения билетов. Только просмотр.', 'warning');
+      return;
+    }
+
+    onEdit?.(flight);
+  };
+
+  const handleDuplicate = (flight: Flight, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (isGuest && guestPermissions === 'view') {
+      toast('У вас нет прав для добавления билетов. Только просмотр.', 'warning');
+      return;
+    }
+
+    onDuplicate?.(flight);
   };
 
   // Показываем состояние пустой истории через секунду после загрузки
@@ -113,6 +145,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         totalFlights={flights.length}
+        visibleFlights={visibleFlights}
       />
 
       {filteredDestinations.length === 0 && searchTerm ? (
@@ -137,6 +170,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({
                 )}
                 onShowChart={() => setChartDestination(destination)}
                 onDelete={handleDelete}
+                onEdit={handleEdit}
+                onDuplicate={handleDuplicate}
               />
             );
           })}
@@ -147,7 +182,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
         <PriceChartModal
           flights={grouped[chartDestination]}
           destination={chartDestination}
-          onClose={() => setChartDestination(null)}
+          onClose={closeChart}
         />
       )}
     </div>

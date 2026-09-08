@@ -3,6 +3,12 @@ import { useState, useCallback } from 'react';
 import { Flight } from '../../shared/types';
 import { generateUUID } from '../utils/id';
 import { toLocalISODate } from '../utils/date';
+import { flightToFormData } from '../utils/flightFormMapping';
+
+export interface CreateFlightOptions {
+  id?: string;
+  dateFound?: string;
+}
 
 // ДОБАВЛЯЕМ export!
 export interface FlightFormData {
@@ -83,11 +89,15 @@ export const useFlightForm = (initialDate?: string) => {
     });
   }, [today]);
 
-  const createFlightObject = useCallback((): Flight => {
+  const hydrateFromFlight = useCallback((flight: Flight) => {
+    setFormData(flightToFormData(flight));
+  }, []);
+
+  const createFlightObject = useCallback((options?: CreateFlightOptions): Flight => {
     const priceNum = Number(formData.totalPrice);
 
     return {
-      id: generateUUID(),
+      id: options?.id ?? generateUUID(),
       origin: formData.origin.trim(),
       destination: formData.destination.trim(),
       type: formData.type,
@@ -110,7 +120,7 @@ export const useFlightForm = (initialDate?: string) => {
       airline: formData.airline.trim(),
       passengers: formData.passengers,
       totalPrice: priceNum,
-      dateFound: toLocalISODate(),
+      dateFound: options?.dateFound ?? toLocalISODate(),
       arrivalNextDay: formData.arrivalNextDay,
       returnArrivalNextDay: formData.type === 'roundTrip' ? formData.returnArrivalNextDay : undefined,
     };
@@ -120,6 +130,7 @@ export const useFlightForm = (initialDate?: string) => {
     formData,
     updateFormData,
     resetForm,
+    hydrateFromFlight,
     createFlightObject,
   };
 };

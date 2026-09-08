@@ -264,6 +264,7 @@ config/*.local.ts
 !index.html
 !eslint.config.mjs
 !docs/
+!docs/SECURITY.md
 !scripts/
 !.env.example
 !ARCHITECTURE.md

@@ -13,6 +13,8 @@ interface DestinationGroupProps {
   onToggle: () => void;
   onShowChart: () => void;
   onDelete: (id: string, e: React.MouseEvent) => void;
+  onEdit: (flight: Flight, e: React.MouseEvent) => void;
+  onDuplicate: (flight: Flight, e: React.MouseEvent) => void;
 }
 
 export const DestinationGroup: React.FC<DestinationGroupProps> = ({
@@ -24,21 +26,37 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
   onToggle,
   onShowChart,
   onDelete,
+  onEdit,
+  onDuplicate,
 }) => {
   const bestFlight = getBestFlight(flights);
   const otherFlights = flights
     .filter(f => f.id !== bestFlight.id)
     .sort((a, b) => a.totalPrice / a.passengers - b.totalPrice / b.passengers);
   
-  const canDelete = !isGuest || (isGuest && guestPermissions === 'edit');
+  const canMutate = !isGuest || guestPermissions === 'edit';
+
+  const handleHeaderKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onToggle();
+    }
+  };
 
   return (
     <div
-      onClick={onToggle}
       className={`${styles.card} ${isActive ? styles.active : ''}`}
       style={isGuest ? { borderLeft: `4px solid ${guestPermissions === 'edit' ? '#4CAF50' : '#FF9800'}` } : {}}
     >
-      <div className={styles.cardHeader}>
+      <div
+        className={styles.cardHeader}
+        onClick={onToggle}
+        onKeyDown={handleHeaderKeyDown}
+        role="button"
+        tabIndex={0}
+        aria-expanded={isActive}
+        aria-label={`${destination}, ${flights.length} билетов`}
+      >
         <div className={styles.cardTitleWithMeta}>
           <span>📍 {destination}</span>
           <span className={styles.ticketCount}>({flights.length})</span>
@@ -73,15 +91,22 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
       </div>
 
       {isActive && (
-        <div className={styles.cardContent}>
+        <div
+          className={styles.cardContent}
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
           <div className={styles.bestFlightNote}>
             ⭐ Лучшее предложение по цене за человека
           </div>
           <FlightCard
+            key={bestFlight.id}
             flight={bestFlight}
             isBest={true}
             onDelete={onDelete}
-            canDelete={canDelete}
+            onEdit={onEdit}
+            onDuplicate={onDuplicate}
+            canMutate={canMutate}
             isGuest={isGuest}
             guestPermissions={guestPermissions}
           />
@@ -96,7 +121,9 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
                   flight={flight}
                   isBest={false}
                   onDelete={onDelete}
-                  canDelete={canDelete}
+                  onEdit={onEdit}
+                  onDuplicate={onDuplicate}
+                  canMutate={canMutate}
                   isGuest={isGuest}
                   guestPermissions={guestPermissions}
                 />

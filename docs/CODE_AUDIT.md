@@ -33,7 +33,7 @@
 4. **Пер-операционный CRUD** вместо snapshot-save (добавить/удалить одну строку).
 5. **Настоящий refresh** (GoTrue session) вместо копии access JWT.
 6. **CORS allowlist** origin Mini App / GitHub Pages вместо `*`.
-7. **Доступный modal/dialog** с focus trap, Escape, `inert` на фоне.
+7. **Доступный modal/dialog** с focus trap и `inert` на фоне. График уже закрывается по Escape и клику на оверлей.
 8. **Тема**: `data-theme=light|dark` из `colorScheme`, слушать `themeChanged`.
 9. **i18n-каталог** вместо строк в JSX (сейчас продукт только на русском).
 10. **CI для Deno functions + RLS** на эфемерной Postgres и `npm audit` в pipeline.
