@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Flight } from '@shared/types';
 import styles from './HistoryView.module.css';
 import { PriceChartModal } from '@features/flights';
@@ -59,6 +59,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({
     () => filteredDestinations.flatMap((destination) => grouped[destination] ?? []),
     [filteredDestinations, grouped]
   );
+
+  const closeChart = useCallback(() => setChartDestination(null), []);
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -180,7 +182,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
         <PriceChartModal
           flights={grouped[chartDestination]}
           destination={chartDestination}
-          onClose={() => setChartDestination(null)}
+          onClose={closeChart}
         />
       )}
     </div>

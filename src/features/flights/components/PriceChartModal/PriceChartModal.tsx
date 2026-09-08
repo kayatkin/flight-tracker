@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -24,15 +24,21 @@ interface PriceChartModalProps {
 
 const PriceChartModal: React.FC<PriceChartModalProps> = ({ flights, destination, onClose }) => {
   const chartData = getSeasonalChartData(flights);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    dialogRef.current?.focus();
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
         onClose();
       }
     };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
   }, [onClose]);
 
   return (
@@ -42,11 +48,13 @@ const PriceChartModal: React.FC<PriceChartModalProps> = ({ flights, destination,
       role="presentation"
     >
       <div
+        ref={dialogRef}
         className={styles.modalContent}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="price-chart-title"
+        tabIndex={-1}
       >
         <div className={styles.modalHeader}>
           <h3 id="price-chart-title">📈 Сезонность цен: {destination}</h3>

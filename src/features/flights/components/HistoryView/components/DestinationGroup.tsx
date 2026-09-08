@@ -91,7 +91,11 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
       </div>
 
       {isActive && (
-        <div className={styles.cardContent}>
+        <div
+          className={styles.cardContent}
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
           <div className={styles.bestFlightNote}>
             ⭐ Лучшее предложение по цене за человека
           </div>
