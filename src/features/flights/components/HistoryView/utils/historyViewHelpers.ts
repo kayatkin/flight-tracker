@@ -1,4 +1,5 @@
 import { Flight } from '@shared/types';
+import { pluralize } from '@shared/lib/i18n/pluralize';
 
 // Утилита: YYYY-MM-DD → DD-MM-YYYY
 export const formatDateToDMY = (isoDate: string): string => {
@@ -41,6 +42,21 @@ export const getBestFlight = (flightList: Flight[]): Flight => {
     const currPrice = curr.totalPrice / curr.passengers;
     return currPrice < bestPrice ? curr : best;
   });
+};
+
+export const formatPassengerCount = (count: number): string => {
+  const word = pluralize(count, {
+    one: 'пассажир',
+    few: 'пассажира',
+    many: 'пассажиров',
+  });
+  return `${count} ${word}`;
+};
+
+export const textMatchesQuery = (value: string, query: string): boolean => {
+  const term = query.trim().toLocaleLowerCase('ru-RU');
+  if (!term) return true;
+  return value.toLocaleLowerCase('ru-RU').includes(term);
 };
 
 export const groupFlightsByDestination = (flights: Flight[]): Record<string, Flight[]> => {

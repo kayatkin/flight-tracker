@@ -1,5 +1,4 @@
-// src/components/PriceChartModal.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -26,12 +25,39 @@ interface PriceChartModalProps {
 const PriceChartModal: React.FC<PriceChartModalProps> = ({ flights, destination, onClose }) => {
   const chartData = getSeasonalChartData(flights);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+    <div
+      className={styles.modalOverlay}
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        className={styles.modalContent}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="price-chart-title"
+      >
         <div className={styles.modalHeader}>
-          <h3>📈 Сезонность цен: {destination}</h3>
-          <button className={styles.closeButton} onClick={onClose}>✕</button>
+          <h3 id="price-chart-title">📈 Сезонность цен: {destination}</h3>
+          <button
+            type="button"
+            className={styles.closeButton}
+            onClick={onClose}
+            aria-label="Закрыть график"
+          >
+            ✕
+          </button>
         </div>
         <div className={styles.chartContainer}>
           <Line data={chartData} options={chartOptions} />

@@ -54,6 +54,10 @@ const App: React.FC = () => {
     }
   }, [isViewGuest]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTab]);
+
   const handleEditFlight = (flight: Flight) => {
     setEditingFlight(flight);
     setActiveTab('add');

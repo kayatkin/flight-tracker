@@ -53,6 +53,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
     if (editingFlight) {
       hydrateFromFlight(editingFlight);
       setAnalysis(null);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [editingFlight, hydrateFromFlight]);
 
@@ -127,6 +128,12 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
+      {isEditing && (
+        <div className={styles.editBanner} role="status">
+          Редактирование сохранённого билета. Дата поиска не изменится.
+        </div>
+      )}
+
       <RouteSection
         formData={formData}
         updateFormData={updateFormData}

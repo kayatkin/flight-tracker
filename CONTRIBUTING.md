@@ -93,11 +93,16 @@ test: добавлены тесты для getSeasonalChartData
 
 ### 6. Проверки CI
 
-При создании PR автоматически запускаются:
+При создании PR автоматически запускаются lint, typecheck, тесты и сборка. На `main` после зелёного build — деплой GitHub Pages.
 
-- Линтинг (ESLint)
-- Сборка (`npm run build`)
-- При пуше в `main` — деплой на GitHub Pages
+Документация, которую нужно держать в синхроне с кодом:
+
+- [README.md](./README.md) — быстрый старт
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — слои и потоки
+- [CHANGELOG.md](./CHANGELOG.md) — пользовательски видимые изменения
+- [docs/USER_GUIDE.md](./docs/USER_GUIDE.md) — как пользоваться приложением
+- [docs/SECURITY.md](./docs/SECURITY.md) — секреты и RLS
+- [docs/SUPABASE_SETUP.md](./docs/SUPABASE_SETUP.md) — деплой бэкенда
 
 ## Настройка окружения
 

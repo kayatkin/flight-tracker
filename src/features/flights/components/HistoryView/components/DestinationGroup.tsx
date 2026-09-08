@@ -36,13 +36,27 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
   
   const canMutate = !isGuest || guestPermissions === 'edit';
 
+  const handleHeaderKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onToggle();
+    }
+  };
+
   return (
     <div
-      onClick={onToggle}
       className={`${styles.card} ${isActive ? styles.active : ''}`}
       style={isGuest ? { borderLeft: `4px solid ${guestPermissions === 'edit' ? '#4CAF50' : '#FF9800'}` } : {}}
     >
-      <div className={styles.cardHeader}>
+      <div
+        className={styles.cardHeader}
+        onClick={onToggle}
+        onKeyDown={handleHeaderKeyDown}
+        role="button"
+        tabIndex={0}
+        aria-expanded={isActive}
+        aria-label={`${destination}, ${flights.length} билетов`}
+      >
         <div className={styles.cardTitleWithMeta}>
           <span>📍 {destination}</span>
           <span className={styles.ticketCount}>({flights.length})</span>

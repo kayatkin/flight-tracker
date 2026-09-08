@@ -14,7 +14,8 @@
 - **Туда** (oneWay) или **Туда-обратно** (roundTrip)
 - Поддержка **пересадок** — отдельно для прямого и обратного направления
 - **Прилёт на следующий день** (+1) — актуально для ночных рейсов
-- Автозаполнение авиакомпаний из списка ранее использованных
+- Автозаполнение городов и авиакомпаний из сохранённых значений и каталога
+- Редактирование и дублирование сохранённого билета
 - Учёт количества пассажиров (1–4) и расчёт цены на человека
 
 ### 📊 Аналитика цен
@@ -26,6 +27,8 @@
 - Карточки перелётов с детальной информацией (время, пересадки, авиакомпания)
 - Группировка по направлению (origin → destination)
 - Поиск по городам и авиакомпаниям
+- Редактирование, копия и удаление карточки
+- Экспорт видимой истории в CSV (UTF-8 с BOM для Excel)
 - Индикатор выгоды на каждой карточке
 
 ### 👥 Совместный доступ (Sharing)
@@ -35,9 +38,9 @@
 - Присоединение по ссылке через Telegram бота
 
 ### 🔐 Гостевой режим
-- Работа без авторизации (данные в localStorage)
-- Индикатор гостевого режима
-- Миграция гостевых данных при входе в аккаунт
+- Вход по одноразовой share-ссылке с правами **просмотр** или **редактирование**
+- Данные владельца читаются из Supabase; view-гость не может менять историю
+- Индикатор гостевого режима и выход из чужой истории
 
 ### 🤖 Telegram бот
 - Команда `/start` — открытие WebApp
@@ -91,16 +94,12 @@ flight-tracker/
 │   │           ├── JoinSessionModal/
 │   │           └── ...
 │   ├── shared/                     # Общий код
+│   │   ├── data/                   # Каталоги городов и авиакомпаний
 │   │   ├── hooks/                  # Кастомные хуки
 │   │   ├── lib/                    # Библиотеки (Supabase client)
 │   │   ├── types/                  # TypeScript типы
 │   │   ├── ui/                     # Общие UI-компоненты
 │   │   └── utils/                  # Утилиты
-│   │       ├── flightAnalysis.ts   # Анализ цены
-│   │       ├── validation.ts       # Валидация формы
-│   │       ├── getSeasonalChartData.ts # Данные для графика
-│   │       ├── telegramUtils.ts    # Утилиты Telegram WebApp
-│   │       └── __tests__/          # Unit-тесты
 │   ├── services/                   # Сервисный слой
 │   │   ├── dataService.ts          # CRUD для рейсов
 │   │   └── appInitService.ts       # Инициализация приложения
@@ -147,18 +146,10 @@ cp .env.example .env.local
 Заполните значения:
 
 ```env
-# Supabase (создайте проект на https://supabase.com)
+# Frontend (.env.local)
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key_here
 VITE_TELEGRAM_BOT_USERNAME=my_flight_tracker1_bot
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
-
-# Telegram Bot (получите токен у @BotFather)
-BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
-WEBAPP_URL=https://your-username.github.io/flight-tracker
-
-# Application
-NODE_ENV=development
 ```
 
 Для бота создайте `bot/.env`:
@@ -235,15 +226,17 @@ npm start  # polling mode
 
 ## 🧪 Тестирование
 
-Проект содержит unit-тесты для ключевых утилит:
+Проект содержит unit-тесты для ключевых утилит (`npm test`):
 
-| Модуль | Тестов | Описание |
-|--------|--------|----------|
-| `validation.ts` | 11 | Валидация формы и дат |
-| `flightAnalysis.ts` | 10 | Анализ выгоды цены |
-| `getSeasonalChartData.ts` | 12 | Подготовка данных для графика |
+| Модуль | Что проверяем |
+|--------|----------------|
+| `validation.ts` | Валидация формы и дат round-trip |
+| `flightAnalysis.ts` | Сравнение цены с лучшим ранее |
+| `getSeasonalChartData.ts` | Данные сезонного графика |
+| `flightCsv.ts` / `flightFormMapping.ts` | Экспорт и копирование билета |
+| `historyViewHelpers.ts` | Группировка, поиск, плюрализация |
 
-Запуск: `npm test`
+Полный прогон качества: `npm run lint && npm run typecheck && npm test && npm run build`.
 
 ## 📐 Архитектурные принципы
 
@@ -253,7 +246,7 @@ npm start  # polling mode
 - **Design tokens** — все цвета, шрифты, отступы и тени вынесены в CSS-переменные
 - **Адаптивная тема** — через CSS `[data-tg-theme]` и Telegram Theme API
 
-Подробнее в [ARCHITECTURE.md](./ARCHITECTURE.md).
+Подробнее в [ARCHITECTURE.md](./ARCHITECTURE.md), [docs/USER_GUIDE.md](./docs/USER_GUIDE.md) и [docs/SECURITY.md](./docs/SECURITY.md).
 
 ## 📄 Лицензия
 

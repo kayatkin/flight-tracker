@@ -249,7 +249,7 @@
   overflow: hidden;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--tg-hint);
-  cursor: pointer;
+  cursor: default;
   transition: all var(--transition-fast);
 }
 
@@ -267,6 +267,12 @@
   padding: var(--space-3) var(--space-4);
   background-color: var(--tg-bg);
   border-bottom: 1px solid var(--tg-hint);
+  cursor: pointer;
+}
+
+.cardHeader:focus-visible {
+  outline: 2px solid var(--tg-link);
+  outline-offset: -2px;
 }
 
 .cardTitleWithMeta {
@@ -319,6 +325,7 @@
   padding: var(--space-4);
   padding-top: var(--space-3);
   background-color: var(--tg-card-bg);
+  cursor: default;
 }
 
 .otherFlightsTitle {
@@ -402,6 +409,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
   font-size: var(--font-size-xs);
   color: var(--tg-hint);
   margin-top: var(--space-2);
@@ -410,14 +419,16 @@
 }
 
 .metaText {
-  flex: 1;
+  flex: 1 1 140px;
+  min-width: 0;
 }
 
 .actionButtons {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .editButton,
@@ -433,8 +444,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 36px;
-  min-height: 36px;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .deleteButton {
@@ -589,6 +600,11 @@
   border-color: var(--tg-link);
 }
 
+.exportButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Улучшенные стили для карточек */
 .bestFlightNote {
   background: var(--color-success-15);
@@ -712,10 +728,8 @@
   .editButton,
   .duplicateButton,
   .deleteButton {
-    font-size: var(--font-size-sm);
-    padding: 2px var(--space-1);
-    min-width: 32px;
-    min-height: 32px;
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 

@@ -7,7 +7,7 @@ import { SearchBar } from './components/SearchBar';
 import { AccessManagement } from './components/AccessManagement';
 // import { GuestIndicator } from './components/GuestIndicator';
 import { EmptyState } from './components/EmptyState';
-import { groupFlightsByDestination } from './utils/historyViewHelpers';
+import { groupFlightsByDestination, textMatchesQuery } from './utils/historyViewHelpers';
 import { toast } from '@shared/ui/Toast';
 
 interface HistoryViewProps {
@@ -45,16 +45,20 @@ const HistoryView: React.FC<HistoryViewProps> = ({
 
   const filteredDestinations = useMemo(() => {
     if (!searchTerm.trim()) return allDestinations;
-    const term = searchTerm.toLowerCase();
     return allDestinations.filter((dest) => {
-      if (dest.toLowerCase().includes(term)) return true;
+      if (textMatchesQuery(dest, searchTerm)) return true;
       return grouped[dest]?.some((flight) =>
-        flight.origin.toLowerCase().includes(term) ||
-        flight.destination.toLowerCase().includes(term) ||
-        flight.airline.toLowerCase().includes(term)
+        textMatchesQuery(flight.origin, searchTerm) ||
+        textMatchesQuery(flight.destination, searchTerm) ||
+        textMatchesQuery(flight.airline, searchTerm)
       );
     });
   }, [searchTerm, allDestinations, grouped]);
+
+  const visibleFlights = useMemo(
+    () => filteredDestinations.flatMap((destination) => grouped[destination] ?? []),
+    [filteredDestinations, grouped]
+  );
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -139,7 +143,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         totalFlights={flights.length}
-        flights={flights}
+        visibleFlights={visibleFlights}
       />
 
       {filteredDestinations.length === 0 && searchTerm ? (

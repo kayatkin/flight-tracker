@@ -1,6 +1,6 @@
 import React from 'react';
 import { Flight } from '@shared/types';
-import { formatDateToDMY, formatPrice, formatLayover } from '../utils/historyViewHelpers';
+import { formatDateToDMY, formatPrice, formatLayover, formatPassengerCount } from '../utils/historyViewHelpers';
 import styles from '../HistoryView.module.css';
 
 interface FlightCardProps {
@@ -24,6 +24,8 @@ export const FlightCard: React.FC<FlightCardProps> = ({
   isGuest,
   guestPermissions,
 }) => {
+  const layover = formatLayover(flight);
+
   return (
     <div
       key={flight.id}
@@ -55,7 +57,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({
         </div>
       )}
 
-      <div className={styles.layover}>{formatLayover(flight)}</div>
+      {layover ? <div className={styles.layover}>{layover}</div> : null}
       <div className={styles.airline}>✈️ {flight.airline || '—'}</div>
 
       <div className={styles.price}>
@@ -65,7 +67,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({
 
       <div className={styles.meta}>
         <span className={styles.metaText}>
-          👥 {flight.passengers} пассажир(ов) • Найдено: {formatDateToDMY(flight.dateFound)}
+          👥 {formatPassengerCount(flight.passengers)} • Найдено: {formatDateToDMY(flight.dateFound)}
           {isGuest && <span style={{ marginLeft: '8px', fontSize: '12px', color: '#666' }}>
             {guestPermissions === 'edit' ? '✏️ Редактирование' : '👁️ Только просмотр'}
           </span>}

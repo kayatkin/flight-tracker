@@ -14,7 +14,7 @@ interface EmptyStateProps {
 
 export const EmptyState: React.FC<EmptyStateProps> = ({ 
   isGuest,
-  guestPermissions,
+  guestPermissions: _guestPermissions,
   flights = [],
   userId,
   onShare,

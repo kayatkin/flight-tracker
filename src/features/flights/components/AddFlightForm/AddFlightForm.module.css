@@ -205,6 +205,16 @@
   transform: scale(0.98);
 }
 
+.editBanner {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+  border-left: 4px solid var(--tg-theme-button-color, #0088cc);
+  color: var(--tg-theme-text-color, #333);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
 .formActions {
   display: flex;
   flex-direction: column;
