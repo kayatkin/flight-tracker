@@ -13,3 +13,4 @@ export * from './suggestions';
 export * from './flightCsv';
 export * from './flightFormMapping';
 export * from './saveStatus';
+export * from './focusTrap';

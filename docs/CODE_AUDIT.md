@@ -33,11 +33,11 @@
 4. **Пер-операционный CRUD** вместо snapshot-save (добавить/удалить одну строку).
 5. **Настоящий refresh** (GoTrue session) вместо копии access JWT.
 6. **CORS allowlist** origin Mini App / GitHub Pages вместо `*`.
-7. **Доступный modal/dialog** с focus trap и `inert` на фоне. Сейчас: Escape + фокус в диалоге у графика, шаринга и присоединения.
-8. **Тема**: слушать `themeChanged` / `prefers-color-scheme`, ставить `data-theme`.
+7. **Доступный modal/dialog** с focus trap и `inert` на фоне. Сделано: Escape, Tab-цикл, `inert`, возврат фокуса.
+8. **Тема**: слушать `themeChanged` / `prefers-color-scheme`, ставить `data-theme`. Сделано.
 9. **i18n-каталог** вместо строк в JSX (сейчас продукт только на русском).
-10. **CI для Deno functions + RLS** на эфемерной Postgres и `npm audit` в pipeline.
-11. **Обновить бот** с `node-telegram-bot-api@0.61` на актуальный клиент; убрать service role, читать токен через RPC.
+10. **CI для Deno functions + RLS** на эфемерной Postgres. Сейчас: `deno check` `_shared` и тесты бота; `npm audit` фронта ещё красный на devDeps, живая Postgres — отдельно.
+11. **Обновить бот** с `node-telegram-bot-api@0.61` на актуальный клиент; убрать service role, читать токен через RPC. Сделано (0.67 + `lookup_share_invite`).
 12. **Не деплоить фронт**, если lint/test красные. Сделано в `deploy.yml`.
 
 ## Файл за файлом
@@ -49,11 +49,11 @@
 | `package.json` | React 19 + Vite 6 + Vitest | Нет coverage/`check`; неиспользуемый `@telegram-apps/sdk` тянет advisory | Оставить SDK на отдельный рефакторинг; тесты расширены |
 | `vite.config.ts` | Сборка, aliases, `envPrefix` | `REACT_APP_*` может утечь в бандл | Не трогали префикс, чтобы не сломать legacy env |
 | `tsconfig.json` | Strict TS только для `src` | Конфиги не проверяются | Ок для текущего контура |
-| `eslint.config.mjs` | Lint фронта | `bot/**` и `supabase/functions/**` игнорируются | Отдельный job — следующий шаг |
+| `eslint.config.mjs` | Lint фронта | `bot/**` и `supabase/functions/**` игнорируются | Бот и `_shared` проверяются отдельными CI job |
 | `index.html` | Telegram script | Нет CSP | CSP после выноса inline-стилей |
 | `public/manifest.json` | PWA | CRA sample, битые иконки | Имя приложения, без фейковых иконок |
 | `.github/workflows/deploy.yml` | Pages | Деплой без обязательного CI | Рекомендация: `needs: ci` |
-| `.github/workflows/ci.yml` | lint/test/build | Нет аудита бэкенда | Рекомендация: Deno + RLS job |
+| `.github/workflows/ci.yml` | lint/test/build | Нет аудита бэкенда | `deno check` functions, тесты бота, `npm audit` |
 | `scripts/deploy-supabase.sh` | Деплой functions | Всегда деплоил `auth-dev` | Skip по умолчанию |
 | `docs/SUPABASE_SETUP.md` | Прод-инструкция | Копипаста включала `ALLOW_DEV_AUTH=true` | Staging отдельно, добавлен `003` |
 
@@ -114,8 +114,8 @@
 
 | Файл | Проблема | Решение |
 |------|----------|---------|
-| `bot/index.js` | Токены в логах; service role | Логи без токена; service role — отдельный рефакторинг |
+| `bot/index.js` | Токены в логах; service role | Логи без токена; lookup через RPC + anon key |
 | `bot/validateTelegram.js` | Мёртвый код без `auth_date` | Не подключали, чтобы не плодить второй валидатор |
-| `bot/package.json` | `node-telegram-bot-api@0.61` | Обновление — отдельный PR с тестами бота |
+| `bot/package.json` | `node-telegram-bot-api@0.61` | `0.67` + `invite.test.js` |
 
 CSS-модули содержат много мёртвых селекторов и дубли theme override — чистить постепенно, не пакетом: легко сломать визуал Telegram.

@@ -1,7 +1,12 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Flight } from '@shared/types';
 import { useFlightForm } from '@shared/hooks';
-import { validateFlightForm, validateRoundTripDates, analyzeFlightPrice } from '@shared/utils';
+import {
+  validateFlightForm,
+  validateRoundTripDates,
+  analyzeFlightPrice,
+  confirmDiscardUnsaved,
+} from '@shared/utils';
 import { toast } from '@shared/ui/Toast';
 import { PriceAnalysis } from '@features/flights';
 
@@ -24,6 +29,7 @@ interface AddFlightFormProps {
   onUpdate?: (flight: Flight) => void;
   onCancelEdit?: () => void;
   onNavigateToHistory?: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
   editingFlight?: Flight | null;
 }
 
@@ -36,9 +42,10 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
   onUpdate,
   onCancelEdit,
   onNavigateToHistory,
+  onDirtyChange,
   editingFlight = null,
 }) => {
-  const { formData, updateFormData, createFlightObject, resetForm, hydrateFromFlight } = useFlightForm();
+  const { formData, updateFormData, createFlightObject, resetForm, hydrateFromFlight, markClean, isDirty } = useFlightForm();
   const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeFlightPrice> | null>(null);
   const navigateTimerRef = useRef<number | undefined>(undefined);
   const isEditing = Boolean(editingFlight);
@@ -48,6 +55,12 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
       window.clearTimeout(navigateTimerRef.current);
     }
   }, []);
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
+
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
 
   useEffect(() => {
     if (editingFlight) {
@@ -112,6 +125,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
     if (editingFlight) {
       onUpdate?.(savedFlight);
       toast('Изменения сохранены', 'success');
+      markClean();
     } else {
       onAdd(savedFlight);
       resetForm();
@@ -124,7 +138,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
       setAnalysis(null);
       onNavigateToHistory?.();
     }, 1000);
-  }, [formData, createFlightObject, flights, onAdd, onUpdate, onNavigateToHistory, resetForm, editingFlight]);
+  }, [formData, createFlightObject, flights, onAdd, onUpdate, onNavigateToHistory, resetForm, markClean, editingFlight]);
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
@@ -192,7 +206,10 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
           <button
             type="button"
             className={styles.cancelButton}
-            onClick={onCancelEdit}
+            onClick={() => {
+              if (isDirty && !confirmDiscardUnsaved()) return;
+              onCancelEdit?.();
+            }}
             aria-label="Отменить редактирование"
           >
             Отмена

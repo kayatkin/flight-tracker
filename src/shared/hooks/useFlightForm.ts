@@ -3,7 +3,11 @@ import { useState, useCallback } from 'react';
 import { Flight } from '../../shared/types';
 import { generateUUID } from '../utils/id';
 import { toLocalISODate } from '../utils/date';
-import { flightToFormData } from '../utils/flightFormMapping';
+import {
+  createEmptyFlightForm,
+  flightToFormData,
+  isFlightFormDirty,
+} from '../utils/flightFormMapping';
 
 export interface CreateFlightOptions {
   id?: string;
@@ -36,62 +40,30 @@ export interface FlightFormData {
 
 export const useFlightForm = (initialDate?: string) => {
   const today = initialDate || toLocalISODate();
+  const emptyForm = createEmptyFlightForm(today);
 
-  const [formData, setFormData] = useState<FlightFormData>({
-    origin: '',
-    destination: '',
-    type: 'oneWay',
-    departureDate: today,
-    returnDate: '',
-    departureTime: '',
-    arrivalTime: '',
-    returnDepartureTime: '',
-    returnArrivalTime: '',
-    isDirectThere: true,
-    isDirectBack: true,
-    layoverCityThere: '',
-    layoverDurationThere: 60,
-    layoverCityBack: '',
-    layoverDurationBack: 60,
-    airline: '',
-    passengers: 1,
-    totalPrice: '',
-    arrivalNextDay: false,
-    returnArrivalNextDay: false,
-  });
+  const [formData, setFormData] = useState<FlightFormData>(emptyForm);
+  const [baseline, setBaseline] = useState<FlightFormData>(emptyForm);
 
   const updateFormData = useCallback((updates: Partial<FlightFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
   }, []);
 
   const resetForm = useCallback(() => {
-    setFormData({
-      origin: '',
-      destination: '',
-      type: 'oneWay',
-      departureDate: today,
-      returnDate: '',
-      departureTime: '',
-      arrivalTime: '',
-      returnDepartureTime: '',
-      returnArrivalTime: '',
-      isDirectThere: true,
-      isDirectBack: true,
-      layoverCityThere: '',
-      layoverDurationThere: 60,
-      layoverCityBack: '',
-      layoverDurationBack: 60,
-      airline: '',
-      passengers: 1,
-      totalPrice: '',
-      arrivalNextDay: false,
-      returnArrivalNextDay: false,
-    });
+    const next = createEmptyFlightForm(today);
+    setFormData(next);
+    setBaseline(next);
   }, [today]);
 
   const hydrateFromFlight = useCallback((flight: Flight) => {
-    setFormData(flightToFormData(flight));
+    const next = flightToFormData(flight);
+    setFormData(next);
+    setBaseline(next);
   }, []);
+
+  const markClean = useCallback(() => {
+    setBaseline(formData);
+  }, [formData]);
 
   const createFlightObject = useCallback((options?: CreateFlightOptions): Flight => {
     const priceNum = Number(formData.totalPrice);
@@ -128,9 +100,11 @@ export const useFlightForm = (initialDate?: string) => {
 
   return {
     formData,
+    isDirty: isFlightFormDirty(formData, baseline),
     updateFormData,
     resetForm,
     hydrateFromFlight,
+    markClean,
     createFlightObject,
   };
 };

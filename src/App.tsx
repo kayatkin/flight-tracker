@@ -5,7 +5,7 @@ import { GuestModeIndicator } from '@features/guest-mode';
 import { ShareFlightModal } from '@features/sharing';
 import { Flight } from '@shared/types';
 import { KNOWN_AIRLINES, KNOWN_CITIES } from '@shared/data';
-import { mergeSuggestions, saveStatusText } from '@shared/utils';
+import { mergeSuggestions, saveStatusText, confirmDiscardUnsaved } from '@shared/utils';
 import styles from './App.module.css';
 
 import { useFlightTracker } from './hooks';
@@ -14,6 +14,7 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'add' | 'history'>('add');
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
   const [editingFlight, setEditingFlight] = useState<Flight | null>(null);
+  const [formDirty, setFormDirty] = useState(false);
 
   const {
     userName,
@@ -67,6 +68,7 @@ const App: React.FC = () => {
   };
 
   const handleCancelEdit = () => {
+    setFormDirty(false);
     setEditingFlight(null);
     setActiveTab('history');
   };
@@ -76,8 +78,16 @@ const App: React.FC = () => {
   };
 
   const handleNavigateToHistory = () => {
+    setFormDirty(false);
     setEditingFlight(null);
     setActiveTab('history');
+  };
+
+  const leaveAddTab = (next: () => void) => {
+    if (formDirty && !confirmDiscardUnsaved()) return;
+    setFormDirty(false);
+    setEditingFlight(null);
+    next();
   };
 
   if (loading || isCheckingToken) {
@@ -155,7 +165,10 @@ const App: React.FC = () => {
               : '➕ Добавить перелет'}
         </button>
         <button
-          onClick={() => setActiveTab('history')}
+          onClick={() => {
+            if (activeTab === 'history') return;
+            leaveAddTab(() => setActiveTab('history'));
+          }}
           className={`${styles.tabButton} ${activeTab === 'history' ? styles.active : ''}`}
         >
           📚 История
@@ -174,6 +187,7 @@ const App: React.FC = () => {
           onUpdate={handleFlightUpdated}
           onCancelEdit={handleCancelEdit}
           onNavigateToHistory={handleNavigateToHistory}
+          onDirtyChange={setFormDirty}
         />
       )}
 

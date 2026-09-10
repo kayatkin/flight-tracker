@@ -167,6 +167,8 @@ cp .env.example bot/.env
 
 - `001_schema.sql` — таблицы `users`, `user_flights`, `shared_sessions`
 - `002_rls.sql` — Row Level Security (обязательно для production)
+- `003_guest_session_rls.sql` — гостевой JWT с проверкой сессии
+- `004_lookup_share_invite.sql` — RPC для бота без service role
 
 **Production:** обязательно настройте RLS и Edge Functions — см. **[docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md)**.
 

@@ -1,7 +1,7 @@
 const encoder = new TextEncoder();
 const INIT_DATA_MAX_AGE_SECONDS = 60 * 60 * 24;
 
-async function importHmacKey(raw: ArrayBuffer): Promise<CryptoKey> {
+async function importHmacKey(raw: BufferSource): Promise<CryptoKey> {
   return crypto.subtle.importKey('raw', raw, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
 }
 
