@@ -12,6 +12,10 @@ import { getTelegramUserType } from '../utils/telegramUserType';
 import { duplicateFlight } from '../utils/flightFormMapping';
 import { toast } from '@shared/ui/Toast';
 import { devLog, logError } from '../utils/logger';
+import {
+  resolveInitSaveStatus,
+  type SaveStatus,
+} from '../utils/saveStatus';
 
 interface UseFlightTrackerResult {
   // Состояния
@@ -24,6 +28,7 @@ interface UseFlightTrackerResult {
   destinationCities: string[];
   loading: boolean;
   isCheckingToken: boolean;
+  saveStatus: SaveStatus;
   
   // Обработчики
   handleAddFlight: (flight: Flight) => void;
@@ -32,6 +37,7 @@ interface UseFlightTrackerResult {
   handleDeleteFlight: (id: string) => void;
   handleJoinSession: (token: string) => Promise<void>;
   handleLeaveGuestMode: () => void;
+  retrySave: () => void;
   
   // Действия
   setActiveTab: (tab: 'add' | 'history') => void;
@@ -48,6 +54,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
   const [destinationCities, setDestinationCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCheckingToken, setIsCheckingToken] = useState<boolean>(true);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
 
   const hydratedRef = useRef(false);
   const skipNextSaveRef = useRef(true);
@@ -82,6 +89,10 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     hydratedRef.current = hydrated;
     skipNextSaveRef.current = true;
     knownFlightIdsRef.current = result.flights.map((flight) => flight.id);
+    setSaveStatus(resolveInitSaveStatus({
+      hydrated,
+      isViewGuest: result.appUser.isGuest && result.appUser.permissions === 'view',
+    }));
   }, []);
 
   // Инициализация приложения
@@ -140,6 +151,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
 
     const saveData = async () => {
       if (generation !== saveGenerationRef.current) return;
+      setSaveStatus('saving');
       try {
         const options = { knownFlightIds: knownIds };
         if (appUser.isGuest && appUser.permissions === 'edit') {
@@ -151,14 +163,19 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
           knownFlightIdsRef.current = snapshot.map((flight) => flight.id);
           pendingSaveRef.current = null;
           setClosingLock(false);
+          setSaveStatus('saved');
         }
       } catch (err) {
         logError('[HOOK] Save error:', err);
         toast('Не удалось сохранить изменения. Проверьте соединение.', 'error');
+        if (generation === saveGenerationRef.current) {
+          setSaveStatus('error');
+        }
       }
     };
 
     pendingSaveRef.current = saveData;
+    setSaveStatus('pending');
     setClosingLock(true);
     pendingTimerRef.current = window.setTimeout(() => {
       void saveData();
@@ -194,6 +211,16 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
       window.removeEventListener('pagehide', flushPendingSave);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
+  }, []);
+
+  const retrySave = useCallback(() => {
+    const saveData = pendingSaveRef.current;
+    if (!saveData) return;
+    if (pendingTimerRef.current) {
+      window.clearTimeout(pendingTimerRef.current);
+      pendingTimerRef.current = undefined;
+    }
+    void saveData();
   }, []);
 
   const canMutate = useCallback(() => {
@@ -373,12 +400,14 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     destinationCities,
     loading,
     isCheckingToken,
+    saveStatus,
     handleAddFlight,
     handleUpdateFlight,
     handleDuplicateFlight,
     handleDeleteFlight,
     handleJoinSession,
     handleLeaveGuestMode,
+    retrySave,
     setActiveTab: () => {},
     setShowShareModal,
   };
