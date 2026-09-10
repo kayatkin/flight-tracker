@@ -5,7 +5,7 @@ import { GuestModeIndicator } from '@features/guest-mode';
 import { ShareFlightModal } from '@features/sharing';
 import { Flight } from '@shared/types';
 import { KNOWN_AIRLINES, KNOWN_CITIES } from '@shared/data';
-import { mergeSuggestions, saveStatusText, confirmDiscardUnsaved } from '@shared/utils';
+import { mergeSuggestions, saveStatusText, confirmDiscardUnsaved, clearFormDraft } from '@shared/utils';
 import styles from './App.module.css';
 
 import { useFlightTracker } from './hooks';
@@ -79,6 +79,9 @@ const App: React.FC = () => {
   };
 
   const handleNavigateToHistory = () => {
+    if (typeof sessionStorage !== 'undefined') {
+      clearFormDraft(sessionStorage);
+    }
     setFormDirty(false);
     setEditingFlight(null);
     setActiveTab('history');
@@ -86,6 +89,9 @@ const App: React.FC = () => {
 
   const leaveAddTab = (next: () => void) => {
     if (formDirty && !confirmDiscardUnsaved()) return;
+    if (formDirty && typeof sessionStorage !== 'undefined') {
+      clearFormDraft(sessionStorage);
+    }
     setFormDirty(false);
     setEditingFlight(null);
     next();

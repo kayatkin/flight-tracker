@@ -59,6 +59,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
   const { formData, updateFormData, createFlightObject, resetForm, hydrateFromFlight, markClean, isDirty } = useFlightForm(undefined, draft);
   const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeFlightPrice> | null>(null);
   const navigateTimerRef = useRef<number | undefined>(undefined);
+  const skipDraftPersistRef = useRef(false);
   const isEditing = Boolean(editingFlight);
 
   useEffect(() => () => {
@@ -72,7 +73,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
   }, [isDirty, onDirtyChange]);
 
   useEffect(() => {
-    if (isEditing || typeof sessionStorage === 'undefined') return;
+    if (isEditing || skipDraftPersistRef.current || typeof sessionStorage === 'undefined') return;
     if (isDirty) writeFormDraft(formData, sessionStorage);
     else clearFormDraft(sessionStorage);
   }, [formData, isDirty, isEditing]);
@@ -144,6 +145,10 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
       toast('Изменения сохранены', 'success');
       markClean();
     } else {
+      skipDraftPersistRef.current = true;
+      if (typeof sessionStorage !== 'undefined') {
+        clearFormDraft(sessionStorage);
+      }
       onAdd(savedFlight);
       resetForm();
     }
