@@ -13,6 +13,7 @@ import { toast } from '@shared/ui/Toast';
 interface HistoryViewProps {
   flights: Flight[];
   onDelete: (id: string) => void;
+  onRestore?: (flight: Flight) => void;
   onEdit?: (flight: Flight) => void;
   onDuplicate?: (flight: Flight) => void;
   onShare?: () => void;
@@ -25,6 +26,7 @@ interface HistoryViewProps {
 const HistoryView: React.FC<HistoryViewProps> = ({
   flights,
   onDelete,
+  onRestore,
   onEdit,
   onDuplicate,
   onShare,
@@ -78,7 +80,17 @@ const HistoryView: React.FC<HistoryViewProps> = ({
     }
 
     if (window.confirm('Удалить этот билет?')) {
+      const snapshot = flights.find((flight) => flight.id === id);
       onDelete(id);
+      if (!snapshot || !onRestore) return;
+      toast('Билет удалён', {
+        variant: 'info',
+        durationMs: 8000,
+        action: {
+          label: 'Вернуть',
+          onClick: () => onRestore(snapshot),
+        },
+      });
     }
   };
 

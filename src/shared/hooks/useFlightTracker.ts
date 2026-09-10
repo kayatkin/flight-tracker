@@ -35,6 +35,7 @@ interface UseFlightTrackerResult {
   handleUpdateFlight: (flight: Flight) => void;
   handleDuplicateFlight: (flight: Flight) => void;
   handleDeleteFlight: (id: string) => void;
+  handleRestoreFlight: (flight: Flight) => void;
   handleJoinSession: (token: string) => Promise<void>;
   handleLeaveGuestMode: () => void;
   retrySave: () => void;
@@ -287,6 +288,15 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     setFlights(prev => prev.filter(f => f.id !== id));
   }, [canMutate]);
 
+  const handleRestoreFlight = useCallback((flight: Flight) => {
+    if (!canMutate()) return;
+    setFlights((prev) => {
+      if (prev.some((item) => item.id === flight.id)) return prev;
+      return [...prev, flight];
+    });
+    rememberFlightLookups(flight);
+  }, [canMutate, rememberFlightLookups]);
+
   const handleJoinSession = useCallback(async (token: string) => {
     try {
       devLog('[HOOK] Joining session');
@@ -405,6 +415,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     handleUpdateFlight,
     handleDuplicateFlight,
     handleDeleteFlight,
+    handleRestoreFlight,
     handleJoinSession,
     handleLeaveGuestMode,
     retrySave,

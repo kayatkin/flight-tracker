@@ -81,6 +81,11 @@ export const readHistorySearch = (
   }
 };
 
+export const restoreFlightList = (flights: Flight[], flight: Flight): Flight[] => {
+  if (flights.some((item) => item.id === flight.id)) return flights;
+  return [...flights, flight];
+};
+
 export const writeHistorySearch = (
   value: string,
   storage?: Pick<Storage, 'setItem' | 'removeItem'> | null

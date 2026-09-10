@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatPassengerCount, groupFlightsByDestination, readHistorySearch, textMatchesQuery, writeHistorySearch, HISTORY_SEARCH_STORAGE_KEY } from '../historyViewHelpers';
+import { formatPassengerCount, groupFlightsByDestination, readHistorySearch, restoreFlightList, textMatchesQuery, writeHistorySearch, HISTORY_SEARCH_STORAGE_KEY } from '../historyViewHelpers';
 import { Flight } from '@shared/types';
 
 const makeFlight = (overrides: Partial<Flight>): Flight => ({
@@ -60,5 +60,14 @@ describe('history search storage', () => {
     expect(readHistorySearch(storage)).toBe('Москва');
     writeHistorySearch('  ', storage);
     expect(store.has(HISTORY_SEARCH_STORAGE_KEY)).toBe(false);
+  });
+});
+
+describe('restoreFlightList', () => {
+  it('puts a deleted ticket back once', () => {
+    const ticket = makeFlight({ id: 'gone' });
+    const restored = restoreFlightList([makeFlight({ id: 'keep' })], ticket);
+    expect(restored.map((flight) => flight.id)).toEqual(['keep', 'gone']);
+    expect(restoreFlightList(restored, ticket)).toEqual(restored);
   });
 });
