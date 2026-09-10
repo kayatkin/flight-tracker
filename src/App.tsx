@@ -30,6 +30,7 @@ const App: React.FC = () => {
     handleUpdateFlight,
     handleDuplicateFlight,
     handleDeleteFlight,
+    handleRestoreFlight,
     handleJoinSession,
     handleLeaveGuestMode,
     saveStatus,
@@ -195,6 +196,7 @@ const App: React.FC = () => {
         <HistoryView
           flights={flights}
           onDelete={handleDeleteFlight}
+          onRestore={handleRestoreFlight}
           onEdit={handleEditFlight}
           onDuplicate={handleDuplicateFlight}
           onShare={() => setShowShareModal(true)}

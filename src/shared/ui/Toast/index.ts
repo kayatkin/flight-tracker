@@ -1,2 +1,2 @@
 export { ToastProvider, useToast, type ToastVariant } from './ToastContext';
-export { toast } from './toastBus';
+export { toast, type ToastOptions, type ToastAction } from './toastBus';
