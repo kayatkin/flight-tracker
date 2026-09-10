@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Flight } from '../../types';
-import { duplicateFlight, flightToFormData } from '../flightFormMapping';
+import { duplicateFlight, flightToFormData, createEmptyFlightForm, isFlightFormDirty } from '../flightFormMapping';
 import { isValidUUID } from '../id';
 import { toLocalISODate } from '../date';
 
@@ -68,5 +68,17 @@ describe('duplicateFlight', () => {
     expect(cloned.destination).toBe(original.destination);
     expect(cloned.totalPrice).toBe(original.totalPrice);
     expect(cloned.dateFound).toBe(toLocalISODate());
+  });
+});
+
+describe('isFlightFormDirty', () => {
+  it('is clean when the form still matches the baseline', () => {
+    const form = createEmptyFlightForm('2026-09-10');
+    expect(isFlightFormDirty(form, form)).toBe(false);
+  });
+
+  it('turns dirty after a field changes', () => {
+    const baseline = createEmptyFlightForm('2026-09-10');
+    expect(isFlightFormDirty({ ...baseline, origin: 'Москва' }, baseline)).toBe(true);
   });
 });

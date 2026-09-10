@@ -197,7 +197,7 @@ CSS-переменные определены в `src/styles/tokens.css`:
 
 ## CI/CD (GitHub Actions)
 
-- `.github/workflows/ci.yml` — на PR в `main`: lint, typecheck, test, build
+- `.github/workflows/ci.yml` — на PR в `main`: lint, typecheck, test, build; отдельно `deno check` functions и тесты бота
 - `.github/workflows/deploy.yml` — пуш в `main`: сборка Vite и GitHub Pages
 
 Node 20. Секреты Pages: `SUPABASE_URL`, `SUPABASE_ANON_KEY`. Username бота — `vars.TELEGRAM_BOT_USERNAME`.
@@ -231,7 +231,8 @@ Node 20. Секреты Pages: `SUPABASE_URL`, `SUPABASE_ANON_KEY`. Username б�
 | `VITE_SUPABASE_URL` | Клиент | URL проекта Supabase |
 | `VITE_SUPABASE_ANON_KEY` | Клиент | Anon key (RLS обязателен) |
 | `VITE_TELEGRAM_BOT_USERNAME` | Клиент | Username бота для share-ссылок |
-| `SUPABASE_SERVICE_ROLE_KEY` | Сервер (бот) | Только бот, не фронт |
+| `SUPABASE_ANON_KEY` | Сервер (бот) | Lookup приглашения через RPC, без service role |
+| `SUPABASE_SERVICE_ROLE_KEY` | Edge Functions | Только `auth-*` на стороне Supabase, не бот |
 | `BOT_TOKEN` | Сервер (бот + Edge Functions) | Токен BotFather |
 | `WEBAPP_URL` | Сервер (бот) | URL Mini App |
 | `JWT_SECRET` | Edge Functions | Подпись гостевых/owner JWT |
@@ -244,7 +245,7 @@ Node 20. Секреты Pages: `SUPABASE_URL`, `SUPABASE_ANON_KEY`. Username б�
 
 Обработчики:
 - `/start` — приветствие + кнопка WebApp
-- `/start share_<token>` — валидация токена через Supabase, показ информации о доступе
+- `/start share_<token>` — опциональная проверка через RPC `lookup_share_invite` (anon key), иначе сразу кнопка Mini App. Токен в текст сообщения не пишется.
 - `/help` — справка
 - `polling_error` / `webhook_error` — обработка ошибок
 - `SIGINT` / `SIGTERM` — graceful shutdown

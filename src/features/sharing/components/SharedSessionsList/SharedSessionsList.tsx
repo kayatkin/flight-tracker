@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@shared/lib';
 import { buildShareUrl } from '@services/shareUrls';
 import { copyToClipboard, logError } from '@shared/utils';
+import { useEscapeToClose } from '@shared/hooks';
 import styles from './SharedSessionsList.module.css';
 import { SharedSession } from '@shared/types';
 import {
@@ -71,6 +72,7 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
   const [error, setError] = useState<string>('');
   const [filter, setFilter] = useState<InvitationFilter>('active');
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const dialogRef = useEscapeToClose<HTMLDivElement>(onClose);
 
   // Загрузка сессий
   const loadSessions = useCallback(async () => {
@@ -115,7 +117,7 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
 
   // Деактивация сессии
   const deactivateSession = useCallback(
-    async (sessionId: string, token: string) => {
+    async (sessionId: string, _token: string) => {
       if (!window.confirm('Отозвать доступ по этой ссылке?')) return;
 
       try {
@@ -197,24 +199,27 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
     }
   };
 
-  if (loading) {
-    return (
-      <div className={styles.modalOverlay} onClick={onClose} role="dialog" aria-modal="true">
-        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+  return (
+    <div className={styles.modalOverlay} onClick={onClose} role="presentation">
+      <div
+        ref={dialogRef}
+        className={styles.modalContent}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={loading ? undefined : 'shared-sessions-title'}
+        aria-label={loading ? 'Загрузка приглашений' : undefined}
+        tabIndex={-1}
+      >
+        {loading ? (
           <div className={styles.loading}>
             <div className={styles.loadingSpinner} />
             <p>Загрузка приглашений...</p>
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={styles.modalOverlay} onClick={onClose} role="dialog" aria-modal="true">
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+        ) : (
+          <>
         <div className={styles.header}>
-          <h3>📋 Выданные приглашения</h3>
+          <h3 id="shared-sessions-title">📋 Выданные приглашения</h3>
           <button
             onClick={onClose}
             className={styles.closeButton}
@@ -424,6 +429,8 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
                 Закрыть
               </button>
             </div>
+          </>
+        )}
           </>
         )}
       </div>

@@ -42,6 +42,7 @@ supabase secrets set ALLOW_DEV_AUTH="false"
     - `supabase/migrations/001_schema.sql`
     - `supabase/migrations/002_rls.sql`
     - `supabase/migrations/003_guest_session_rls.sql`
+    - `supabase/migrations/004_lookup_share_invite.sql`
 
 **Вариант B — CLI:**
 
@@ -105,7 +106,7 @@ GitHub Actions secrets (уже есть `SUPABASE_URL`, `SUPABASE_ANON_KEY`).
 
 | Шаг | Действие |
 |-----|----------|
-| RLS | Миграции `002_rls.sql` и `003_guest_session_rls.sql` применены |
+| RLS | Миграции `002`, `003` и `004_lookup_share_invite.sql` применены |
 | Anon key | Нет прямого доступа к таблицам без JWT |
 | `ALLOW_DEV_AUTH` | `false` |
 | `auth-dev` | Не задеплоен в production |
