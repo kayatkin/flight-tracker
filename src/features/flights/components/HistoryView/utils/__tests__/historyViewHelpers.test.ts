@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatPassengerCount, groupFlightsByDestination, textMatchesQuery } from '../historyViewHelpers';
+import { formatPassengerCount, groupFlightsByDestination, readHistorySearch, textMatchesQuery, writeHistorySearch, HISTORY_SEARCH_STORAGE_KEY } from '../historyViewHelpers';
 import { Flight } from '@shared/types';
 
 const makeFlight = (overrides: Partial<Flight>): Flight => ({
@@ -42,5 +42,23 @@ describe('textMatchesQuery', () => {
     expect(textMatchesQuery('Аэрофлот', 'АЭРО')).toBe(true);
     expect(textMatchesQuery('S7', 's7')).toBe(true);
     expect(textMatchesQuery('Тбилиси', 'paris')).toBe(false);
+  });
+});
+
+describe('history search storage', () => {
+  it('reads and writes the query', () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => { store.set(key, value); },
+      removeItem: (key: string) => { store.delete(key); },
+    };
+
+    expect(readHistorySearch(storage)).toBe('');
+    writeHistorySearch('Москва', storage);
+    expect(store.get(HISTORY_SEARCH_STORAGE_KEY)).toBe('Москва');
+    expect(readHistorySearch(storage)).toBe('Москва');
+    writeHistorySearch('  ', storage);
+    expect(store.has(HISTORY_SEARCH_STORAGE_KEY)).toBe(false);
   });
 });

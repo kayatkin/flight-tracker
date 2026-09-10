@@ -241,7 +241,7 @@ Node 20. Секреты Pages: `SUPABASE_URL`, `SUPABASE_ANON_KEY`. Username б�
 
 ## Telegram бот (`bot/`)
 
-Простой Node.js скрипт на `node-telegram-bot-api` в режиме polling.
+Простой Node.js скрипт на `node-telegram-bot-api` в режиме polling. Lookup приглашения — `fetch` на RPC, без `@supabase/supabase-js` (так бот стартует на Node 20). Если Telegram API недоступен, процесс завершается без fatal-цикла: Mini App разрабатывают через `npm run dev`.
 
 Обработчики:
 - `/start` — приветствие + кнопка WebApp

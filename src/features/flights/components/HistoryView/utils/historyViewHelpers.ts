@@ -68,3 +68,30 @@ export const groupFlightsByDestination = (flights: Flight[]): Record<string, Fli
   });
   return groups;
 };
+
+export const HISTORY_SEARCH_STORAGE_KEY = 'flight-tracker:history-search';
+
+export const readHistorySearch = (
+  storage?: Pick<Storage, 'getItem'> | null
+): string => {
+  try {
+    return storage?.getItem(HISTORY_SEARCH_STORAGE_KEY) ?? '';
+  } catch {
+    return '';
+  }
+};
+
+export const writeHistorySearch = (
+  value: string,
+  storage?: Pick<Storage, 'setItem' | 'removeItem'> | null
+): void => {
+  if (!storage) return;
+  try {
+    const next = value.trim();
+    if (next) storage.setItem(HISTORY_SEARCH_STORAGE_KEY, value);
+    else storage.removeItem(HISTORY_SEARCH_STORAGE_KEY);
+  } catch {
+    // Private mode / disabled storage
+  }
+};
+

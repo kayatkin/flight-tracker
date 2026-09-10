@@ -5,6 +5,9 @@ const {
   buildShareWebAppUrl,
   buildInviteCopy,
   buildOpenInviteCopy,
+  buildLookupInviteUrl,
+  isTelegramUnreachable,
+  lookupShareInvite,
 } = require('./invite');
 
 describe('parseStartPayload', () => {
@@ -42,5 +45,55 @@ describe('invite copy', () => {
       buildShareWebAppUrl('https://example.com/app', 'tok/en'),
       'https://example.com/app?token=tok%2Fen'
     );
+  });
+});
+
+describe('lookupShareInvite', () => {
+  it('builds the RPC URL without a trailing slash', () => {
+    assert.equal(
+      buildLookupInviteUrl('https://example.supabase.co/'),
+      'https://example.supabase.co/rest/v1/rpc/lookup_share_invite'
+    );
+  });
+
+  it('returns unknown when anon key is missing', async () => {
+    const result = await lookupShareInvite('tok', { supabaseUrl: 'https://example.supabase.co' });
+    assert.deepEqual(result, { status: 'unknown' });
+  });
+
+  it('returns ok for an active invite row', async () => {
+    const fetchImpl = async (url, init) => {
+      assert.equal(url, 'https://example.supabase.co/rest/v1/rpc/lookup_share_invite');
+      assert.equal(init.method, 'POST');
+      assert.equal(JSON.parse(init.body).p_token, 'tok');
+      return {
+        ok: true,
+        json: async () => [{ permissions: 'view', expires_at: '2026-12-01T00:00:00.000Z' }],
+      };
+    };
+
+    const result = await lookupShareInvite('tok', {
+      supabaseUrl: 'https://example.supabase.co',
+      anonKey: 'anon',
+      fetchImpl,
+    });
+    assert.equal(result.status, 'ok');
+    assert.equal(result.permissions, 'view');
+  });
+
+  it('treats an empty RPC result as invalid', async () => {
+    const result = await lookupShareInvite('tok', {
+      supabaseUrl: 'https://example.supabase.co',
+      anonKey: 'anon',
+      fetchImpl: async () => ({ ok: true, json: async () => [] }),
+    });
+    assert.deepEqual(result, { status: 'invalid' });
+  });
+});
+
+describe('isTelegramUnreachable', () => {
+  it('detects blocked-network timeouts', () => {
+    assert.equal(isTelegramUnreachable({ message: 'EFATAL: Error: ETIMEDOUT' }), true);
+    assert.equal(isTelegramUnreachable({ message: 'socket hang up' }), false);
   });
 });
