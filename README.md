@@ -175,12 +175,12 @@ cp .env.example bot/.env
 ### 4. Запуск в разработке
 
 ```bash
-# Фронтенд (React dev server)
+# Фронтенд (React dev server) — этого достаточно для локальной разработки Mini App
 npm run dev
 # → http://localhost:5173/flight-tracker/
 
-# Telegram бот (в другом терминале)
-cd bot && npm run dev
+# Telegram бот (нужен доступ к api.telegram.org)
+cd bot && npm start
 ```
 
 ### 5. Тесты

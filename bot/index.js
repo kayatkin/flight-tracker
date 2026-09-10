@@ -1,5 +1,4 @@
 const TelegramBot = require('node-telegram-bot-api');
-const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 const {
   parseStartPayload,
@@ -7,6 +6,8 @@ const {
   buildInviteCopy,
   buildOpenInviteCopy,
   webAppKeyboard,
+  isTelegramUnreachable,
+  lookupShareInvite,
 } = require('./invite');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
@@ -27,9 +28,10 @@ if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
   console.warn('SUPABASE_SERVICE_ROLE_KEY is ignored. Use SUPABASE_ANON_KEY and migration 004.');
 }
 
-const supabase = SUPABASE_URL && SUPABASE_ANON_KEY
-  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  : null;
+const inviteLookup = {
+  supabaseUrl: SUPABASE_URL,
+  anonKey: SUPABASE_ANON_KEY,
+};
 
 const bot = new TelegramBot(BOT_TOKEN, {
   polling: true,
@@ -37,28 +39,6 @@ const bot = new TelegramBot(BOT_TOKEN, {
     timeout: 60000,
   },
 });
-
-async function lookupShareInvite(token) {
-  if (!supabase) return { status: 'unknown' };
-
-  try {
-    const { data, error } = await supabase.rpc('lookup_share_invite', { p_token: token });
-    if (error) {
-      console.error('lookup_share_invite failed');
-      return { status: 'unknown' };
-    }
-    const row = Array.isArray(data) ? data[0] : data;
-    if (!row || !row.permissions) return { status: 'invalid' };
-    return {
-      status: 'ok',
-      permissions: row.permissions,
-      expires_at: row.expires_at,
-    };
-  } catch (error) {
-    console.error('lookup_share_invite failed');
-    return { status: 'unknown' };
-  }
-}
 
 bot.onText(/\/start(.+)?/, async (msg, match) => {
   const chatId = msg.chat.id;
@@ -82,7 +62,7 @@ bot.onText(/\/start(.+)?/, async (msg, match) => {
         return;
       }
 
-      const invite = await lookupShareInvite(payload.token);
+      const invite = await lookupShareInvite(payload.token, inviteLookup);
       if (invite.status === 'invalid') {
         await bot.sendMessage(
           chatId,
@@ -149,8 +129,18 @@ bot.onText(/\/help/, async (msg) => {
   );
 });
 
+function logTelegramUnreachable() {
+  console.error('Cannot reach api.telegram.org (timeout or blocked network).');
+  console.error('The Mini App does not need the bot: from the repo root run `npm run dev`.');
+}
+
 bot.on('polling_error', (error) => {
   console.error('Telegram polling error:', error.message);
+  if (isTelegramUnreachable(error)) {
+    logTelegramUnreachable();
+    setTimeout(() => process.exit(0), 1000);
+    return;
+  }
   if (error.code === 'EFATAL') {
     setTimeout(() => process.exit(1), 5000);
   }
@@ -164,6 +154,10 @@ bot.getMe().then((botInfo) => {
   console.log(`Bot started @${botInfo.username}`);
 }).catch((error) => {
   console.error('getMe failed:', error.message);
+  if (isTelegramUnreachable(error)) {
+    logTelegramUnreachable();
+    process.exit(0);
+  }
   process.exit(1);
 });
 
