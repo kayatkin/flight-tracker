@@ -16,6 +16,7 @@
 - **Прилёт на следующий день** (+1) — актуально для ночных рейсов
 - Автозаполнение городов и авиакомпаний из сохранённых значений и каталога
 - Редактирование и дублирование сохранённого билета
+- Индикатор сохранения в шапке (очередь, успех, ошибка с повтором)
 - Учёт количества пассажиров (1–4) и расчёт цены на человека
 
 ### 📊 Аналитика цен
@@ -246,7 +247,7 @@ npm start  # polling mode
 - **Design tokens** — все цвета, шрифты, отступы и тени вынесены в CSS-переменные
 - **Адаптивная тема** — через CSS `[data-tg-theme]` и Telegram Theme API
 
-Подробнее в [ARCHITECTURE.md](./ARCHITECTURE.md), [docs/USER_GUIDE.md](./docs/USER_GUIDE.md) и [docs/SECURITY.md](./docs/SECURITY.md).
+Подробнее в [ARCHITECTURE.md](./ARCHITECTURE.md), [docs/USER_GUIDE.md](./docs/USER_GUIDE.md), [docs/SECURITY.md](./docs/SECURITY.md) и [docs/ROADMAP.md](./docs/ROADMAP.md).
 
 ## 📄 Лицензия
 

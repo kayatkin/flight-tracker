@@ -5,7 +5,7 @@ import { GuestModeIndicator } from '@features/guest-mode';
 import { ShareFlightModal } from '@features/sharing';
 import { Flight } from '@shared/types';
 import { KNOWN_AIRLINES, KNOWN_CITIES } from '@shared/data';
-import { mergeSuggestions } from '@shared/utils';
+import { mergeSuggestions, saveStatusText } from '@shared/utils';
 import styles from './App.module.css';
 
 import { useFlightTracker } from './hooks';
@@ -31,9 +31,12 @@ const App: React.FC = () => {
     handleDeleteFlight,
     handleJoinSession,
     handleLeaveGuestMode,
+    saveStatus,
+    retrySave,
   } = useFlightTracker();
 
   const isViewGuest = Boolean(appUser?.isGuest && appUser.permissions === 'view');
+  const statusLabel = saveStatusText(saveStatus);
   const originSuggestions = useMemo(
     () => mergeSuggestions(originCities, KNOWN_CITIES),
     [originCities]
@@ -102,9 +105,32 @@ const App: React.FC = () => {
       )}
 
       <h2 className={styles.title}>✈️ Flight Tracker</h2>
-      <p className={styles.greeting}>
-        Привет, <strong>{userName}</strong>!
-      </p>
+      <div className={styles.headerCopy}>
+        <p className={styles.greeting}>
+          Привет, <strong>{userName}</strong>!
+        </p>
+        {statusLabel && (
+          <p
+            className={[
+              styles.saveStatus,
+              saveStatus === 'error' ? styles.saveStatusError : '',
+            ].filter(Boolean).join(' ')}
+            role="status"
+            aria-live="polite"
+          >
+            {statusLabel}
+            {saveStatus === 'error' && (
+              <button
+                type="button"
+                className={styles.saveStatusRetry}
+                onClick={retrySave}
+              >
+                Повторить
+              </button>
+            )}
+          </p>
+        )}
+      </div>
 
       {showShareModal && appUser && !appUser.isGuest && (
         <ShareFlightModal

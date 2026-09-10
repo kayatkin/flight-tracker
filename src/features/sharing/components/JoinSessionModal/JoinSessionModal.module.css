@@ -29,6 +29,7 @@
     box-shadow: var(--shadow-2xl);
     animation: slideUp 0.3s ease;
     border: 1px solid var(--tg-border);
+    outline: none;
   }
   
   @keyframes slideUp {

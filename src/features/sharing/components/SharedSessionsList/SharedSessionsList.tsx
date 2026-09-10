@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@shared/lib';
 import { buildShareUrl } from '@services/shareUrls';
-import { logError } from '@shared/utils/logger';
+import { copyToClipboard, logError } from '@shared/utils';
 import styles from './SharedSessionsList.module.css';
 import { SharedSession } from '@shared/types';
 import {
@@ -141,18 +141,18 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
   const copyToken = useCallback(async (token: string, permissions: 'view' | 'edit') => {
     const url = buildShareUrl(token, permissions);
     const linkType = permissions === 'edit' ? 'Telegram ссылка для редактирования' : 'Веб-ссылка для просмотра';
-    
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopiedToken(token);
-      
-      window.setTimeout(() => {
-        setCopiedToken(null);
-      }, 2000);
-    } catch (err) {
-      logError(`Не удалось скопировать ${linkType}:`, err);
+
+    const copied = await copyToClipboard(url);
+    if (!copied) {
+      logError(`Не удалось скопировать ${linkType}`);
       setError('Не удалось скопировать ссылку');
+      return;
     }
+
+    setCopiedToken(token);
+    window.setTimeout(() => {
+      setCopiedToken(null);
+    }, 2000);
   }, []);
 
   // Фильтрация сессий

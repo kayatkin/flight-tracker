@@ -93,7 +93,7 @@ test: добавлены тесты для getSeasonalChartData
 
 ### 6. Проверки CI
 
-При создании PR автоматически запускаются lint, typecheck, тесты и сборка. На `main` после зелёного build — деплой GitHub Pages.
+При пуше в `main` GitHub Actions сначала прогоняет lint, typecheck и тесты, и только затем деплоит на GitHub Pages.
 
 Документация, которую нужно держать в синхроне с кодом:
 

@@ -56,6 +56,9 @@ export interface TelegramWebApp {
   version?: string;
   platform?: string;
   colorScheme?: 'light' | 'dark';
+  enableClosingConfirmation?: () => void;
+  disableClosingConfirmation?: () => void;
+
   
   // Методы
   openTelegramLink(url: string): void;

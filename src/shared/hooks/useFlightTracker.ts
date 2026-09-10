@@ -12,6 +12,10 @@ import { getTelegramUserType } from '../utils/telegramUserType';
 import { duplicateFlight } from '../utils/flightFormMapping';
 import { toast } from '@shared/ui/Toast';
 import { devLog, logError } from '../utils/logger';
+import {
+  resolveInitSaveStatus,
+  type SaveStatus,
+} from '../utils/saveStatus';
 
 interface UseFlightTrackerResult {
   // Состояния
@@ -24,6 +28,7 @@ interface UseFlightTrackerResult {
   destinationCities: string[];
   loading: boolean;
   isCheckingToken: boolean;
+  saveStatus: SaveStatus;
   
   // Обработчики
   handleAddFlight: (flight: Flight) => void;
@@ -32,6 +37,7 @@ interface UseFlightTrackerResult {
   handleDeleteFlight: (id: string) => void;
   handleJoinSession: (token: string) => Promise<void>;
   handleLeaveGuestMode: () => void;
+  retrySave: () => void;
   
   // Действия
   setActiveTab: (tab: 'add' | 'history') => void;
@@ -48,11 +54,14 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
   const [destinationCities, setDestinationCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCheckingToken, setIsCheckingToken] = useState<boolean>(true);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
 
   const hydratedRef = useRef(false);
   const skipNextSaveRef = useRef(true);
   const knownFlightIdsRef = useRef<string[]>([]);
   const saveGenerationRef = useRef(0);
+  const pendingSaveRef = useRef<(() => Promise<void>) | null>(null);
+  const pendingTimerRef = useRef<number | undefined>(undefined);
 
   const setShowShareModal = useCallback((_show: boolean) => {
     // Реализация будет в App.tsx
@@ -80,6 +89,10 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     hydratedRef.current = hydrated;
     skipNextSaveRef.current = true;
     knownFlightIdsRef.current = result.flights.map((flight) => flight.id);
+    setSaveStatus(resolveInitSaveStatus({
+      hydrated,
+      isViewGuest: result.appUser.isGuest && result.appUser.permissions === 'view',
+    }));
   }, []);
 
   // Инициализация приложения
@@ -110,6 +123,19 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     initApp();
   }, [applyInitResult]);
 
+  const setClosingLock = useCallback((locked: boolean) => {
+    const webApp = window.Telegram?.WebApp;
+    try {
+      if (locked) {
+        webApp?.enableClosingConfirmation?.();
+      } else {
+        webApp?.disableClosingConfirmation?.();
+      }
+    } catch (error) {
+      logError('[HOOK] Closing confirmation failed:', error);
+    }
+  }, []);
+
   // Автосохранение данных — только после успешной загрузки и локальных изменений
   useEffect(() => {
     if (loading || !userId || !appUser || !hydratedRef.current) return;
@@ -118,13 +144,14 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
       return;
     }
     if (appUser.isGuest && appUser.permissions !== 'edit') return;
-    
+
     const generation = ++saveGenerationRef.current;
     const snapshot = flights;
     const knownIds = knownFlightIdsRef.current;
 
     const saveData = async () => {
       if (generation !== saveGenerationRef.current) return;
+      setSaveStatus('saving');
       try {
         const options = { knownFlightIds: knownIds };
         if (appUser.isGuest && appUser.permissions === 'edit') {
@@ -134,16 +161,67 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
         }
         if (generation === saveGenerationRef.current) {
           knownFlightIdsRef.current = snapshot.map((flight) => flight.id);
+          pendingSaveRef.current = null;
+          setClosingLock(false);
+          setSaveStatus('saved');
         }
       } catch (err) {
         logError('[HOOK] Save error:', err);
         toast('Не удалось сохранить изменения. Проверьте соединение.', 'error');
+        if (generation === saveGenerationRef.current) {
+          setSaveStatus('error');
+        }
       }
     };
-    
-    const timer = setTimeout(saveData, 2000);
-    return () => clearTimeout(timer);
-  }, [flights, airlines, originCities, destinationCities, loading, userId, appUser]);
+
+    pendingSaveRef.current = saveData;
+    setSaveStatus('pending');
+    setClosingLock(true);
+    pendingTimerRef.current = window.setTimeout(() => {
+      void saveData();
+    }, 2000);
+
+    return () => {
+      if (pendingTimerRef.current) {
+        window.clearTimeout(pendingTimerRef.current);
+      }
+    };
+  }, [flights, airlines, originCities, destinationCities, loading, userId, appUser, setClosingLock]);
+
+  useEffect(() => {
+    const flushPendingSave = () => {
+      const saveData = pendingSaveRef.current;
+      if (!saveData) return;
+      if (pendingTimerRef.current) {
+        window.clearTimeout(pendingTimerRef.current);
+        pendingTimerRef.current = undefined;
+      }
+      void saveData();
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        flushPendingSave();
+      }
+    };
+
+    window.addEventListener('pagehide', flushPendingSave);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.removeEventListener('pagehide', flushPendingSave);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, []);
+
+  const retrySave = useCallback(() => {
+    const saveData = pendingSaveRef.current;
+    if (!saveData) return;
+    if (pendingTimerRef.current) {
+      window.clearTimeout(pendingTimerRef.current);
+      pendingTimerRef.current = undefined;
+    }
+    void saveData();
+  }, []);
 
   const canMutate = useCallback(() => {
     if (appUser?.isGuest && appUser.permissions === 'view') {
@@ -322,12 +400,14 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     destinationCities,
     loading,
     isCheckingToken,
+    saveStatus,
     handleAddFlight,
     handleUpdateFlight,
     handleDuplicateFlight,
     handleDeleteFlight,
     handleJoinSession,
     handleLeaveGuestMode,
+    retrySave,
     setActiveTab: () => {},
     setShowShareModal,
   };
