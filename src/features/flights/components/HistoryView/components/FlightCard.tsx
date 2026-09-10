@@ -59,6 +59,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({
 
       {layover ? <div className={styles.layover}>{layover}</div> : null}
       <div className={styles.airline}>✈️ {flight.airline || '—'}</div>
+      {flight.notes ? <div className={styles.notes}>📝 {flight.notes}</div> : null}
 
       <div className={styles.price}>
         💰 Всего: {formatPrice(flight.totalPrice)} |{' '}

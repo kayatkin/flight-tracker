@@ -7,7 +7,17 @@ import { SearchBar } from './components/SearchBar';
 import { AccessManagement } from './components/AccessManagement';
 // import { GuestIndicator } from './components/GuestIndicator';
 import { EmptyState } from './components/EmptyState';
-import { groupFlightsByDestination, textMatchesQuery, readHistorySearch, writeHistorySearch } from './utils/historyViewHelpers';
+import {
+  groupFlightsByDestination,
+  flightMatchesQuery,
+  textMatchesQuery,
+  readHistorySearch,
+  writeHistorySearch,
+  readHistorySort,
+  writeHistorySort,
+  sortDestinationKeys,
+  type HistorySort,
+} from './utils/historyViewHelpers';
 import { toast } from '@shared/ui/Toast';
 
 interface HistoryViewProps {
@@ -38,6 +48,9 @@ const HistoryView: React.FC<HistoryViewProps> = ({
   const [searchTerm, setSearchTerm] = useState(() =>
     typeof sessionStorage === 'undefined' ? '' : readHistorySearch(sessionStorage)
   );
+  const [sort, setSort] = useState<HistorySort>(() =>
+    typeof sessionStorage === 'undefined' ? 'route' : readHistorySort(sessionStorage)
+  );
   const [activeDestination, setActiveDestination] = useState<string | null>(null);
   const [chartDestination, setChartDestination] = useState<string | null>(null);
   const [showEmptyState, setShowEmptyState] = useState<boolean>(false);
@@ -45,17 +58,16 @@ const HistoryView: React.FC<HistoryViewProps> = ({
   // Используем useMemo для оптимизации группировки
   const grouped = useMemo(() => groupFlightsByDestination(flights), [flights]);
 
-  const allDestinations = useMemo(() => Object.keys(grouped).sort(), [grouped]);
+  const allDestinations = useMemo(
+    () => sortDestinationKeys(Object.keys(grouped), grouped, sort),
+    [grouped, sort]
+  );
 
   const filteredDestinations = useMemo(() => {
     if (!searchTerm.trim()) return allDestinations;
     return allDestinations.filter((dest) => {
       if (textMatchesQuery(dest, searchTerm)) return true;
-      return grouped[dest]?.some((flight) =>
-        textMatchesQuery(flight.origin, searchTerm) ||
-        textMatchesQuery(flight.destination, searchTerm) ||
-        textMatchesQuery(flight.airline, searchTerm)
-      );
+      return grouped[dest]?.some((flight) => flightMatchesQuery(flight, searchTerm));
     });
   }, [searchTerm, allDestinations, grouped]);
 
@@ -70,6 +82,11 @@ const HistoryView: React.FC<HistoryViewProps> = ({
     if (typeof sessionStorage === 'undefined') return;
     writeHistorySearch(searchTerm, sessionStorage);
   }, [searchTerm]);
+
+  useEffect(() => {
+    if (typeof sessionStorage === 'undefined') return;
+    writeHistorySort(sort, sessionStorage);
+  }, [sort]);
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -163,6 +180,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({
       <SearchBar
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
+        sort={sort}
+        onSortChange={setSort}
         totalFlights={flights.length}
         visibleFlights={visibleFlights}
       />
@@ -187,6 +206,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
                 onToggle={() => setActiveDestination(
                   activeDestination === destination ? null : destination
                 )}
+                sort={sort}
                 onShowChart={() => setChartDestination(destination)}
                 onDelete={handleDelete}
                 onEdit={handleEdit}

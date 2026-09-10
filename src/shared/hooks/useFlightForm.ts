@@ -34,15 +34,16 @@ export interface FlightFormData {
   airline: string;
   passengers: 1 | 2 | 3 | 4;
   totalPrice: string;
+  notes: string;
   arrivalNextDay: boolean;
   returnArrivalNextDay: boolean;
 }
 
-export const useFlightForm = (initialDate?: string) => {
+export const useFlightForm = (initialDate?: string, initialDraft?: FlightFormData | null) => {
   const today = initialDate || toLocalISODate();
   const emptyForm = createEmptyFlightForm(today);
 
-  const [formData, setFormData] = useState<FlightFormData>(emptyForm);
+  const [formData, setFormData] = useState<FlightFormData>(initialDraft ?? emptyForm);
   const [baseline, setBaseline] = useState<FlightFormData>(emptyForm);
 
   const updateFormData = useCallback((updates: Partial<FlightFormData>) => {
@@ -93,6 +94,7 @@ export const useFlightForm = (initialDate?: string) => {
       passengers: formData.passengers,
       totalPrice: priceNum,
       dateFound: options?.dateFound ?? toLocalISODate(),
+      notes: formData.notes.trim() || undefined,
       arrivalNextDay: formData.arrivalNextDay,
       returnArrivalNextDay: formData.type === 'roundTrip' ? formData.returnArrivalNextDay : undefined,
     };

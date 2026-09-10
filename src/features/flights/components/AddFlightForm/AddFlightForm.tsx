@@ -6,6 +6,10 @@ import {
   validateRoundTripDates,
   analyzeFlightPrice,
   confirmDiscardUnsaved,
+  readFormDraft,
+  writeFormDraft,
+  clearFormDraft,
+  toLocalISODate,
 } from '@shared/utils';
 import { toast } from '@shared/ui/Toast';
 import { PriceAnalysis } from '@features/flights';
@@ -17,6 +21,7 @@ import LayoverSection from './components/LayoverSection/LayoverSection';
 import AirlineSection from './components/AirlineSection/AirlineSection';
 import PassengersSection from './components/PassengersSection/PassengersSection';
 import PriceSection from './components/PriceSection/PriceSection';
+import NotesSection from './components/NotesSection/NotesSection';
 
 import styles from './AddFlightForm.module.css';
 
@@ -45,7 +50,13 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
   onDirtyChange,
   editingFlight = null,
 }) => {
-  const { formData, updateFormData, createFlightObject, resetForm, hydrateFromFlight, markClean, isDirty } = useFlightForm();
+  const draft = editingFlight
+    ? null
+    : readFormDraft(
+      typeof sessionStorage === 'undefined' ? null : sessionStorage,
+      toLocalISODate()
+    );
+  const { formData, updateFormData, createFlightObject, resetForm, hydrateFromFlight, markClean, isDirty } = useFlightForm(undefined, draft);
   const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeFlightPrice> | null>(null);
   const navigateTimerRef = useRef<number | undefined>(undefined);
   const isEditing = Boolean(editingFlight);
@@ -59,6 +70,12 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
   useEffect(() => {
     onDirtyChange?.(isDirty);
   }, [isDirty, onDirtyChange]);
+
+  useEffect(() => {
+    if (isEditing || typeof sessionStorage === 'undefined') return;
+    if (isDirty) writeFormDraft(formData, sessionStorage);
+    else clearFormDraft(sessionStorage);
+  }, [formData, isDirty, isEditing]);
 
   useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
 
@@ -182,6 +199,11 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
       />
 
       <PriceSection
+        formData={formData}
+        updateFormData={updateFormData}
+      />
+
+      <NotesSection
         formData={formData}
         updateFormData={updateFormData}
       />

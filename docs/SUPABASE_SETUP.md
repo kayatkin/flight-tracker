@@ -43,6 +43,7 @@ supabase secrets set ALLOW_DEV_AUTH="false"
     - `supabase/migrations/002_rls.sql`
     - `supabase/migrations/003_guest_session_rls.sql`
     - `supabase/migrations/004_lookup_share_invite.sql`
+    - `supabase/migrations/005_flight_notes.sql`
 
 **Вариант B — CLI:**
 
