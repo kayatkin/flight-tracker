@@ -33,12 +33,12 @@
 4. **Пер-операционный CRUD** вместо snapshot-save (добавить/удалить одну строку).
 5. **Настоящий refresh** (GoTrue session) вместо копии access JWT.
 6. **CORS allowlist** origin Mini App / GitHub Pages вместо `*`.
-7. **Доступный modal/dialog** с focus trap и `inert` на фоне. График уже закрывается по Escape и клику на оверлей.
-8. **Тема**: `data-theme=light|dark` из `colorScheme`, слушать `themeChanged`.
+7. **Доступный modal/dialog** с focus trap и `inert` на фоне. Сейчас: Escape + фокус в диалоге у графика, шаринга и присоединения.
+8. **Тема**: слушать `themeChanged` / `prefers-color-scheme`, ставить `data-theme`.
 9. **i18n-каталог** вместо строк в JSX (сейчас продукт только на русском).
 10. **CI для Deno functions + RLS** на эфемерной Postgres и `npm audit` в pipeline.
 11. **Обновить бот** с `node-telegram-bot-api@0.61` на актуальный клиент; убрать service role, читать токен через RPC.
-12. **Не деплоить фронт**, если lint/test красные.
+12. **Не деплоить фронт**, если lint/test красные. Сделано в `deploy.yml`.
 
 ## Файл за файлом
 

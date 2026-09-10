@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { createShareSession, revokeShareSession } from '@services/shareService';
 import { toast } from '@shared/ui/Toast';
-import { logError } from '@shared/utils/logger';
+import { copyToClipboard, logError } from '@shared/utils';
+import { useEscapeToClose } from '@shared/hooks';
 import ShareLinkOptions from '../ShareLinkOptions/ShareLinkOptions';
 import styles from './ShareFlightModal.module.css';
 
@@ -13,6 +14,7 @@ interface ShareFlightModalProps {
 }
 
 const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, onShareCreated }) => {
+  const dialogRef = useEscapeToClose<HTMLDivElement>(onClose);
   const [permissions, setPermissions] = useState<'view' | 'edit'>('view');
   const [expiryDays, setExpiryDays] = useState<number>(7);
   const [generatedToken, setGeneratedToken] = useState<string>('');
@@ -46,15 +48,17 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
 
   // 🔥 ОБНОВЛЕННАЯ ФУНКЦИЯ КОПИРОВАНИЯ
   const handleCopyText = (text: string) => {
-    navigator.clipboard.writeText(text)
-      .then(() => {
-        const hasInstructions = text.includes('КАК ОТКРЫТЬ') || text.includes('Привет!');
-        toast(
-          hasInstructions ? 'Ссылка с инструкцией скопирована' : 'Ссылка скопирована',
-          'success'
-        );
-      })
-      .catch((err) => logError('Copy failed:', err));
+    void copyToClipboard(text).then((copied) => {
+      if (!copied) {
+        toast('Не удалось скопировать ссылку', 'error');
+        return;
+      }
+      const hasInstructions = text.includes('КАК ОТКРЫТЬ') || text.includes('Привет!');
+      toast(
+        hasInstructions ? 'Ссылка с инструкцией скопирована' : 'Ссылка скопирована',
+        'success'
+      );
+    });
   };
 
   const deactivateLink = async () => {
@@ -83,13 +87,20 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
   };
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+    <div className={styles.modalOverlay} onClick={onClose} role="presentation">
+      <div
+        ref={dialogRef}
+        className={styles.modalContent}
+        onClick={e => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="share-flight-title"
+        tabIndex={-1}
+      >
         
         {!generatedToken ? (
           <>
-            {/* ЭКРАН СОЗДАНИЯ ССЫЛКИ - БЕЗ ИЗМЕНЕНИЙ */}
-            <h3>📤 Поделиться историей перелетов</h3>
+            <h3 id="share-flight-title">📤 Поделиться историей перелетов</h3>
             
             <div className={styles.hintBox}>
               <p>Создайте ссылку, чтобы поделиться историей с друзьями</p>

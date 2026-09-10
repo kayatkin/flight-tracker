@@ -1,6 +1,6 @@
 // src/utils/telegram.ts - ОПТИМИЗИРОВАННАЯ ВЕРСИЯ
 import { TelegramWebApp } from '../../shared/types/telegram.d';
-import { applyTelegramTheme } from './theme';
+import { bindTelegramTheme } from './theme';
 import { generateShortId } from './id';
 import { devLog, logError } from './logger';
 
@@ -69,10 +69,9 @@ export const initTelegramWebApp = (webApp: TelegramWebApp): void => {
   try {
     webApp.ready();
     webApp.expand();
-    applyTelegramTheme(webApp);
+    bindTelegramTheme(webApp);
     devLog('[TELEGRAM] WebApp initialized');
   } catch (error) {
     logError('[TELEGRAM] Failed to initialize:', error);
-    // Не вызываем applyDefaultTheme здесь - это делает applyTelegramTheme
   }
 };

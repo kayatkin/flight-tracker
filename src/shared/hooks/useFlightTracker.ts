@@ -53,6 +53,8 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
   const skipNextSaveRef = useRef(true);
   const knownFlightIdsRef = useRef<string[]>([]);
   const saveGenerationRef = useRef(0);
+  const pendingSaveRef = useRef<(() => Promise<void>) | null>(null);
+  const pendingTimerRef = useRef<number | undefined>(undefined);
 
   const setShowShareModal = useCallback((_show: boolean) => {
     // Реализация будет в App.tsx
@@ -110,6 +112,19 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     initApp();
   }, [applyInitResult]);
 
+  const setClosingLock = useCallback((locked: boolean) => {
+    const webApp = window.Telegram?.WebApp;
+    try {
+      if (locked) {
+        webApp?.enableClosingConfirmation?.();
+      } else {
+        webApp?.disableClosingConfirmation?.();
+      }
+    } catch (error) {
+      logError('[HOOK] Closing confirmation failed:', error);
+    }
+  }, []);
+
   // Автосохранение данных — только после успешной загрузки и локальных изменений
   useEffect(() => {
     if (loading || !userId || !appUser || !hydratedRef.current) return;
@@ -118,7 +133,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
       return;
     }
     if (appUser.isGuest && appUser.permissions !== 'edit') return;
-    
+
     const generation = ++saveGenerationRef.current;
     const snapshot = flights;
     const knownIds = knownFlightIdsRef.current;
@@ -134,16 +149,52 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
         }
         if (generation === saveGenerationRef.current) {
           knownFlightIdsRef.current = snapshot.map((flight) => flight.id);
+          pendingSaveRef.current = null;
+          setClosingLock(false);
         }
       } catch (err) {
         logError('[HOOK] Save error:', err);
         toast('Не удалось сохранить изменения. Проверьте соединение.', 'error');
       }
     };
-    
-    const timer = setTimeout(saveData, 2000);
-    return () => clearTimeout(timer);
-  }, [flights, airlines, originCities, destinationCities, loading, userId, appUser]);
+
+    pendingSaveRef.current = saveData;
+    setClosingLock(true);
+    pendingTimerRef.current = window.setTimeout(() => {
+      void saveData();
+    }, 2000);
+
+    return () => {
+      if (pendingTimerRef.current) {
+        window.clearTimeout(pendingTimerRef.current);
+      }
+    };
+  }, [flights, airlines, originCities, destinationCities, loading, userId, appUser, setClosingLock]);
+
+  useEffect(() => {
+    const flushPendingSave = () => {
+      const saveData = pendingSaveRef.current;
+      if (!saveData) return;
+      if (pendingTimerRef.current) {
+        window.clearTimeout(pendingTimerRef.current);
+        pendingTimerRef.current = undefined;
+      }
+      void saveData();
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        flushPendingSave();
+      }
+    };
+
+    window.addEventListener('pagehide', flushPendingSave);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.removeEventListener('pagehide', flushPendingSave);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, []);
 
   const canMutate = useCallback(() => {
     if (appUser?.isGuest && appUser.permissions === 'view') {

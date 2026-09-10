@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,6 +12,7 @@ import {
 import { Line } from 'react-chartjs-2';
 import { Flight } from '@shared/types';
 import { getSeasonalChartData, chartOptions } from '@shared/utils';
+import { useEscapeToClose } from '@shared/hooks';
 import styles from './PriceChartModal.module.css';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
@@ -24,22 +25,7 @@ interface PriceChartModalProps {
 
 const PriceChartModal: React.FC<PriceChartModalProps> = ({ flights, destination, onClose }) => {
   const chartData = getSeasonalChartData(flights);
-  const dialogRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    dialogRef.current?.focus();
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        event.stopPropagation();
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', onKeyDown, true);
-    return () => window.removeEventListener('keydown', onKeyDown, true);
-  }, [onClose]);
+  const dialogRef = useEscapeToClose<HTMLDivElement>(onClose);
 
   return (
     <div

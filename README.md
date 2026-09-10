@@ -246,7 +246,7 @@ npm start  # polling mode
 - **Design tokens** — все цвета, шрифты, отступы и тени вынесены в CSS-переменные
 - **Адаптивная тема** — через CSS `[data-tg-theme]` и Telegram Theme API
 
-Подробнее в [ARCHITECTURE.md](./ARCHITECTURE.md), [docs/USER_GUIDE.md](./docs/USER_GUIDE.md) и [docs/SECURITY.md](./docs/SECURITY.md).
+Подробнее в [ARCHITECTURE.md](./ARCHITECTURE.md), [docs/USER_GUIDE.md](./docs/USER_GUIDE.md), [docs/SECURITY.md](./docs/SECURITY.md) и [docs/ROADMAP.md](./docs/ROADMAP.md).
 
 ## 📄 Лицензия
 

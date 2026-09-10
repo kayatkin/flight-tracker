@@ -5,7 +5,7 @@ import {
   getTelegramUser, 
   getDevelopmentUserId, 
   initTelegramWebApp,
-  applyDefaultTheme 
+  bindSystemTheme,
 } from '../shared/utils';
 import { 
   isInTelegramWebApp,
@@ -119,7 +119,7 @@ export const initTelegramUser = (): {
   
   if (!webApp) {
     devLog('[INIT] No Telegram WebApp, using development mode');
-    applyDefaultTheme();
+    bindSystemTheme();
     return {
       currentUserId: getDevelopmentUserId(),
       currentUserName: 'Разработчик',
@@ -129,7 +129,7 @@ export const initTelegramUser = (): {
 
   if (!webApp.initData) {
     devLog('[INIT] Telegram SDK present without launch data, treating as web');
-    applyDefaultTheme();
+    bindSystemTheme();
     return {
       currentUserId: getDevelopmentUserId(),
       currentUserName: 'Разработчик',
@@ -346,7 +346,7 @@ export const initializeApp = async (): Promise<AppInitResult> => {
 
 export const getFallbackInitResult = (error: unknown): AppInitResult => {
   logError('[CRITICAL] App initialization crashed:', error);
-  applyDefaultTheme();
+  bindSystemTheme();
   
   return {
     userName: 'Гость',
