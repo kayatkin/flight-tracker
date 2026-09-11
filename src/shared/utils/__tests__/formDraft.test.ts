@@ -10,6 +10,7 @@ import {
   readEditFormDraft,
   writeEditFormDraft,
   clearEditFormDraft,
+  peekEditFormDraft,
 } from '../formDraft';
 
 const memoryStorage = () => {
@@ -90,11 +91,25 @@ describe('edit form draft storage', () => {
   it('restores only when the flight id matches', () => {
     const storage = memoryStorage();
     const filled = { ...createEmptyFlightForm('2026-09-10'), origin: 'Казань' };
-    writeEditFormDraft('flight-1', filled, storage);
+    const flight = {
+      id: 'flight-1',
+      origin: 'Москва',
+      destination: 'Тбилиси',
+      type: 'oneWay' as const,
+      departureDate: '2026-09-10',
+      isDirectThere: true,
+      isDirectBack: true,
+      airline: 'SU',
+      passengers: 1 as const,
+      totalPrice: 15000,
+      dateFound: '2026-09-10',
+    };
+    writeEditFormDraft(flight, filled, storage);
 
     expect(storage.store.get(EDIT_FORM_DRAFT_STORAGE_KEY)).toContain('Казань');
     expect(readEditFormDraft('flight-1', storage, '2026-09-10')?.origin).toBe('Казань');
     expect(readEditFormDraft('flight-2', storage, '2026-09-10')).toBeNull();
+    expect(peekEditFormDraft(storage, '2026-09-10')?.flight.origin).toBe('Москва');
 
     clearEditFormDraft(storage);
     expect(storage.store.has(EDIT_FORM_DRAFT_STORAGE_KEY)).toBe(false);

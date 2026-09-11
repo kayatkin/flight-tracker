@@ -279,9 +279,14 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     }
     devLog('[HOOK] Updating flight:', updatedFlight.id);
     markFlightChanged(updatedFlight.id);
-    setFlights((prev) => prev.map((flight) => (
-      flight.id === updatedFlight.id ? updatedFlight : flight
-    )));
+    setFlights((prev) => {
+      if (prev.some((flight) => flight.id === updatedFlight.id)) {
+        return prev.map((flight) => (
+          flight.id === updatedFlight.id ? updatedFlight : flight
+        ));
+      }
+      return [...prev, updatedFlight];
+    });
     rememberFlightLookups(updatedFlight);
   }, [canMutate, rememberFlightLookups, markFlightChanged]);
 

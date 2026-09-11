@@ -82,7 +82,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
   useEffect(() => {
     if (typeof sessionStorage === 'undefined' || skipDraftPersistRef.current) return;
     if (isEditing && editingFlight) {
-      if (isDirty) writeEditFormDraft(editingFlight.id, formData, sessionStorage);
+      if (isDirty) writeEditFormDraft(editingFlight, formData, sessionStorage);
       else clearEditFormDraft(sessionStorage);
       return;
     }

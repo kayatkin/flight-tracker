@@ -10,13 +10,19 @@ import {
   confirmDiscardUnsaved,
   clearFormDraft,
   clearEditFormDraft,
+  peekEditFormDraft,
 } from '@shared/utils';
 import { useFlightTracker } from '@shared/hooks';
 import styles from './App.module.css';
 
+const restoredEditFlight = (): Flight | null => {
+  if (typeof sessionStorage === 'undefined') return null;
+  return peekEditFormDraft(sessionStorage)?.flight ?? null;
+};
+
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'add' | 'history'>('add');
-  const [editingFlight, setEditingFlight] = useState<Flight | null>(null);
+  const [editingFlight, setEditingFlight] = useState<Flight | null>(() => restoredEditFlight());
   const [formDirty, setFormDirty] = useState(false);
 
   const {
