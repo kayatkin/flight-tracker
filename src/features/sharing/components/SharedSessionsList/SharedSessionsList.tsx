@@ -94,7 +94,7 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
       const formattedSessions: SharedSession[] = (data || []).map((session) => ({
         id: session.id,
         owner_id: session.owner_id,
-        token: session.token,
+        token: session.token ?? null,
         permissions: session.permissions,
         expires_at: session.expires_at ?? defaultExpiresAt,
         created_at: session.created_at,
@@ -313,7 +313,8 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
               >
                 {filteredSessions.map((session) => {
                   const status = getStatusInfo(session);
-                  const isTokenCopied = copiedToken === session.token;
+                  const canCopyLink = Boolean(session.token);
+                  const isTokenCopied = Boolean(session.token) && copiedToken === session.token;
                   
                   return (
                     <div 
@@ -363,8 +364,9 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
                         </div>
                         
                         <div className={styles.actionButtonsCompact}>
+                          {canCopyLink ? (
                           <button
-                            onClick={() => copyToken(session.token, session.permissions)}
+                            onClick={() => copyToken(session.token as string, session.permissions)}
                             className={`${styles.copyButtonCompact} ${
                               isTokenCopied ? styles.copyButtonCompactActive : ''
                             }`}
@@ -382,8 +384,13 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
                             {isTokenCopied ? '✓ Скопировано' : 
                               session.permissions === 'edit' ? '📱 Telegram' : '🌐 Web'}
                           </button>
+                          ) : (
+                            <span className={styles.tokenPreview} title="Ссылка была показана один раз при создании">
+                              Ссылка один раз
+                            </span>
+                          )}
                           <button
-                            onClick={() => deactivateSession(session.id, session.token)}
+                            onClick={() => deactivateSession(session.id, session.token ?? '')}
                             className={styles.revokeButtonCompact}
                             aria-label="Отозвать доступ по этому приглашению"
                             disabled={!session.is_active}
@@ -399,8 +406,8 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
                       <div className={styles.sessionFooter}>
                         <div className={styles.tokenRow}>
                           <span className={styles.detailLabel}>Токен:</span>
-                          <span className={styles.tokenPreview} title={session.token}>
-                            {session.token.substring(0, 15)}...
+                          <span className={styles.tokenPreview} title={session.token ?? undefined}>
+                            {session.token ? `${session.token.substring(0, 15)}...` : 'скрыт после создания'}
                           </span>
                         </div>
                         <div className={styles.linkTypeHint}>

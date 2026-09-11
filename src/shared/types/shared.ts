@@ -4,7 +4,7 @@ import { TelegramUser } from './telegram.d';
 export interface SharedSession {
   id: string;
   owner_id: string;
-  token: string;
+  token: string | null;
   permissions: 'view' | 'edit';
   expires_at?: string;
   created_at: string;

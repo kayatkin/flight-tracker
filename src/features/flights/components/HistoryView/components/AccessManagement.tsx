@@ -10,7 +10,6 @@ import styles from '../HistoryView.module.css';
 interface AccessManagementProps {
   flights: Flight[];
   userId?: string;
-  onShare?: () => void;
   onJoin?: (token: string) => void;
   isEmptyState: boolean;
 }
@@ -18,7 +17,6 @@ interface AccessManagementProps {
 export const AccessManagement: React.FC<AccessManagementProps> = ({
   flights,
   userId,
-  onShare,
   onJoin,
   isEmptyState,
 }) => {
@@ -41,9 +39,21 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
     <>
       <div className={styles.accessManagementContainer}>
         {/* Заголовок аккордеона */}
-        <div 
+        <div
           className={`${styles.accessHeader} ${accessExpanded ? styles.accessHeaderExpanded : ''}`}
           onClick={() => setAccessExpanded(!accessExpanded)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              setAccessExpanded((open) => !open);
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          aria-expanded={accessExpanded}
+          aria-label={isEmptyState
+            ? 'Управление доступом. Начните отслеживать перелеты и делитесь историей'
+            : 'Управление доступом к вашей истории перелетов'}
         >
           <div className={styles.accessHeaderContent}>
             <span className={styles.accessIcon}>🔐</span>
@@ -160,10 +170,7 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
         <SharedSessionsList
           userId={userId}
           onClose={() => setShowSessionsModal(false)}
-          onSessionDeactivated={() => {
-            console.log('Приглашение отозвано');
-            // Можно добавить обновление данных
-          }}
+          onSessionDeactivated={() => undefined}
         />
       )}
     </>

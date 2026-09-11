@@ -30,6 +30,7 @@
     animation: slideUp 0.3s ease;
     border: 1px solid var(--tg-border);
     outline: none;
+    position: relative;
   }
   
   @keyframes slideUp {
@@ -72,6 +73,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    z-index: 1;
   }
   
   .closeButton:hover {

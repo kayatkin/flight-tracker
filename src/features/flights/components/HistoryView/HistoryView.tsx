@@ -5,7 +5,6 @@ import { PriceChartModal } from '@features/flights';
 import { DestinationGroup } from './components/DestinationGroup';
 import { SearchBar } from './components/SearchBar';
 import { AccessManagement } from './components/AccessManagement';
-// import { GuestIndicator } from './components/GuestIndicator';
 import { EmptyState } from './components/EmptyState';
 import {
   groupFlightsByDestination,
@@ -26,7 +25,6 @@ interface HistoryViewProps {
   onRestore?: (flight: Flight) => void;
   onEdit?: (flight: Flight) => void;
   onDuplicate?: (flight: Flight) => void;
-  onShare?: () => void;
   onJoin?: (token: string) => void;
   userId?: string;
   isGuest?: boolean;
@@ -39,7 +37,6 @@ const HistoryView: React.FC<HistoryViewProps> = ({
   onRestore,
   onEdit,
   onDuplicate,
-  onShare,
   onJoin,
   userId,
   isGuest = false,
@@ -151,7 +148,6 @@ const HistoryView: React.FC<HistoryViewProps> = ({
         guestPermissions={guestPermissions}
         flights={flights}
         userId={userId}
-        onShare={onShare}
         onJoin={onJoin}
       />
     );
@@ -164,19 +160,11 @@ const HistoryView: React.FC<HistoryViewProps> = ({
         <AccessManagement
           flights={flights}
           userId={userId}
-          onShare={onShare}
           onJoin={onJoin}
           isEmptyState={false}
         />
       )}
 
-      {/* Индикатор гостевого режима */}
-      {/* 
-      {isGuest && (
-        <GuestIndicator guestPermissions={guestPermissions} />
-      )}
-      */}
-      {/* Основной контент */}
       <SearchBar
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}

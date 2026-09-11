@@ -17,6 +17,7 @@
 - Автозаполнение городов и авиакомпаний из сохранённых значений и каталога
 - Необязательная заметка к билету
 - Черновик новой формы переживает обновление вкладки
+- Черновик правки того же билета тоже переживает Cmd+R
 - Редактирование и дублирование сохранённого билета
 - Индикатор сохранения в шапке (очередь, успех, ошибка с повтором)
 - Учёт количества пассажиров (1–4) и расчёт цены на человека
@@ -153,7 +154,7 @@ cp .env.example .env.local
 # Frontend (.env.local)
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key_here
-VITE_TELEGRAM_BOT_USERNAME=my_flight_tracker1_bot
+VITE_TELEGRAM_BOT_USERNAME=your_bot_username
 ```
 
 Для бота создайте `bot/.env`:

@@ -4,11 +4,14 @@ import './index.css';
 import './styles/tokens.css';
 import App from './App';
 import { ToastProvider } from '@shared/ui/Toast';
+import { ErrorBoundary } from '@shared/ui/ErrorBoundary';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ToastProvider>
-      <App />
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
     </ToastProvider>
   </React.StrictMode>
 );

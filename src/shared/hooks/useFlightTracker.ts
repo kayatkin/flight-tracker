@@ -7,7 +7,7 @@ import {
   initGuestMode,
   clearTokenFromUrl 
 } from '../../services/appInitService';
-import { saveOwnerData, saveGuestData } from '../../services/dataService';
+import { persistFlightChanges } from '../../services/dataService';
 import { getTelegramUserType } from '../utils/telegramUserType';
 import { duplicateFlight } from '../utils/flightFormMapping';
 import { toast } from '@shared/ui/Toast';
@@ -39,10 +39,6 @@ interface UseFlightTrackerResult {
   handleJoinSession: (token: string) => Promise<void>;
   handleLeaveGuestMode: () => void;
   retrySave: () => void;
-  
-  // Действия
-  setActiveTab: (tab: 'add' | 'history') => void;
-  setShowShareModal: (show: boolean) => void;
 }
 
 export const useFlightTracker = (): UseFlightTrackerResult => {
@@ -59,13 +55,21 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
 
   const hydratedRef = useRef(false);
   const skipNextSaveRef = useRef(true);
-  const knownFlightIdsRef = useRef<string[]>([]);
+  const changeStampRef = useRef(new Map<string, number>());
+  const deletedIdsRef = useRef(new Set<string>());
   const saveGenerationRef = useRef(0);
   const pendingSaveRef = useRef<(() => Promise<void>) | null>(null);
   const pendingTimerRef = useRef<number | undefined>(undefined);
 
-  const setShowShareModal = useCallback((_show: boolean) => {
-    // Реализация будет в App.tsx
+  const markFlightChanged = useCallback((id: string) => {
+    const stamps = changeStampRef.current;
+    stamps.set(id, (stamps.get(id) ?? 0) + 1);
+    deletedIdsRef.current.delete(id);
+  }, []);
+
+  const markFlightDeleted = useCallback((id: string) => {
+    deletedIdsRef.current.add(id);
+    changeStampRef.current.delete(id);
   }, []);
 
   const applyInitResult = useCallback((
@@ -89,7 +93,8 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     setDestinationCities(result.destinationCities);
     hydratedRef.current = hydrated;
     skipNextSaveRef.current = true;
-    knownFlightIdsRef.current = result.flights.map((flight) => flight.id);
+    changeStampRef.current = new Map();
+    deletedIdsRef.current = new Set();
     setSaveStatus(resolveInitSaveStatus({
       hydrated,
       isViewGuest: result.appUser.isGuest && result.appUser.permissions === 'view',
@@ -146,22 +151,33 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     }
     if (appUser.isGuest && appUser.permissions !== 'edit') return;
 
+    const stampSnap = new Map(changeStampRef.current);
+    const deleteSnap = [...deletedIdsRef.current];
+    const upserts = flights.filter((flight) => stampSnap.has(flight.id));
+    if (upserts.length === 0 && deleteSnap.length === 0) return;
+
     const generation = ++saveGenerationRef.current;
-    const snapshot = flights;
-    const knownIds = knownFlightIdsRef.current;
+    const targetUserId = appUser.isGuest && appUser.permissions === 'edit'
+      ? appUser.ownerId
+      : userId;
 
     const saveData = async () => {
       if (generation !== saveGenerationRef.current) return;
       setSaveStatus('saving');
       try {
-        const options = { knownFlightIds: knownIds };
-        if (appUser.isGuest && appUser.permissions === 'edit') {
-          await saveGuestData(appUser.ownerId, snapshot, options);
-        } else if (!appUser.isGuest) {
-          await saveOwnerData(userId, snapshot, airlines, originCities, destinationCities, options);
-        }
+        if (generation !== saveGenerationRef.current) return;
+        await persistFlightChanges(targetUserId, upserts, deleteSnap);
         if (generation === saveGenerationRef.current) {
-          knownFlightIdsRef.current = snapshot.map((flight) => flight.id);
+          for (const [id, rev] of stampSnap) {
+            if (changeStampRef.current.get(id) === rev) {
+              changeStampRef.current.delete(id);
+            }
+          }
+          for (const id of deleteSnap) {
+            if (!changeStampRef.current.has(id)) {
+              deletedIdsRef.current.delete(id);
+            }
+          }
           pendingSaveRef.current = null;
           setClosingLock(false);
           setSaveStatus('saved');
@@ -187,7 +203,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
         window.clearTimeout(pendingTimerRef.current);
       }
     };
-  }, [flights, airlines, originCities, destinationCities, loading, userId, appUser, setClosingLock]);
+  }, [flights, loading, userId, appUser, setClosingLock]);
 
   useEffect(() => {
     const flushPendingSave = () => {
@@ -251,9 +267,10 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
       return;
     }
     devLog('[HOOK] Adding flight:', newFlight.id);
+    markFlightChanged(newFlight.id);
     setFlights(prev => [...prev, newFlight]);
     rememberFlightLookups(newFlight);
-  }, [canMutate, rememberFlightLookups]);
+  }, [canMutate, rememberFlightLookups, markFlightChanged]);
 
   const handleUpdateFlight = useCallback((updatedFlight: Flight) => {
     if (!canMutate()) {
@@ -261,11 +278,12 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
       return;
     }
     devLog('[HOOK] Updating flight:', updatedFlight.id);
+    markFlightChanged(updatedFlight.id);
     setFlights((prev) => prev.map((flight) => (
       flight.id === updatedFlight.id ? updatedFlight : flight
     )));
     rememberFlightLookups(updatedFlight);
-  }, [canMutate, rememberFlightLookups]);
+  }, [canMutate, rememberFlightLookups, markFlightChanged]);
 
   const handleDuplicateFlight = useCallback((flight: Flight) => {
     if (!canMutate()) {
@@ -274,10 +292,11 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     }
     const cloned = duplicateFlight(flight);
     devLog('[HOOK] Duplicating flight:', flight.id, '->', cloned.id);
+    markFlightChanged(cloned.id);
     setFlights((prev) => [...prev, cloned]);
     rememberFlightLookups(cloned);
     toast('Копия билета сохранена', 'success');
-  }, [canMutate, rememberFlightLookups]);
+  }, [canMutate, rememberFlightLookups, markFlightChanged]);
 
   const handleDeleteFlight = useCallback((id: string) => {
     if (!canMutate()) {
@@ -285,17 +304,19 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
       return;
     }
     devLog('[HOOK] Deleting flight');
+    markFlightDeleted(id);
     setFlights(prev => prev.filter(f => f.id !== id));
-  }, [canMutate]);
+  }, [canMutate, markFlightDeleted]);
 
   const handleRestoreFlight = useCallback((flight: Flight) => {
     if (!canMutate()) return;
+    markFlightChanged(flight.id);
     setFlights((prev) => {
       if (prev.some((item) => item.id === flight.id)) return prev;
       return [...prev, flight];
     });
     rememberFlightLookups(flight);
-  }, [canMutate, rememberFlightLookups]);
+  }, [canMutate, rememberFlightLookups, markFlightChanged]);
 
   const handleJoinSession = useCallback(async (token: string) => {
     try {
@@ -419,7 +440,5 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     handleJoinSession,
     handleLeaveGuestMode,
     retrySave,
-    setActiveTab: () => {},
-    setShowShareModal,
   };
 };

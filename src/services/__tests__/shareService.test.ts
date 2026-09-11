@@ -10,7 +10,7 @@ describe('shareService', () => {
 
   it('buildShareUrl returns Telegram deep link for edit permission', () => {
     const url = buildShareUrl('abc123token', 'edit');
-    expect(url).toMatch(/^https:\/\/t\.me\//);
+    expect(url).toMatch(/^https:\/\/t\.me\/test_flight_bot/);
     expect(url).toContain('startapp=abc123token');
   });
 

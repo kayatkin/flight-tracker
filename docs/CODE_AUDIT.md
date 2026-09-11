@@ -28,17 +28,8 @@
 Это мировой стандарт для Mini App + BaaS, но каждое изменение либо операционное, либо требует отдельного окна миграции.
 
 1. **Asymmetric JWT Supabase** вместо общего HS256 `JWT_SECRET`. Dual-key, `kid`, ротация.
-2. **Хеш share-токена в БД** (`token_hash`), в ссылке — plaintext один раз.
-3. **Привязка edit-приглашения к Telegram user id**, а не «любой подписанный пользователь».
-4. **Пер-операционный CRUD** вместо snapshot-save (добавить/удалить одну строку).
-5. **Настоящий refresh** (GoTrue session) вместо копии access JWT.
-6. **CORS allowlist** origin Mini App / GitHub Pages вместо `*`.
-7. **Доступный modal/dialog** с focus trap и `inert` на фоне. Сделано: Escape, Tab-цикл, `inert`, возврат фокуса.
-8. **Тема**: слушать `themeChanged` / `prefers-color-scheme`, ставить `data-theme`. Сделано.
-9. **i18n-каталог** вместо строк в JSX (сейчас продукт только на русском).
-10. **CI для Deno functions + RLS** на эфемерной Postgres. Сделано: `deno check` `_shared`, тесты бота, job `rls` на Postgres 15, `npm audit --audit-level=high` на фронте.
-11. **Обновить бот** с `node-telegram-bot-api@0.61` на актуальный клиент; убрать service role, читать токен через RPC. Сделано (0.67 + `lookup_share_invite`).
-12. **Не деплоить фронт**, если lint/test красные. Сделано в `deploy.yml`.
+2. **Настоящий refresh** (GoTrue session) вместо копии access JWT.
+3. **i18n-каталог** вместо строк в JSX (сейчас продукт только на русском).
 
 ## Файл за файлом
 
@@ -50,22 +41,22 @@
 | `vite.config.ts` | Сборка, aliases, `envPrefix` | `REACT_APP_*` может утечь в бандл | Не трогали префикс, чтобы не сломать legacy env |
 | `tsconfig.json` | Strict TS только для `src` | Конфиги не проверяются | Ок для текущего контура |
 | `eslint.config.mjs` | Lint фронта | `bot/**` и `supabase/functions/**` игнорируются | Бот и `_shared` проверяются отдельными CI job |
-| `index.html` | Telegram script | Нет CSP | CSP после выноса inline-стилей |
+| `index.html` | Telegram script | Нет CSP | CSP-lite + `favicon.svg` относительно `base` |
 | `public/manifest.json` | PWA | CRA sample, битые иконки | Имя приложения, без фейковых иконок |
-| `.github/workflows/deploy.yml` | Pages | Деплой без обязательного CI | Рекомендация: `needs: ci` |
-| `.github/workflows/ci.yml` | lint/test/build | Нет аудита бэкенда | `deno check` functions, тесты бота, RLS на Postgres 15, `npm audit` |
+| `.github/workflows/deploy.yml` | Pages | Деплой без обязательного CI | `needs`: quality, functions, bot, rls |
+| `.github/workflows/ci.yml` | lint/test/build | Нет аудита бэкенда | `deno check` auth-* + `_shared`, тесты бота, RLS на Postgres 15, `npm audit` |
 | `scripts/deploy-supabase.sh` | Деплой functions | Всегда деплоил `auth-dev` | Skip по умолчанию |
-| `docs/SUPABASE_SETUP.md` | Прод-инструкция | Копипаста включала `ALLOW_DEV_AUTH=true` | Staging отдельно, добавлены `003`–`005` |
+| `docs/SUPABASE_SETUP.md` | Прод-инструкция | Копипаста включала `ALLOW_DEV_AUTH=true` | Staging отдельно, добавлены `003`–`006` |
 
 ### `src/services`
 
 | Файл | Проблема | Решение |
 |------|----------|---------|
-| `dataService.ts` | Пустая загрузка при ошибке; wipe всей таблицы; prune `NOT IN` | `ok`, prune известных id, UUID сохраняется |
+| `dataService.ts` | Пустая загрузка при ошибке; wipe всей таблицы; prune `NOT IN` | `ok`, prune известных id, UUID сохраняется, `persistFlightChanges` пишет только dirty-строки |
 | `appInitService.ts` | Логи токена; boolean `processed_invitation_token`; браузер как Telegram | Без логов секретов; in-memory promise; `initData` |
 | `authService.ts` | Access JWT как refresh | `autoRefreshToken: false` на клиенте |
-| `shareService.ts` | Ок | Без ломающих правок |
-| `shareUrls.ts` | Хардкод origin/бота | Origin из `window`, бот из env |
+| `shareService.ts` | Plaintext token в строке | Новые строки: `token_hash`, `token` NULL; fallback на старую схему |
+| `shareUrls.ts` | Хардкод origin/бота | Origin из `window`, бот из env, без выдуманного username |
 
 ### `src/shared`
 
@@ -100,23 +91,24 @@
 
 | Файл | Проблема | Решение |
 |------|----------|---------|
-| `001_schema.sql` | Plaintext token, нет FK на owner | Следующий этап (миграция данных) |
+| `001_schema.sql` | Plaintext token, нет FK на owner | `006` делает `token` nullable и добавляет `token_hash` |
 | `002_rls.sql` | Гость = claims JWT | Дополнено `003` |
 | `003_guest_session_rls.sql` | — | Новая проверка сессии, legacy JWT без claim ещё работают |
 | `005_flight_notes.sql` | — | Опциональная колонка `notes` |
+| `006_share_token_hash.sql` | — | Хеш токена, bind Telegram id, lookup по hash или plaintext |
 | `_shared/telegram.ts` | Нет TTL, `===` для HMAC | `auth_date` + timing-safe |
-| `_shared/jwt.ts` | Claims могли перекрыть `role`; guest TTL 7д | Reserved claims последними |
-| `auth-guest` | 7д JWT, `expires_in: 1д` | TTL = min(1д, остаток сессии) + `share_session_id` |
+| `_shared/jwt.ts` | Claims могли перекрыть `role`; guest TTL 7д | Reserved claims последними; default TTL 1 сутки |
+| `auth-guest` | 7д JWT, `expires_in: 1д` | Lookup по hash, bind edit Telegram id, CORS allowlist |
 | `auth-telegram` | JWT даже если upsert users упал | Ошибка 500 |
-| `auth-dev` | Account takeover если секрет true | Не деплоить в prod |
-| `_shared/cors.ts` | `*` | Не сужали, чтобы не сломать WebView |
+| `auth-dev` | Account takeover если секрет true | Не деплоить в prod; upsert error → 500 |
+| `_shared/cors.ts` | `*` | Allowlist Pages + localhost, `Vary: Origin` |
 
 ### Бот
 
 | Файл | Проблема | Решение |
 |------|----------|---------|
 | `bot/index.js` | Токены в логах; service role | Логи без токена; lookup через RPC + anon key |
-| `bot/validateTelegram.js` | Мёртвый код без `auth_date` | Не подключали, чтобы не плодить второй валидатор |
+| `bot/validateTelegram.js` | Мёртвый код без `auth_date` | Удалён |
 | `bot/package.json` | `node-telegram-bot-api@0.61` | `0.67` + `invite.test.js` |
 
 CSS-модули содержат много мёртвых селекторов и дубли theme override — чистить постепенно, не пакетом: легко сломать визуал Telegram.

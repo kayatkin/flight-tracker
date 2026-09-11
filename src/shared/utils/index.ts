@@ -13,5 +13,6 @@ export * from './suggestions';
 export * from './flightCsv';
 export * from './flightFormMapping';
 export * from './formDraft';
+export * from './hashShareToken';
 export * from './saveStatus';
 export * from './focusTrap';

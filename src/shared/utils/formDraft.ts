@@ -2,6 +2,7 @@ import type { FlightFormData } from '../hooks/useFlightForm';
 import { createEmptyFlightForm, isFlightFormDirty } from './flightFormMapping';
 
 export const FORM_DRAFT_STORAGE_KEY = 'flight-tracker:new-form-draft';
+export const EDIT_FORM_DRAFT_STORAGE_KEY = 'flight-tracker:edit-form-draft';
 
 const asString = (value: unknown, fallback: string): string =>
   typeof value === 'string' ? value : fallback;
@@ -90,6 +91,72 @@ export const clearFormDraft = (
   if (!storage) return;
   try {
     storage.removeItem(FORM_DRAFT_STORAGE_KEY);
+  } catch {
+    // Private mode / disabled storage
+  }
+};
+
+interface EditFormDraftPayload {
+  id: string;
+  form: FlightFormData;
+}
+
+const parseEditFormDraft = (
+  raw: string | null,
+  flightId: string,
+  today: string
+): FlightFormData | null => {
+  if (!raw) return null;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return null;
+    const source = parsed as Record<string, unknown>;
+    if (source.id !== flightId) return null;
+    const formRaw = source.form;
+    if (!formRaw || typeof formRaw !== 'object') return null;
+    return parseFormDraft(JSON.stringify(formRaw), today);
+  } catch {
+    return null;
+  }
+};
+
+export const readEditFormDraft = (
+  flightId: string,
+  storage?: Pick<Storage, 'getItem'> | null,
+  today?: string
+): FlightFormData | null => {
+  if (!storage || !flightId) return null;
+  try {
+    return parseEditFormDraft(
+      storage.getItem(EDIT_FORM_DRAFT_STORAGE_KEY),
+      flightId,
+      today ?? ''
+    );
+  } catch {
+    return null;
+  }
+};
+
+export const writeEditFormDraft = (
+  flightId: string,
+  data: FlightFormData,
+  storage?: Pick<Storage, 'setItem'> | null
+): void => {
+  if (!storage || !flightId) return;
+  try {
+    const payload: EditFormDraftPayload = { id: flightId, form: data };
+    storage.setItem(EDIT_FORM_DRAFT_STORAGE_KEY, JSON.stringify(payload));
+  } catch {
+    // Private mode / disabled storage
+  }
+};
+
+export const clearEditFormDraft = (
+  storage?: Pick<Storage, 'removeItem'> | null
+): void => {
+  if (!storage) return;
+  try {
+    storage.removeItem(EDIT_FORM_DRAFT_STORAGE_KEY);
   } catch {
     // Private mode / disabled storage
   }

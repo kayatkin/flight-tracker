@@ -33,9 +33,12 @@ async function signHs256(message: string, secret: string): Promise<string> {
 }
 
 /** Signs a Supabase-compatible access token (HS256). */
+export const OWNER_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7;
+export const DEFAULT_TOKEN_TTL_SECONDS = 60 * 60 * 24;
+
 export async function signAccessToken(
   claims: AppJwtClaims,
-  expiresInSeconds = 60 * 60 * 24 * 7
+  expiresInSeconds = DEFAULT_TOKEN_TTL_SECONDS
 ): Promise<string> {
   const jwtSecret = Deno.env.get('JWT_SECRET');
   if (!jwtSecret) {

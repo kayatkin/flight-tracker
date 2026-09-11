@@ -9,8 +9,7 @@ const readEnv = (viteKey: string, legacyKey: string): string =>
 export const env = {
   supabaseUrl: readEnv('VITE_SUPABASE_URL', 'REACT_APP_SUPABASE_URL'),
   supabaseAnonKey: readEnv('VITE_SUPABASE_ANON_KEY', 'REACT_APP_SUPABASE_ANON_KEY'),
-  telegramBotUsername:
-    (import.meta.env.VITE_TELEGRAM_BOT_USERNAME as string | undefined) ?? 'my_flight_tracker1_bot',
+  telegramBotUsername: readEnv('VITE_TELEGRAM_BOT_USERNAME', 'REACT_APP_TELEGRAM_BOT_USERNAME'),
   isDev: import.meta.env.DEV,
   isProd: import.meta.env.PROD,
 } as const;

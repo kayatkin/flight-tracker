@@ -31,6 +31,14 @@ supabase secrets set ALLOW_DEV_AUTH="false"
 
 Для staging-окружения (не production) можно отдельно включить `ALLOW_DEV_AUTH=true` и задеплоить `auth-dev` через `DEPLOY_AUTH_DEV=true`.
 
+Опционально сузить CORS ещё сильнее:
+
+```bash
+supabase secrets set CORS_ALLOWED_ORIGINS="https://kayatkin.github.io,http://localhost:5173"
+```
+
+По умолчанию разрешены GitHub Pages и локальный Vite.
+
 `BOT_TOKEN` и `SUPABASE_*` подставляются автоматически при деплое функций.
 
 ## 4. Примените миграции БД
@@ -44,6 +52,7 @@ supabase secrets set ALLOW_DEV_AUTH="false"
     - `supabase/migrations/003_guest_session_rls.sql`
     - `supabase/migrations/004_lookup_share_invite.sql`
     - `supabase/migrations/005_flight_notes.sql`
+    - `supabase/migrations/006_share_token_hash.sql`
 
 **Вариант B — CLI:**
 
@@ -79,7 +88,7 @@ supabase functions deploy auth-guest --no-verify-jwt
 ```env
 VITE_SUPABASE_URL=https://xxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
-VITE_TELEGRAM_BOT_USERNAME=my_flight_tracker1_bot
+VITE_TELEGRAM_BOT_USERNAME=your_bot_username
 ```
 
 GitHub Actions secrets (уже есть `SUPABASE_URL`, `SUPABASE_ANON_KEY`).
@@ -107,7 +116,7 @@ GitHub Actions secrets (уже есть `SUPABASE_URL`, `SUPABASE_ANON_KEY`).
 
 | Шаг | Действие |
 |-----|----------|
-| RLS | Миграции `002`, `003` и `004_lookup_share_invite.sql` применены |
+| RLS | Миграции `002`, `003`, `004_lookup_share_invite.sql`, `005_flight_notes.sql`, `006_share_token_hash.sql` применены |
 | Anon key | Нет прямого доступа к таблицам без JWT |
 | `ALLOW_DEV_AUTH` | `false` |
 | `auth-dev` | Не задеплоен в production |

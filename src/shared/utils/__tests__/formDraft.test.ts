@@ -2,10 +2,14 @@ import { describe, it, expect } from 'vitest';
 import { createEmptyFlightForm } from '../flightFormMapping';
 import {
   FORM_DRAFT_STORAGE_KEY,
+  EDIT_FORM_DRAFT_STORAGE_KEY,
   parseFormDraft,
   readFormDraft,
   writeFormDraft,
   clearFormDraft,
+  readEditFormDraft,
+  writeEditFormDraft,
+  clearEditFormDraft,
 } from '../formDraft';
 
 const memoryStorage = () => {
@@ -79,5 +83,21 @@ describe('form draft storage', () => {
     clearFormDraft(storage);
     expect(storage.store.has(FORM_DRAFT_STORAGE_KEY)).toBe(false);
     expect(readFormDraft(storage, '2026-09-10')).toBeNull();
+  });
+});
+
+describe('edit form draft storage', () => {
+  it('restores only when the flight id matches', () => {
+    const storage = memoryStorage();
+    const filled = { ...createEmptyFlightForm('2026-09-10'), origin: 'Казань' };
+    writeEditFormDraft('flight-1', filled, storage);
+
+    expect(storage.store.get(EDIT_FORM_DRAFT_STORAGE_KEY)).toContain('Казань');
+    expect(readEditFormDraft('flight-1', storage, '2026-09-10')?.origin).toBe('Казань');
+    expect(readEditFormDraft('flight-2', storage, '2026-09-10')).toBeNull();
+
+    clearEditFormDraft(storage);
+    expect(storage.store.has(EDIT_FORM_DRAFT_STORAGE_KEY)).toBe(false);
+    expect(readEditFormDraft('flight-1', storage, '2026-09-10')).toBeNull();
   });
 });

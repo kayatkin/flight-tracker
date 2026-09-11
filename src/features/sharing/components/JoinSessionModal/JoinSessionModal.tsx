@@ -32,7 +32,6 @@ const JoinSessionModal: React.FC<JoinSessionModalProps> = ({ onJoin, onClose }) 
           onClick={onClose} 
           className={styles.closeButton}
           aria-label="Закрыть окно присоединения"
-          style={{ position: 'absolute', right: '16px', top: '16px', zIndex: 1 }}
         >
           ✕
         </button>
