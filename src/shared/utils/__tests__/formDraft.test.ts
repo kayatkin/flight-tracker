@@ -2,10 +2,15 @@ import { describe, it, expect } from 'vitest';
 import { createEmptyFlightForm } from '../flightFormMapping';
 import {
   FORM_DRAFT_STORAGE_KEY,
+  EDIT_FORM_DRAFT_STORAGE_KEY,
   parseFormDraft,
   readFormDraft,
   writeFormDraft,
   clearFormDraft,
+  readEditFormDraft,
+  writeEditFormDraft,
+  clearEditFormDraft,
+  peekEditFormDraft,
 } from '../formDraft';
 
 const memoryStorage = () => {
@@ -79,5 +84,35 @@ describe('form draft storage', () => {
     clearFormDraft(storage);
     expect(storage.store.has(FORM_DRAFT_STORAGE_KEY)).toBe(false);
     expect(readFormDraft(storage, '2026-09-10')).toBeNull();
+  });
+});
+
+describe('edit form draft storage', () => {
+  it('restores only when the flight id matches', () => {
+    const storage = memoryStorage();
+    const filled = { ...createEmptyFlightForm('2026-09-10'), origin: 'Казань' };
+    const flight = {
+      id: 'flight-1',
+      origin: 'Москва',
+      destination: 'Тбилиси',
+      type: 'oneWay' as const,
+      departureDate: '2026-09-10',
+      isDirectThere: true,
+      isDirectBack: true,
+      airline: 'SU',
+      passengers: 1 as const,
+      totalPrice: 15000,
+      dateFound: '2026-09-10',
+    };
+    writeEditFormDraft(flight, filled, storage);
+
+    expect(storage.store.get(EDIT_FORM_DRAFT_STORAGE_KEY)).toContain('Казань');
+    expect(readEditFormDraft('flight-1', storage, '2026-09-10')?.origin).toBe('Казань');
+    expect(readEditFormDraft('flight-2', storage, '2026-09-10')).toBeNull();
+    expect(peekEditFormDraft(storage, '2026-09-10')?.flight.origin).toBe('Москва');
+
+    clearEditFormDraft(storage);
+    expect(storage.store.has(EDIT_FORM_DRAFT_STORAGE_KEY)).toBe(false);
+    expect(readEditFormDraft('flight-1', storage, '2026-09-10')).toBeNull();
   });
 });

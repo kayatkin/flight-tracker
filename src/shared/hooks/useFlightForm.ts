@@ -39,12 +39,18 @@ export interface FlightFormData {
   returnArrivalNextDay: boolean;
 }
 
-export const useFlightForm = (initialDate?: string, initialDraft?: FlightFormData | null) => {
+export const useFlightForm = (
+  initialDate?: string,
+  initialDraft?: FlightFormData | null,
+  initialBaseline?: FlightFormData | null
+) => {
   const today = initialDate || toLocalISODate();
   const emptyForm = createEmptyFlightForm(today);
 
-  const [formData, setFormData] = useState<FlightFormData>(initialDraft ?? emptyForm);
-  const [baseline, setBaseline] = useState<FlightFormData>(emptyForm);
+  const [formData, setFormData] = useState<FlightFormData>(
+    initialDraft ?? initialBaseline ?? emptyForm
+  );
+  const [baseline, setBaseline] = useState<FlightFormData>(initialBaseline ?? emptyForm);
 
   const updateFormData = useCallback((updates: Partial<FlightFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }));

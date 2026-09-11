@@ -38,6 +38,7 @@ export default defineConfig({
     env: {
       VITE_SUPABASE_URL: 'https://test.supabase.co',
       VITE_SUPABASE_ANON_KEY: 'test-anon-key',
+      VITE_TELEGRAM_BOT_USERNAME: 'test_flight_bot',
     },
   },
 });

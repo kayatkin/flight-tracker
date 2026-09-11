@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 jobs:
-  build:
+  quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,6 +23,9 @@ jobs:
 
       - run: npm ci --no-audit
 
+      - name: Audit
+        run: npm audit --audit-level=high
+
       - name: Lint
         run: npm run lint
 
@@ -31,6 +34,73 @@ jobs:
 
       - name: Test
         run: npm test
+
+  functions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Typecheck Edge Functions
+        run: deno check supabase/functions/_shared/*.ts supabase/functions/auth-telegram/index.ts supabase/functions/auth-guest/index.ts supabase/functions/auth-dev/index.ts
+
+  bot:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install bot dependencies
+        run: npm install
+      - name: Test bot helpers
+        run: npm test
+
+  rls:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: flight_tracker
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d flight_tracker"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install psql
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Apply migrations and run RLS tests
+        env:
+          PGHOST: localhost
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: flight_tracker
+        run: bash scripts/rls-ci.sh
+
+  build:
+    needs: [quality, functions, bot, rls]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci --no-audit
 
       - name: Build
         run: npm run build

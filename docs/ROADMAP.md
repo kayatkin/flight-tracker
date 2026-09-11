@@ -19,6 +19,8 @@
 - Сортировка истории (маршрут / цена / дата поиска)
 - Необязательная заметка на билете
 - CI для RLS на временной Postgres и `npm audit` фронта
+- Error Boundary, черновик правки, per-row save, хеш share-токена, CORS allowlist
+- Деплой Pages ждёт полный CI, включая RLS и Deno functions
 
 ## Можно делать дальше без ломки продукта
 
@@ -29,6 +31,6 @@
 - Монетизация / Stars / i18n EN+RU с ветки `feature/monetization-i18n` — большой конфликт с текущей `main`, не мержить вслепую.
 - Сайт-аналог на VPS: тот же SPA, плюс вход владельца (Telegram Login или Supabase Auth). Не форкать код.
 - Смена визуального языка карточек и сетки экрана.
-- Хеш share-токена в БД, asymmetric JWT, CORS allowlist, per-row CRUD.
+- Asymmetric JWT Supabase (нужна ротация ключей в Dashboard).
 
 Подробности по дырам прошлого: [CODE_AUDIT.md](./CODE_AUDIT.md). Как пользоваться: [USER_GUIDE.md](./USER_GUIDE.md).

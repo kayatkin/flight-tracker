@@ -2,18 +2,27 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { AddFlightForm } from '@features/flights';
 import { HistoryView } from '@features/flights';
 import { GuestModeIndicator } from '@features/guest-mode';
-import { ShareFlightModal } from '@features/sharing';
 import { Flight } from '@shared/types';
 import { KNOWN_AIRLINES, KNOWN_CITIES } from '@shared/data';
-import { mergeSuggestions, saveStatusText, confirmDiscardUnsaved, clearFormDraft } from '@shared/utils';
+import {
+  mergeSuggestions,
+  saveStatusText,
+  confirmDiscardUnsaved,
+  clearFormDraft,
+  clearEditFormDraft,
+  peekEditFormDraft,
+} from '@shared/utils';
+import { useFlightTracker } from '@shared/hooks';
 import styles from './App.module.css';
 
-import { useFlightTracker } from './hooks';
+const restoredEditFlight = (): Flight | null => {
+  if (typeof sessionStorage === 'undefined') return null;
+  return peekEditFormDraft(sessionStorage)?.flight ?? null;
+};
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'add' | 'history'>('add');
-  const [showShareModal, setShowShareModal] = useState<boolean>(false);
-  const [editingFlight, setEditingFlight] = useState<Flight | null>(null);
+  const [editingFlight, setEditingFlight] = useState<Flight | null>(() => restoredEditFlight());
   const [formDirty, setFormDirty] = useState(false);
 
   const {
@@ -63,12 +72,31 @@ const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTab]);
 
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!formDirty) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [formDirty]);
+
+  const clearDrafts = () => {
+    if (typeof sessionStorage === 'undefined') return;
+    clearFormDraft(sessionStorage);
+    clearEditFormDraft(sessionStorage);
+  };
+
   const handleEditFlight = (flight: Flight) => {
     setEditingFlight(flight);
     setActiveTab('add');
   };
 
   const handleCancelEdit = () => {
+    if (typeof sessionStorage !== 'undefined') {
+      clearEditFormDraft(sessionStorage);
+    }
     setFormDirty(false);
     setEditingFlight(null);
     setActiveTab('history');
@@ -79,9 +107,7 @@ const App: React.FC = () => {
   };
 
   const handleNavigateToHistory = () => {
-    if (typeof sessionStorage !== 'undefined') {
-      clearFormDraft(sessionStorage);
-    }
+    clearDrafts();
     setFormDirty(false);
     setEditingFlight(null);
     setActiveTab('history');
@@ -89,9 +115,7 @@ const App: React.FC = () => {
 
   const leaveAddTab = (next: () => void) => {
     if (formDirty && !confirmDiscardUnsaved()) return;
-    if (formDirty && typeof sessionStorage !== 'undefined') {
-      clearFormDraft(sessionStorage);
-    }
+    if (formDirty) clearDrafts();
     setFormDirty(false);
     setEditingFlight(null);
     next();
@@ -99,12 +123,8 @@ const App: React.FC = () => {
 
   if (loading || isCheckingToken) {
     return (
-      <div className={styles.app} style={{ textAlign: 'center', padding: '40px' }}>
-        <div style={{
-          fontSize: '16px',
-          color: 'var(--tg-text-color, #000)',
-          animation: 'pulse 1.5s infinite'
-        }}>
+      <div className={`${styles.app} ${styles.loadingScreen}`}>
+        <div className={styles.loadingLabel}>
           Загрузка данных...
         </div>
       </div>
@@ -148,14 +168,6 @@ const App: React.FC = () => {
           </p>
         )}
       </div>
-
-      {showShareModal && appUser && !appUser.isGuest && (
-        <ShareFlightModal
-          userId={appUser.userId}
-          onClose={() => setShowShareModal(false)}
-          onShareCreated={() => {}}
-        />
-      )}
 
       <div className={styles.tabs}>
         <button
@@ -205,23 +217,12 @@ const App: React.FC = () => {
           onRestore={handleRestoreFlight}
           onEdit={handleEditFlight}
           onDuplicate={handleDuplicateFlight}
-          onShare={() => setShowShareModal(true)}
           onJoin={handleJoinSession}
           userId={appUser?.userId || userId}
           isGuest={appUser?.isGuest || false}
           guestPermissions={appUser?.isGuest ? appUser.permissions : undefined}
         />
       )}
-
-      <style>
-        {`
-          @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-          }
-        `}
-      </style>
     </div>
   );
 };

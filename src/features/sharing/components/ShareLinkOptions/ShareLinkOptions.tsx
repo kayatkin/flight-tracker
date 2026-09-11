@@ -5,14 +5,12 @@ import styles from './ShareLinkOptions.module.css';
 interface ShareLinkOptionsProps {
   shareUrl: string;
   permissions: 'view' | 'edit';
-  token: string;
   onCopy: (text: string) => void;
 }
 
 const ShareLinkOptions: React.FC<ShareLinkOptionsProps> = ({
   shareUrl,
   permissions,
-  token,
   onCopy
 }) => {
   const [shareWithInstructions, setShareWithInstructions] = useState<boolean>(true);

@@ -109,7 +109,7 @@ Flight Tracker — это Telegram Mini App (React SPA), которое рабо
 | Файл | Содержание |
 |------|-----------|
 | `types.ts` | `Flight`, `UserData`, `UserDataResponse`, `UserConfig` |
-| `common.ts` | Общие типы |
+| `common.ts` | Общие типы (не использовались) | Удалён |
 | `shared.ts` | Типы для sharing-функциональности |
 | `telegram.d.ts` | Декларации Telegram WebApp API |
 
@@ -238,7 +238,7 @@ Node 20. Секреты Pages: `SUPABASE_URL`, `SUPABASE_ANON_KEY`. Username б�
 | `SUPABASE_SERVICE_ROLE_KEY` | Edge Functions | Только `auth-*` на стороне Supabase, не бот |
 | `BOT_TOKEN` | Сервер (бот + Edge Functions) | Токен BotFather |
 | `WEBAPP_URL` | Сервер (бот) | URL Mini App |
-| `JWT_SECRET` | Edge Functions | Подпись гостевых/owner JWT |
+| `CORS_ALLOWED_ORIGINS` | Edge Functions | Дополнительные origin через запятую |
 
 Шаблон: `.env.example`. Живые значения — [docs/SECURITY.md](./docs/SECURITY.md).
 

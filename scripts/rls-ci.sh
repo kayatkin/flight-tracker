@@ -16,6 +16,7 @@ psql=(psql -v ON_ERROR_STOP=1)
 "${psql[@]}" -f "$ROOT/supabase/migrations/003_guest_session_rls.sql"
 "${psql[@]}" -f "$ROOT/supabase/migrations/004_lookup_share_invite.sql"
 "${psql[@]}" -f "$ROOT/supabase/migrations/005_flight_notes.sql"
+"${psql[@]}" -f "$ROOT/supabase/migrations/006_share_token_hash.sql"
 "${psql[@]}" -f "$ROOT/supabase/tests/rls.sql"
 
 echo "RLS tests passed"

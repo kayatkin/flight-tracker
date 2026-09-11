@@ -50,6 +50,14 @@ INSERT INTO shared_sessions (id, token, owner_id, permissions, is_active, expire
   ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'view_token_revoked', 'owner_a', 'view', FALSE, NOW() + INTERVAL '1 day'),
   ('dddddddd-dddd-4ddd-8ddd-dddddddddddd', 'view_token_expired', 'owner_a', 'view', TRUE, NOW() - INTERVAL '1 day');
 
+INSERT INTO shared_sessions (id, token, token_hash, owner_id, permissions, is_active, expires_at) VALUES
+  (
+    'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+    NULL,
+    encode(digest('hashed_only_token', 'sha256'), 'hex'),
+    'owner_a', 'view', TRUE, NOW() + INTERVAL '1 day'
+  );
+
 -- Owner A sees only own flights, including notes.
 SELECT tests.as_jwt('{"role":"authenticated","user_id":"owner_a","app_role":"owner"}'::jsonb);
 SET ROLE authenticated;
@@ -149,6 +157,10 @@ SELECT tests.expect(
 SELECT tests.expect(
   (SELECT count(*) FROM lookup_share_invite('view_token_revoked')) = 0,
   'anon RPC should hide revoked invites'
+);
+SELECT tests.expect(
+  (SELECT count(*) FROM lookup_share_invite('hashed_only_token')) = 1,
+  'anon RPC should find an invite stored only as token_hash'
 );
 
 DO $$

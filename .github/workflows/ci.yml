@@ -46,7 +46,7 @@ jobs:
         with:
           deno-version: v2.x
       - name: Typecheck Edge Functions
-        run: deno check supabase/functions/_shared/jwt.ts supabase/functions/_shared/telegram.ts supabase/functions/_shared/cors.ts
+        run: deno check supabase/functions/_shared/*.ts supabase/functions/auth-telegram/index.ts supabase/functions/auth-guest/index.ts supabase/functions/auth-dev/index.ts
 
   bot:
     runs-on: ubuntu-latest

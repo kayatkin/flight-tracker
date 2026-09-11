@@ -9,7 +9,11 @@ import {
   readFormDraft,
   writeFormDraft,
   clearFormDraft,
+  readEditFormDraft,
+  writeEditFormDraft,
+  clearEditFormDraft,
   toLocalISODate,
+  flightToFormData,
 } from '@shared/utils';
 import { toast } from '@shared/ui/Toast';
 import { PriceAnalysis } from '@features/flights';
@@ -50,13 +54,16 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
   onDirtyChange,
   editingFlight = null,
 }) => {
-  const draft = editingFlight
-    ? null
-    : readFormDraft(
-      typeof sessionStorage === 'undefined' ? null : sessionStorage,
-      toLocalISODate()
-    );
-  const { formData, updateFormData, createFlightObject, resetForm, hydrateFromFlight, markClean, isDirty } = useFlightForm(undefined, draft);
+  const storage = typeof sessionStorage === 'undefined' ? null : sessionStorage;
+  const today = toLocalISODate();
+  const savedForm = editingFlight ? flightToFormData(editingFlight) : null;
+  const editDraft = editingFlight ? readEditFormDraft(editingFlight.id, storage, today) : null;
+  const newDraft = editingFlight ? null : readFormDraft(storage, today);
+  const { formData, updateFormData, createFlightObject, resetForm, markClean, isDirty } = useFlightForm(
+    undefined,
+    editDraft ?? (editingFlight ? savedForm : newDraft),
+    savedForm
+  );
   const [analysis, setAnalysis] = useState<ReturnType<typeof analyzeFlightPrice> | null>(null);
   const navigateTimerRef = useRef<number | undefined>(undefined);
   const skipDraftPersistRef = useRef(false);
@@ -73,20 +80,24 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
   }, [isDirty, onDirtyChange]);
 
   useEffect(() => {
-    if (isEditing || skipDraftPersistRef.current || typeof sessionStorage === 'undefined') return;
+    if (typeof sessionStorage === 'undefined' || skipDraftPersistRef.current) return;
+    if (isEditing && editingFlight) {
+      if (isDirty) writeEditFormDraft(editingFlight, formData, sessionStorage);
+      else clearEditFormDraft(sessionStorage);
+      return;
+    }
+    if (isEditing) return;
     if (isDirty) writeFormDraft(formData, sessionStorage);
     else clearFormDraft(sessionStorage);
-  }, [formData, isDirty, isEditing]);
+  }, [formData, isDirty, isEditing, editingFlight]);
 
   useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
 
   useEffect(() => {
-    if (editingFlight) {
-      hydrateFromFlight(editingFlight);
-      setAnalysis(null);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [editingFlight, hydrateFromFlight]);
+    if (!editingFlight) return;
+    setAnalysis(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [editingFlight]);
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
@@ -141,6 +152,9 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
     }
 
     if (editingFlight) {
+      if (typeof sessionStorage !== 'undefined') {
+        clearEditFormDraft(sessionStorage);
+      }
       onUpdate?.(savedFlight);
       toast('Изменения сохранены', 'success');
       markClean();

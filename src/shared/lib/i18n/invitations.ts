@@ -45,7 +45,7 @@ export const getInvitationsDisplayText = (
 
 // ИСПРАВЛЕНИЕ: Убрали число из скобок
 export const getFilterLabel = (
-  count: number,
+  _count: number,
   filter: InvitationFilter
 ): string => {
   const baseLabels = {

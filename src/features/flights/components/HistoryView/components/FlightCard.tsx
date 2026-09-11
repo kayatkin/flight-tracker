@@ -46,12 +46,12 @@ export const FlightCard: React.FC<FlightCardProps> = ({
       {(flight.departureTime || flight.arrivalTime) && (
         <div className={styles.dateTime}>
           ➡️ {flight.departureTime || '—'} → {flight.arrivalTime || '—'}
-          {flight.arrivalNextDay && <span style={{ fontSize: '12px', color: '#888', marginLeft: '4px' }}> (+1)</span>}
+          {flight.arrivalNextDay && <span className={styles.nextDayHint}> (+1)</span>}
           {flight.type === 'roundTrip' && (
             <>
               <br />
               ↩️ {flight.returnDepartureTime || '—'} → {flight.returnArrivalTime || '—'}
-              {flight.returnArrivalNextDay && <span style={{ fontSize: '12px', color: '#888', marginLeft: '4px' }}> (+1)</span>}
+              {flight.returnArrivalNextDay && <span className={styles.nextDayHint}> (+1)</span>}
             </>
           )}
         </div>
@@ -69,7 +69,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({
       <div className={styles.meta}>
         <span className={styles.metaText}>
           👥 {formatPassengerCount(flight.passengers)} • Найдено: {formatDateToDMY(flight.dateFound)}
-          {isGuest && <span style={{ marginLeft: '8px', fontSize: '12px', color: '#666' }}>
+          {isGuest && <span className={styles.guestMeta}>
             {guestPermissions === 'edit' ? '✏️ Редактирование' : '👁️ Только просмотр'}
           </span>}
         </span>

@@ -1,4 +1,4 @@
-import { supabase } from '@lib/supabaseClient';
+import { supabase } from '@shared/lib';
 import { env } from '@shared/config/env';
 import { getDevelopmentUserId } from '@shared/utils/telegram';
 import { isRealTelegramUser } from '@shared/utils/telegramUserType';
@@ -107,6 +107,3 @@ export const authenticateOwner = async (): Promise<OwnerAuthResult | null> => {
   return null;
 };
 
-export const signOutAuth = async (): Promise<void> => {
-  await supabase.auth.signOut();
-};

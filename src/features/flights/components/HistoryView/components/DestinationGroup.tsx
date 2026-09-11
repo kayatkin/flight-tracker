@@ -43,8 +43,12 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
 
   return (
     <div
-      className={`${styles.card} ${isActive ? styles.active : ''}`}
-      style={isGuest ? { borderLeft: `4px solid ${guestPermissions === 'edit' ? '#4CAF50' : '#FF9800'}` } : {}}
+      className={[
+        styles.card,
+        isActive ? styles.active : '',
+        isGuest && guestPermissions === 'edit' ? styles.cardGuestEdit : '',
+        isGuest && guestPermissions !== 'edit' ? styles.cardGuestView : '',
+      ].filter(Boolean).join(' ')}
     >
       <div
         className={styles.cardHeader}
@@ -71,7 +75,6 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
             }}
             title="График сезонности цен"
             disabled={flights.length < 2}
-            style={flights.length < 2 ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
           >
             📈
           </button>

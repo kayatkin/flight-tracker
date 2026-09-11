@@ -220,13 +220,12 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
             <ShareLinkOptions
               shareUrl={shareUrl}
               permissions={permissions}
-              token={generatedToken}
               onCopy={handleCopyText}
             />
 
             <div className={styles.finalHint}>
               <p>📤 <strong>Что делать:</strong> Используйте кнопки выше чтобы скопировать или поделиться ссылкой</p>
-              <p>⚠️ <strong>Важно:</strong> Делитесь ссылкой только с теми, кому доверяете</p>
+              <p>⚠️ <strong>Важно:</strong> Скопируйте ссылку сейчас — в списке приглашений её больше не будет</p>
             </div>
 
             <div className={styles.buttonGroup}>

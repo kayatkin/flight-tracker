@@ -8,7 +8,6 @@ interface EmptyStateProps {
   guestPermissions: 'view' | 'edit';
   flights?: Flight[];
   userId?: string;
-  onShare?: () => void;
   onJoin?: (token: string) => void;
 }
 
@@ -17,7 +16,6 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   guestPermissions: _guestPermissions,
   flights = [],
   userId,
-  onShare,
   onJoin
 }) => {
   return (
@@ -27,7 +25,6 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         <AccessManagement
           flights={flights}
           userId={userId}
-          onShare={onShare}
           onJoin={onJoin}
           isEmptyState={true}
         />
