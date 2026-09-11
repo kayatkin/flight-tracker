@@ -1,6 +1,9 @@
 -- Hash share tokens at rest. New invites store token_hash only;
 -- plaintext stays in the link the owner copies once.
 -- Optional bind of edit invites to the first Telegram user who opens them.
+--
+-- On Supabase, pgcrypto lives in schema `extensions`. The lookup function
+-- must include that schema in search_path, otherwise digest() is missing.
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
@@ -12,7 +15,7 @@ ALTER TABLE shared_sessions
   ALTER COLUMN token DROP NOT NULL;
 
 UPDATE shared_sessions
-SET token_hash = encode(digest(token, 'sha256'), 'hex')
+SET token_hash = encode(digest(convert_to(token, 'UTF8'), 'sha256'::text), 'hex')
 WHERE token IS NOT NULL
   AND (token_hash IS NULL OR token_hash = '');
 
@@ -25,14 +28,14 @@ RETURNS TABLE (permissions text, expires_at timestamptz)
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $$
   SELECT s.permissions::text, s.expires_at
   FROM public.shared_sessions s
   WHERE s.is_active IS TRUE
     AND s.expires_at > NOW()
     AND (
-      s.token_hash = encode(digest(p_token, 'sha256'), 'hex')
+      s.token_hash = encode(digest(convert_to(p_token, 'UTF8'), 'sha256'::text), 'hex')
       OR s.token = p_token
     )
   LIMIT 1;
