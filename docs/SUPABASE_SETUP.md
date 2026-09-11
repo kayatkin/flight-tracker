@@ -52,7 +52,7 @@ supabase secrets set CORS_ALLOWED_ORIGINS="https://kayatkin.github.io,http://loc
     - `supabase/migrations/003_guest_session_rls.sql`
     - `supabase/migrations/004_lookup_share_invite.sql`
     - `supabase/migrations/005_flight_notes.sql`
-    - `supabase/migrations/006_share_token_hash.sql`
+    - `supabase/migrations/006_share_token_hash.sql` (lookup uses `search_path = public, extensions`, because on Supabase `digest` is in `extensions`)
 
 **Вариант B — CLI:**
 
