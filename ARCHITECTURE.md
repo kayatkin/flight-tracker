@@ -56,10 +56,11 @@ Flight Tracker — это Telegram Mini App (React SPA), которое рабо
 - `AirlineSection` — авиакомпания с автозаполнением
 - `PassengersSection` — количество пассажиров (1–4)
 - `PriceSection` — цена билета
+- `NotesSection` — необязательная заметка
 
 **HistoryView** подкомпоненты:
 
-- `SearchBar` — поиск и экспорт CSV видимых билетов
+- `SearchBar` — поиск, сортировка и экспорт CSV видимых билетов
 - `DestinationGroup` — группа маршрута, раскрытие по заголовку
 - `FlightCard` — карточка рейса: правка, копия, удаление
 - `AccessManagement` — управление доступом (для владельца)
@@ -85,7 +86,7 @@ Flight Tracker — это Telegram Mini App (React SPA), которое рабо
 | Хук | Назначение |
 |-----|-----------|
 | `useFlightTracker` | Главный хук: список рейсов, add/update/duplicate/delete, autosave |
-| `useFlightForm` | Состояние формы добавления рейса, валидация |
+| `useFlightForm` | Состояние формы добавления рейса, черновик новой записи, валидация |
 | `useAutocomplete` | Автозаполнение городов/авиакомпаний |
 
 #### `shared/utils/` — утилиты
@@ -99,6 +100,7 @@ Flight Tracker — это Telegram Mini App (React SPA), которое рабо
 | `telegramTokens.ts` | Управление токенами для совместного доступа |
 | `telegram.ts` | Инициализация Telegram SDK |
 | `flightCsv.ts` | Сборка и скачивание CSV истории |
+| `formDraft.ts` | Черновик новой формы в sessionStorage |
 | `flightFormMapping.ts` | Билет → поля формы, дублирование с новым UUID |
 | `suggestions.ts` | Слияние сохранённых значений с каталогом |
 
@@ -197,8 +199,9 @@ CSS-переменные определены в `src/styles/tokens.css`:
 
 ## CI/CD (GitHub Actions)
 
-- `.github/workflows/ci.yml` — на PR в `main`: lint, typecheck, test, build; отдельно `deno check` functions и тесты бота
+- `.github/workflows/ci.yml` — на PR в `main`: lint, typecheck, test, build, `npm audit`; отдельно `deno check` functions, тесты бота и RLS на Postgres 15
 - `.github/workflows/deploy.yml` — пуш в `main`: сборка Vite и GitHub Pages
+- Локально RLS: `npm run test:rls` при доступном Postgres
 
 Node 20. Секреты Pages: `SUPABASE_URL`, `SUPABASE_ANON_KEY`. Username бота — `vars.TELEGRAM_BOT_USERNAME`.
 

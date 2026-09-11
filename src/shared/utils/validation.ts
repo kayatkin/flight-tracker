@@ -1,4 +1,5 @@
-// src/utils/validation.ts
+export const NOTES_MAX_LENGTH = 500;
+
 export const validateFlightForm = (
     formData: {
       origin: string;
@@ -8,6 +9,7 @@ export const validateFlightForm = (
       returnDate: string;
       totalPrice: string;
       airline?: string;
+      notes?: string;
     }
   ): string[] => {
     const errors: string[] = [];
@@ -33,6 +35,10 @@ export const validateFlightForm = (
     const priceNum = Number(formData.totalPrice);
     if (!(formData.totalPrice ?? '').trim() || !Number.isFinite(priceNum) || priceNum <= 0) {
       errors.push('Укажите корректную стоимость (только цифры, больше 0)');
+    }
+
+    if ((formData.notes ?? '').length > NOTES_MAX_LENGTH) {
+      errors.push(`Заметка не длиннее ${NOTES_MAX_LENGTH} символов`);
     }
   
     return errors;

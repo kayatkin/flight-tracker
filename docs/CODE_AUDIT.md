@@ -36,7 +36,7 @@
 7. **Доступный modal/dialog** с focus trap и `inert` на фоне. Сделано: Escape, Tab-цикл, `inert`, возврат фокуса.
 8. **Тема**: слушать `themeChanged` / `prefers-color-scheme`, ставить `data-theme`. Сделано.
 9. **i18n-каталог** вместо строк в JSX (сейчас продукт только на русском).
-10. **CI для Deno functions + RLS** на эфемерной Postgres. Сейчас: `deno check` `_shared` и тесты бота; `npm audit` фронта ещё красный на devDeps, живая Postgres — отдельно.
+10. **CI для Deno functions + RLS** на эфемерной Postgres. Сделано: `deno check` `_shared`, тесты бота, job `rls` на Postgres 15, `npm audit --audit-level=high` на фронте.
 11. **Обновить бот** с `node-telegram-bot-api@0.61` на актуальный клиент; убрать service role, читать токен через RPC. Сделано (0.67 + `lookup_share_invite`).
 12. **Не деплоить фронт**, если lint/test красные. Сделано в `deploy.yml`.
 
@@ -53,9 +53,9 @@
 | `index.html` | Telegram script | Нет CSP | CSP после выноса inline-стилей |
 | `public/manifest.json` | PWA | CRA sample, битые иконки | Имя приложения, без фейковых иконок |
 | `.github/workflows/deploy.yml` | Pages | Деплой без обязательного CI | Рекомендация: `needs: ci` |
-| `.github/workflows/ci.yml` | lint/test/build | Нет аудита бэкенда | `deno check` functions, тесты бота, `npm audit` |
+| `.github/workflows/ci.yml` | lint/test/build | Нет аудита бэкенда | `deno check` functions, тесты бота, RLS на Postgres 15, `npm audit` |
 | `scripts/deploy-supabase.sh` | Деплой functions | Всегда деплоил `auth-dev` | Skip по умолчанию |
-| `docs/SUPABASE_SETUP.md` | Прод-инструкция | Копипаста включала `ALLOW_DEV_AUTH=true` | Staging отдельно, добавлен `003` |
+| `docs/SUPABASE_SETUP.md` | Прод-инструкция | Копипаста включала `ALLOW_DEV_AUTH=true` | Staging отдельно, добавлены `003`–`005` |
 
 ### `src/services`
 
@@ -93,7 +93,7 @@
 | `JoinSessionForm` | Не парсил `startapp` | `extractShareToken` |
 | `JoinSessionModal` | Закрытие до завершения join | `await onJoin` |
 | `SharedSessionsList` | Хардкод бота, лог URL | `buildShareUrl` |
-| `HistoryView` | Поиск только по ключу группы | Origin/destination/airline |
+| `HistoryView` | Поиск только по ключу группы | Origin/destination/airline/заметка, сортировка групп |
 | `historyViewHelpers` | Группа = destination | `origin → destination` |
 
 ### Supabase
@@ -103,6 +103,7 @@
 | `001_schema.sql` | Plaintext token, нет FK на owner | Следующий этап (миграция данных) |
 | `002_rls.sql` | Гость = claims JWT | Дополнено `003` |
 | `003_guest_session_rls.sql` | — | Новая проверка сессии, legacy JWT без claim ещё работают |
+| `005_flight_notes.sql` | — | Опциональная колонка `notes` |
 | `_shared/telegram.ts` | Нет TTL, `===` для HMAC | `auth_date` + timing-safe |
 | `_shared/jwt.ts` | Claims могли перекрыть `role`; guest TTL 7д | Reserved claims последними |
 | `auth-guest` | 7д JWT, `expires_in: 1д` | TTL = min(1д, остаток сессии) + `share_session_id` |

@@ -22,6 +22,7 @@ export const createEmptyFlightForm = (today: string): FlightFormData => ({
   airline: '',
   passengers: 1,
   totalPrice: '',
+  notes: '',
   arrivalNextDay: false,
   returnArrivalNextDay: false,
 });
@@ -59,6 +60,7 @@ export const flightToFormData = (flight: Flight): FlightFormData => ({
   airline: flight.airline ?? '',
   passengers: flight.passengers,
   totalPrice: flight.totalPrice ? String(flight.totalPrice) : '',
+  notes: flight.notes ?? '',
   arrivalNextDay: Boolean(flight.arrivalNextDay),
   returnArrivalNextDay: Boolean(flight.returnArrivalNextDay),
 });

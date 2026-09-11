@@ -1,5 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { formatPassengerCount, groupFlightsByDestination, readHistorySearch, restoreFlightList, textMatchesQuery, writeHistorySearch, HISTORY_SEARCH_STORAGE_KEY } from '../historyViewHelpers';
+import {
+  formatPassengerCount,
+  groupFlightsByDestination,
+  readHistorySearch,
+  restoreFlightList,
+  textMatchesQuery,
+  writeHistorySearch,
+  HISTORY_SEARCH_STORAGE_KEY,
+  HISTORY_SORT_STORAGE_KEY,
+  readHistorySort,
+  writeHistorySort,
+  sortDestinationKeys,
+  splitBestAndOthers,
+  flightMatchesQuery,
+} from '../historyViewHelpers';
 import { Flight } from '@shared/types';
 
 const makeFlight = (overrides: Partial<Flight>): Flight => ({
@@ -69,5 +83,60 @@ describe('restoreFlightList', () => {
     const restored = restoreFlightList([makeFlight({ id: 'keep' })], ticket);
     expect(restored.map((flight) => flight.id)).toEqual(['keep', 'gone']);
     expect(restoreFlightList(restored, ticket)).toEqual(restored);
+  });
+});
+
+describe('history sort', () => {
+  const memoryStorage = () => {
+    const store = new Map<string, string>();
+    return {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => { store.set(key, value); },
+      removeItem: (key: string) => { store.delete(key); },
+      store,
+    };
+  };
+
+  it('persists a non-default sort and drops the default', () => {
+    const storage = memoryStorage();
+    expect(readHistorySort(storage)).toBe('route');
+    writeHistorySort('found-desc', storage);
+    expect(storage.store.get(HISTORY_SORT_STORAGE_KEY)).toBe('found-desc');
+    expect(readHistorySort(storage)).toBe('found-desc');
+    writeHistorySort('route', storage);
+    expect(storage.store.has(HISTORY_SORT_STORAGE_KEY)).toBe(false);
+  });
+
+  it('orders groups by cheapest person price or newest dateFound', () => {
+    const cheap = makeFlight({ id: 'cheap', origin: 'B', destination: 'Y', totalPrice: 8000, dateFound: '2026-01-01' });
+    const pricey = makeFlight({ id: 'pricey', origin: 'A', destination: 'X', totalPrice: 20000, dateFound: '2026-08-01' });
+    const grouped = groupFlightsByDestination([cheap, pricey]);
+
+    expect(sortDestinationKeys(Object.keys(grouped), grouped, 'route')).toEqual(['A → X', 'B → Y']);
+    expect(sortDestinationKeys(Object.keys(grouped), grouped, 'price-asc')).toEqual(['B → Y', 'A → X']);
+    expect(sortDestinationKeys(Object.keys(grouped), grouped, 'found-desc')).toEqual(['A → X', 'B → Y']);
+  });
+
+  it('keeps the cheapest ticket first and sorts the rest', () => {
+    const flights = [
+      makeFlight({ id: 'mid', totalPrice: 12000, dateFound: '2026-03-01' }),
+      makeFlight({ id: 'best', totalPrice: 8000, dateFound: '2026-01-01' }),
+      makeFlight({ id: 'new', totalPrice: 15000, dateFound: '2026-08-01' }),
+    ];
+    const byPrice = splitBestAndOthers(flights, 'price-asc');
+    expect(byPrice.best.id).toBe('best');
+    expect(byPrice.others.map((flight) => flight.id)).toEqual(['mid', 'new']);
+
+    const byFound = splitBestAndOthers(flights, 'found-desc');
+    expect(byFound.best.id).toBe('best');
+    expect(byFound.others.map((flight) => flight.id)).toEqual(['new', 'mid']);
+  });
+});
+
+describe('flightMatchesQuery', () => {
+  it('matches an optional note', () => {
+    const flight = makeFlight({ notes: 'окно у прохода' });
+    expect(flightMatchesQuery(flight, 'окно')).toBe(true);
+    expect(flightMatchesQuery(flight, 'Париж')).toBe(false);
   });
 });

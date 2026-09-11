@@ -16,7 +16,7 @@
 
 ## Production-минимум
 
-1. Миграции `001_schema.sql`, `002_rls.sql`, `003_guest_session_rls.sql`, `004_lookup_share_invite.sql`.
+1. Миграции `001_schema.sql`, `002_rls.sql`, `003_guest_session_rls.sql`, `004_lookup_share_invite.sql`, `005_flight_notes.sql`.
 2. Edge Functions `auth-telegram` и `auth-guest`. Функцию `auth-dev` в production не деплоить.
 3. `ALLOW_DEV_AUTH=false`.
 4. После любой утечки в git или логах — **сразу ротация**: BotFather → Revoke, Supabase → новый anon/service/JWT, бот и фронт обновить, старые share-ссылки считать скомпрометированными.

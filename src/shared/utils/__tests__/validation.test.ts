@@ -88,6 +88,11 @@ describe('validateFlightForm', () => {
     expect(errors).toContain('Укажите авиакомпанию');
   });
 
+  it('отклоняет слишком длинную заметку', () => {
+    const errors = validateFlightForm({ ...validFormData, notes: 'x'.repeat(501) });
+    expect(errors).toContain('Заметка не длиннее 500 символов');
+  });
+
   it('собирает несколько ошибок одновременно', () => {
     const errors = validateFlightForm({
       origin: '',

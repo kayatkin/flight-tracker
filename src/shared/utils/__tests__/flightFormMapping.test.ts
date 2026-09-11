@@ -30,7 +30,7 @@ const makeFlight = (overrides: Partial<Flight> = {}): Flight => ({
 
 describe('flightToFormData', () => {
   it('maps a saved flight onto the form fields', () => {
-    const form = flightToFormData(makeFlight());
+    const form = flightToFormData(makeFlight({ notes: 'окно' }));
     expect(form.origin).toBe('Москва');
     expect(form.destination).toBe('Тбилиси');
     expect(form.type).toBe('roundTrip');
@@ -40,6 +40,7 @@ describe('flightToFormData', () => {
     expect(form.totalPrice).toBe('42000');
     expect(form.arrivalNextDay).toBe(true);
     expect(form.passengers).toBe(2);
+    expect(form.notes).toBe('окно');
   });
 
   it('fills defaults for missing optional fields', () => {
@@ -68,6 +69,11 @@ describe('duplicateFlight', () => {
     expect(cloned.destination).toBe(original.destination);
     expect(cloned.totalPrice).toBe(original.totalPrice);
     expect(cloned.dateFound).toBe(toLocalISODate());
+  });
+
+  it('keeps an optional note on the copy', () => {
+    const cloned = duplicateFlight(makeFlight({ notes: 'окно' }));
+    expect(cloned.notes).toBe('окно');
   });
 });
 

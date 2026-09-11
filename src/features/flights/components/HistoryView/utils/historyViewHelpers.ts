@@ -100,3 +100,118 @@ export const writeHistorySearch = (
   }
 };
 
+export type HistorySort = 'route' | 'price-asc' | 'found-desc' | 'found-asc';
+
+export const HISTORY_SORT_STORAGE_KEY = 'flight-tracker:history-sort';
+export const DEFAULT_HISTORY_SORT: HistorySort = 'route';
+export const HISTORY_SORT_OPTIONS: { value: HistorySort; label: string }[] = [
+  { value: 'route', label: 'По маршруту' },
+  { value: 'price-asc', label: 'Сначала дешёвые' },
+  { value: 'found-desc', label: 'Сначала новые' },
+  { value: 'found-asc', label: 'Сначала старые' },
+];
+
+export const isHistorySort = (value: string): value is HistorySort =>
+  HISTORY_SORT_OPTIONS.some((option) => option.value === value);
+
+export const readHistorySort = (
+  storage?: Pick<Storage, 'getItem'> | null
+): HistorySort => {
+  try {
+    const raw = storage?.getItem(HISTORY_SORT_STORAGE_KEY) ?? '';
+    return isHistorySort(raw) ? raw : DEFAULT_HISTORY_SORT;
+  } catch {
+    return DEFAULT_HISTORY_SORT;
+  }
+};
+
+export const writeHistorySort = (
+  value: HistorySort,
+  storage?: Pick<Storage, 'setItem' | 'removeItem'> | null
+): void => {
+  if (!storage) return;
+  try {
+    if (value === DEFAULT_HISTORY_SORT) storage.removeItem(HISTORY_SORT_STORAGE_KEY);
+    else storage.setItem(HISTORY_SORT_STORAGE_KEY, value);
+  } catch {
+    // Private mode / disabled storage
+  }
+};
+
+export const pricePerPerson = (flight: Flight): number => {
+  const passengers = Number(flight.passengers) || 1;
+  return flight.totalPrice / passengers;
+};
+
+const compareDates = (left: string, right: string): number =>
+  left.localeCompare(right);
+
+export const compareFlightsBySort = (left: Flight, right: Flight, sort: HistorySort): number => {
+  if (sort === 'found-desc') {
+    return compareDates(right.dateFound, left.dateFound) || pricePerPerson(left) - pricePerPerson(right);
+  }
+  if (sort === 'found-asc') {
+    return compareDates(left.dateFound, right.dateFound) || pricePerPerson(left) - pricePerPerson(right);
+  }
+  return pricePerPerson(left) - pricePerPerson(right);
+};
+
+export const sortFlightsByHistorySort = (flights: Flight[], sort: HistorySort): Flight[] =>
+  [...flights].sort((left, right) => compareFlightsBySort(left, right, sort));
+
+export const splitBestAndOthers = (
+  flights: Flight[],
+  sort: HistorySort
+): { best: Flight; others: Flight[] } => {
+  const best = getBestFlight(flights);
+  return {
+    best,
+    others: sortFlightsByHistorySort(
+      flights.filter((flight) => flight.id !== best.id),
+      sort
+    ),
+  };
+};
+
+const groupDateFound = (flights: Flight[], mode: 'min' | 'max'): string => {
+  if (flights.length === 0) return '';
+  return flights.reduce((current, flight) => {
+    if (!current) return flight.dateFound;
+    if (mode === 'max') return flight.dateFound > current ? flight.dateFound : current;
+    return flight.dateFound < current ? flight.dateFound : current;
+  }, '');
+};
+
+export const sortDestinationKeys = (
+  destinations: string[],
+  grouped: Record<string, Flight[]>,
+  sort: HistorySort
+): string[] => {
+  const copy = [...destinations];
+  copy.sort((left, right) => {
+    const leftFlights = grouped[left] ?? [];
+    const rightFlights = grouped[right] ?? [];
+    if (sort === 'price-asc') {
+      const leftPrice = Math.min(...leftFlights.map(pricePerPerson));
+      const rightPrice = Math.min(...rightFlights.map(pricePerPerson));
+      return leftPrice - rightPrice || left.localeCompare(right, 'ru-RU');
+    }
+    if (sort === 'found-desc') {
+      return compareDates(groupDateFound(rightFlights, 'max'), groupDateFound(leftFlights, 'max'))
+        || left.localeCompare(right, 'ru-RU');
+    }
+    if (sort === 'found-asc') {
+      return compareDates(groupDateFound(leftFlights, 'min'), groupDateFound(rightFlights, 'min'))
+        || left.localeCompare(right, 'ru-RU');
+    }
+    return left.localeCompare(right, 'ru-RU');
+  });
+  return copy;
+};
+
+export const flightMatchesQuery = (flight: Flight, query: string): boolean =>
+  textMatchesQuery(flight.origin, query) ||
+  textMatchesQuery(flight.destination, query) ||
+  textMatchesQuery(flight.airline, query) ||
+  textMatchesQuery(flight.notes ?? '', query);
+

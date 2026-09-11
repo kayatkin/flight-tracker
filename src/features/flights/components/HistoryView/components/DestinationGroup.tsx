@@ -1,12 +1,13 @@
 import React from 'react';
 import { Flight } from '@shared/types';
 import { FlightCard } from './FlightCard';
-import { getBestFlight, formatPrice, formatDateToDMY } from '../utils/historyViewHelpers';
+import { formatPrice, formatDateToDMY, splitBestAndOthers, type HistorySort } from '../utils/historyViewHelpers';
 import styles from '../HistoryView.module.css';
 
 interface DestinationGroupProps {
   destination: string;
   flights: Flight[];
+  sort: HistorySort;
   isActive: boolean;
   isGuest: boolean;
   guestPermissions: 'view' | 'edit';
@@ -20,6 +21,7 @@ interface DestinationGroupProps {
 export const DestinationGroup: React.FC<DestinationGroupProps> = ({
   destination,
   flights,
+  sort,
   isActive,
   isGuest,
   guestPermissions,
@@ -29,11 +31,7 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
   onEdit,
   onDuplicate,
 }) => {
-  const bestFlight = getBestFlight(flights);
-  const otherFlights = flights
-    .filter(f => f.id !== bestFlight.id)
-    .sort((a, b) => a.totalPrice / a.passengers - b.totalPrice / b.passengers);
-  
+  const { best: bestFlight, others: otherFlights } = splitBestAndOthers(flights, sort);
   const canMutate = !isGuest || guestPermissions === 'edit';
 
   const handleHeaderKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {

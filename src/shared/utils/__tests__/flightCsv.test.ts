@@ -21,7 +21,7 @@ describe('flightsToCsv', () => {
   it('starts with a BOM and a Russian header row', () => {
     const csv = flightsToCsv([]);
     expect(csv.startsWith('\uFEFF')).toBe(true);
-    expect(csv).toContain('Откуда,Куда,Тип,Дата вылета,Дата обратно,Авиакомпания,Пассажиры,Цена всего,Цена на человека,Найдено');
+    expect(csv).toContain('Откуда,Куда,Тип,Дата вылета,Дата обратно,Авиакомпания,Пассажиры,Цена всего,Цена на человека,Найдено,Заметка');
   });
 
   it('maps round-trip type and price per person', () => {
@@ -36,6 +36,11 @@ describe('flightsToCsv', () => {
     expect(csv).toContain('2026-06-22');
     expect(csv).toContain('15000');
     expect(csv).toContain('"S7, Ural"');
+  });
+
+  it('includes an optional note', () => {
+    const csv = flightsToCsv([makeFlight({ notes: 'окно, багаж' })]);
+    expect(csv).toContain('"окно, багаж"');
   });
 });
 

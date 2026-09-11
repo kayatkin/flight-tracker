@@ -112,6 +112,7 @@ export const loadUserData = async (targetUserId: string): Promise<LoadUserDataRe
           layoverDurationBack: record.layover_duration_back || undefined,
           arrivalNextDay: record.arrival_next_day || undefined,
           returnArrivalNextDay: record.return_arrival_next_day || undefined,
+          notes: record.notes || undefined,
         };
         
         return flight;
@@ -229,6 +230,7 @@ export const saveOwnerData = async (
         date_found: flight.dateFound,
         arrival_next_day: flight.arrivalNextDay || false,
         return_arrival_next_day: flight.returnArrivalNextDay || false,
+        notes: flight.notes?.trim() || null,
         updated_at: new Date().toISOString(),
       };
       

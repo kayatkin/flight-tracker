@@ -22,6 +22,7 @@ export interface Flight {
   passengers: 1 | 2 | 3 | 4;
   totalPrice: number;
   dateFound: string;
+  notes?: string;
   arrivalNextDay?: boolean;
   returnArrivalNextDay?: boolean;
 }

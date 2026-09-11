@@ -67,5 +67,30 @@ describe('dataService persistence', () => {
 
     expect(query.upsert).toHaveBeenCalled();
     expect(query.in).toHaveBeenCalledWith('flight_id', ['22222222-2222-4222-8222-222222222222']);
+    const payload = query.upsert.mock.calls[0][0][0] as { notes: string | null };
+    expect(payload.notes).toBeNull();
+  });
+
+  it('saves a trimmed note', async () => {
+    const query = createQuery({ data: [], error: null });
+    from.mockReturnValue(query);
+
+    await saveOwnerData('user-1', [{
+      id: '11111111-1111-4111-8111-111111111111',
+      origin: 'Moscow',
+      destination: 'Istanbul',
+      type: 'oneWay',
+      departureDate: '2026-06-15',
+      isDirectThere: true,
+      isDirectBack: false,
+      airline: 'TK',
+      passengers: 1,
+      totalPrice: 10000,
+      dateFound: '2026-05-01',
+      notes: '  окно  ',
+    }]);
+
+    const payload = query.upsert.mock.calls[0][0][0] as { notes: string | null };
+    expect(payload.notes).toBe('окно');
   });
 });

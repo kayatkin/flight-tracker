@@ -12,6 +12,7 @@ const CSV_COLUMNS: { key: keyof Flight | 'pricePerPerson'; header: string }[] = 
   { key: 'totalPrice', header: 'Цена всего' },
   { key: 'pricePerPerson', header: 'Цена на человека' },
   { key: 'dateFound', header: 'Найдено' },
+  { key: 'notes', header: 'Заметка' },
 ];
 
 const csvCell = (value: unknown): string => {
