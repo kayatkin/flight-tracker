@@ -37,14 +37,14 @@
 
 | Файл | Назначение | Проблема | Решение |
 |------|------------|----------|---------|
-| `package.json` | React 19 + Vite 6 + Vitest | Нет coverage/`check`; неиспользуемый `@telegram-apps/sdk` тянет advisory | Оставить SDK на отдельный рефакторинг; тесты расширены |
+| `package.json` | React 19 + Vite 6 + Vitest | Coverage в CI; Vitest 3.2.7 закрывает UI path-traversal без перехода на Vitest 5 | `@telegram-apps/sdk` по-прежнему не тянем |
 | `vite.config.ts` | Сборка, aliases, `envPrefix` | `REACT_APP_*` может утечь в бандл | Не трогали префикс, чтобы не сломать legacy env |
 | `tsconfig.json` | Strict TS только для `src` | Конфиги не проверяются | Ок для текущего контура |
-| `eslint.config.mjs` | Lint фронта | `bot/**` и `supabase/functions/**` игнорируются | Бот и `_shared` проверяются отдельными CI job |
+| `eslint.config.mjs` | Lint фронта и бота | Functions по-прежнему вне ESLint (Deno) | `bot/**/*.js` в корневом `npm run lint`; functions — `deno check` + `deno lint` |
 | `index.html` | Telegram script | Нет CSP | CSP-lite + `favicon.svg` относительно `base` |
 | `public/manifest.json` | PWA | CRA sample, битые иконки | Имя приложения, без фейковых иконок |
 | `.github/workflows/deploy.yml` | Pages | Деплой без обязательного CI | `needs`: quality, functions, bot, rls |
-| `.github/workflows/ci.yml` | lint/test/build | Нет аудита бэкенда | `deno check` auth-* + `_shared`, тесты бота, RLS на Postgres 15, `npm audit` |
+| `.github/workflows/ci.yml` | lint/test/build | Нет аудита бэкенда | `deno check` + `deno lint`, coverage фронта, тесты бота, RLS на Postgres 15, `npm audit` |
 | `scripts/deploy-supabase.sh` | Деплой functions | Всегда деплоил `auth-dev` | Skip по умолчанию |
 | `docs/SUPABASE_SETUP.md` | Прод-инструкция | Копипаста включала `ALLOW_DEV_AUTH=true` | Staging отдельно, добавлены `003`–`006` |
 

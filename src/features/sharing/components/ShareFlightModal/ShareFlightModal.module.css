@@ -305,28 +305,6 @@
   border-color: var(--tg-link-color, #0088cc);
 }
 
-.copyButton {
-  width: 100%;
-  padding: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 15px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition: all 0.3s ease;
-}
-
-.copyButton:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
 .finalHint {
   background: rgba(255, 193, 7, 0.1);
   border-left: 4px solid #ffc107;
@@ -350,14 +328,6 @@
   margin-bottom: 0;
 }
 
-/* Оставлены только необходимые стили - удалены: */
-
-/* УДАЛЕНО: 
-.telegramHint - больше не используется
-.webHint - больше не используется 
-(эти стили перенесены в ShareLinkOptions) */
-
-/* Оставляем только .telegramNote для использования в ShareFlightModal */
 .telegramNote {
   font-size: 13px;
   color: #666;
