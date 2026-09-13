@@ -28,7 +28,7 @@
 Это мировой стандарт для Mini App + BaaS, но каждое изменение либо операционное, либо требует отдельного окна миграции.
 
 1. **Asymmetric JWT Supabase** вместо общего HS256 `JWT_SECRET`. Dual-key, `kid`, ротация.
-2. **Настоящий refresh** (GoTrue session) вместо копии access JWT.
+2. **Настоящий refresh для Telegram/гостя** (сейчас копия access JWT). Email-владельцы уже на GoTrue refresh + PKCE.
 3. **i18n-каталог** вместо строк в JSX (сейчас продукт только на русском).
 
 ## Файл за файлом
@@ -46,7 +46,7 @@
 | `.github/workflows/deploy.yml` | Pages | Деплой без обязательного CI | `needs`: quality, functions, bot, rls |
 | `.github/workflows/ci.yml` | lint/test/build | Нет аудита бэкенда | `deno check` + `deno lint`, coverage фронта, тесты бота, RLS на Postgres 15, `npm audit` |
 | `scripts/deploy-supabase.sh` | Деплой functions | Всегда деплоил `auth-dev` | Skip по умолчанию |
-| `docs/SUPABASE_SETUP.md` | Прод-инструкция | Копипаста включала `ALLOW_DEV_AUTH=true` | Staging отдельно, добавлены `003`–`006` |
+| `docs/SUPABASE_SETUP.md` | Прод-инструкция | Копипаста включала `ALLOW_DEV_AUTH=true` | Staging отдельно, добавлены `003`–`007` |
 
 ### `src/services`
 
@@ -54,7 +54,7 @@
 |------|----------|---------|
 | `dataService.ts` | Пустая загрузка при ошибке; wipe всей таблицы; prune `NOT IN` | `ok`, prune известных id, UUID сохраняется, `persistFlightChanges` пишет только dirty-строки |
 | `appInitService.ts` | Логи токена; boolean `processed_invitation_token`; браузер как Telegram | Без логов секретов; in-memory promise; `initData` |
-| `authService.ts` | Access JWT как refresh | `autoRefreshToken: false` на клиенте |
+| `authService.ts` | Access JWT как refresh | Email: GoTrue refresh; Telegram/гость: `stopAutoRefresh()` |
 | `shareService.ts` | Plaintext token в строке | Новые строки: `token_hash`, `token` NULL; fallback на старую схему |
 | `shareUrls.ts` | Хардкод origin/бота | Origin из `window`, бот из env, без выдуманного username |
 
@@ -71,7 +71,7 @@
 | `utils/id.ts` | Math.random fallback для share token | Share token требует Web Crypto |
 | `utils/url.ts` | Стирает весь query/hash | Удаляет только token-параметры |
 | `utils/getSeasonalChartData.ts` | UTC parse месяца | Разбор `YYYY-MM-DD` |
-| `lib/supabaseClient.ts` | `createClient('', '')`; auto refresh | Placeholder URL, без refresh |
+| `lib/supabaseClient.ts` | `createClient('', '')`; auto refresh | Placeholder URL; email включает `autoRefreshToken` + PKCE |
 | `config/env.ts` | Варн только в DEV | Варн всегда |
 | `ui/AutocompleteInput` | Дублирующийся `id` | `useId()` |
 
@@ -96,6 +96,7 @@
 | `003_guest_session_rls.sql` | — | Новая проверка сессии, legacy JWT без claim ещё работают |
 | `005_flight_notes.sql` | — | Опциональная колонка `notes` |
 | `006_share_token_hash.sql` | — | Хеш токена, bind Telegram id, lookup по hash или plaintext |
+| `007_email_owner_auth.sql` | `is_owner()` только `app_role=owner` | GoTrue без `app_role` тоже owner; access-token hook |
 | `_shared/telegram.ts` | Нет TTL, `===` для HMAC | `auth_date` + timing-safe |
 | `_shared/jwt.ts` | Claims могли перекрыть `role`; guest TTL 7д | Reserved claims последними; default TTL 1 сутки |
 | `auth-guest` | 7д JWT, `expires_in: 1д` | Lookup по hash, bind edit Telegram id, CORS allowlist |

@@ -15,7 +15,7 @@ import {
   getTokenFromTelegramStartParam 
 } from '../shared/utils/telegramTokens';
 import { loadUserData } from './dataService';
-import { authenticateGuest, authenticateOwner } from './authService';
+import { authenticateGuest, authenticateOwner, AuthRequiredError } from './authService';
 import { generateShortId } from '../shared/utils/id';
 import { isRealTelegramUser, getTelegramUserType } from '../shared/utils/telegramUserType';
 import { clearTokenFromUrl } from '../shared/utils/url';
@@ -319,7 +319,7 @@ export const initializeApp = async (): Promise<AppInitResult> => {
     if (!auth) {
       logError('[INIT] Owner authentication failed');
       isInitializing = false;
-      throw new Error('Authentication required');
+      throw new AuthRequiredError();
     }
 
     const userData = await loadUserData(auth.userId);

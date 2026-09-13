@@ -53,6 +53,7 @@ supabase secrets set CORS_ALLOWED_ORIGINS="https://kayatkin.github.io,http://loc
     - `supabase/migrations/004_lookup_share_invite.sql`
     - `supabase/migrations/005_flight_notes.sql`
     - `supabase/migrations/006_share_token_hash.sql` (lookup uses `search_path = public, extensions`, because on Supabase `digest` is in `extensions`)
+    - `supabase/migrations/007_email_owner_auth.sql` (`is_owner()` для GoTrue JWT; `custom_access_token_hook`)
 
 **Вариант B — CLI:**
 
@@ -109,14 +110,27 @@ GitHub Actions secrets (уже есть `SUPABASE_URL`, `SUPABASE_ANON_KEY`).
 
 ### Dev (браузер)
 
-1. `ALLOW_DEV_AUTH=true` в secrets.
-2. `npm run dev` — автоматически вызывается `auth-dev`.
+1. `ALLOW_DEV_AUTH=true` в secrets и `DEPLOY_AUTH_DEV=true` при деплое функций.
+2. `npm run dev` → на экране входа кнопка **Войти как разработчик** (автоматически `auth-dev` больше не вызывается).
+
+### Email (браузер)
+
+Это настройки **Dashboard**, CLI их не включает.
+
+1. Authentication → Providers → **Email** включён (Confirm email — по желанию).
+2. Authentication → URL Configuration:
+   - Site URL: `https://kayatkin.github.io/flight-tracker/`
+   - Redirect URLs: `https://kayatkin.github.io/flight-tracker/`, `https://kayatkin.github.io/flight-tracker/**`, `http://localhost:5173/flight-tracker/`, `http://localhost:5173/flight-tracker/**`
+3. Authentication → Hooks → **Custom Access Token** → `custom_access_token_hook` (после `007`). Пока хук выключен, RLS всё равно пускает GoTrue JWT: `role=authenticated` и нет `app_role`.
+4. Применить миграцию `007_email_owner_auth.sql`.
+
+Email-владелец получает `user_id` = UUID из Auth. Telegram остаётся `tg_<id>`. Это разные аккаунты, пока нет таблицы identities.
 
 ## 8. Production checklist
 
 | Шаг | Действие |
 |-----|----------|
-| RLS | Миграции `002`, `003`, `004_lookup_share_invite.sql`, `005_flight_notes.sql`, `006_share_token_hash.sql` применены |
+| RLS | Миграции `002`, `003`, `004_lookup_share_invite.sql`, `005_flight_notes.sql`, `006_share_token_hash.sql`, `007_email_owner_auth.sql` применены |
 | Anon key | Нет прямого доступа к таблицам без JWT |
 | `ALLOW_DEV_AUTH` | `false` |
 | `auth-dev` | Не задеплоен в production |
@@ -136,11 +150,13 @@ GitHub Actions secrets (уже есть `SUPABASE_URL`, `SUPABASE_ANON_KEY`).
 ## Архитектура
 
 ```
-Клиент                    Edge Functions              PostgreSQL + RLS
+Клиент                    Edge Functions / GoTrue     PostgreSQL + RLS
   │                              │                           │
   ├─ initData ──► auth-telegram ─┤── JWT (owner) ───────────►│ owner policies
   ├─ share token ► auth-guest ───┤── JWT (guest) ───────────►│ guest policies
+  ├─ email/password ► GoTrue ────┤── JWT (owner) ───────────►│ owner policies
   └─ dev userId ► auth-dev ──────┘── JWT (owner) ───────────►│ (только staging)
 ```
 
 JWT содержит `user_id`, `app_role` (`owner` | `guest`), `permissions` (`view` | `edit`) и для гостей `share_session_id`.
+Email GoTrue JWT до включения хука может быть без `app_role`; `is_owner()` это учитывает.

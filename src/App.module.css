@@ -75,6 +75,23 @@
   color: var(--tg-link-color);
 }
 
+.signOut {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--tg-link-color);
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.signOut:focus-visible {
+  outline: 2px solid var(--tg-link-color);
+  outline-offset: 2px;
+}
+
 .saveStatus {
   margin: 6px 0 0;
   font-size: 12px;

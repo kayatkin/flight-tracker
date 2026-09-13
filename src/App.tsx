@@ -2,8 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { AddFlightForm } from '@features/flights';
 import { HistoryView } from '@features/flights';
 import { GuestModeIndicator } from '@features/guest-mode';
+import { AuthScreen } from '@features/auth';
 import { Flight } from '@shared/types';
 import { KNOWN_AIRLINES, KNOWN_CITIES } from '@shared/data';
+import { supabase } from '@shared/lib';
 import {
   mergeSuggestions,
   saveStatusText,
@@ -44,9 +46,14 @@ const App: React.FC = () => {
     handleLeaveGuestMode,
     saveStatus,
     retrySave,
+    needsAuth,
+    completeAuth,
+    signOut,
   } = useFlightTracker();
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
 
   const isViewGuest = Boolean(appUser?.isGuest && appUser.permissions === 'view');
+  const canSignOut = Boolean(appUser && !appUser.isGuest && !appUser.isTelegram);
   const statusLabel = saveStatusText(saveStatus);
   const originSuggestions = useMemo(
     () => mergeSuggestions(originCities, KNOWN_CITIES),
@@ -62,11 +69,32 @@ const App: React.FC = () => {
   );
 
   useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setPasswordRecovery(true);
+      }
+    });
+    return () => {
+      data.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
     if (isViewGuest) {
       setActiveTab('history');
       setEditingFlight(null);
     }
   }, [isViewGuest]);
+
+  useEffect(() => {
+    if (!needsAuth && !passwordRecovery) return;
+    setActiveTab('add');
+    setEditingFlight(null);
+    setFormDirty(false);
+    if (typeof sessionStorage === 'undefined') return;
+    clearFormDraft(sessionStorage);
+    clearEditFormDraft(sessionStorage);
+  }, [needsAuth, passwordRecovery]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -131,6 +159,18 @@ const App: React.FC = () => {
     );
   }
 
+  if (passwordRecovery || needsAuth) {
+    return (
+      <AuthScreen
+        recoveryMode={passwordRecovery}
+        onAuthenticated={async () => {
+          setPasswordRecovery(false);
+          await completeAuth();
+        }}
+      />
+    );
+  }
+
   return (
     <div className={styles.app}>
       {appUser?.isGuest && (
@@ -146,6 +186,15 @@ const App: React.FC = () => {
         <p className={styles.greeting}>
           Привет, <strong>{userName}</strong>!
         </p>
+        {canSignOut && (
+          <button
+            type="button"
+            className={styles.signOut}
+            onClick={() => { void signOut(); }}
+          >
+            Выйти
+          </button>
+        )}
         {statusLabel && (
           <p
             className={[

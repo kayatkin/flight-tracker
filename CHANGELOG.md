@@ -5,6 +5,19 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
 версионирование — [SemVer](https://semver.org/lang/ru/).
 
+## [1.6.0] — 2026-09-13
+
+### Добавлено
+
+- Вход, регистрация и сброс пароля по email в браузере (тот же SPA, без форка)
+- Кнопка «Выйти» у email-владельца; в DEV — «Войти как разработчик» на экране входа
+- Миграция `007_email_owner_auth.sql`: `is_owner()` принимает GoTrue JWT без `app_role`, Custom Access Token hook помечает email-сессию как owner
+
+### Изменено
+
+- Браузер без Telegram больше не открывает приложение как «Только на устройстве» — сначала экран входа
+- GoTrue session для email включает auto-refresh и PKCE; custom JWT Telegram/гостя по-прежнему не обновляются
+
 ## [1.5.2] — 2026-09-13
 
 ### Добавлено

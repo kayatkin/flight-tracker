@@ -148,6 +148,52 @@ SELECT tests.expect(
 );
 RESET ROLE;
 
+-- Email/GoTrue owner JWT without app_role still owns its own rows.
+-- Real GoTrue tokens use `sub`; user_id is added only after the access-token hook.
+INSERT INTO users (user_id, name) VALUES
+  ('email_owner', 'Email'),
+  ('11111111-1111-4111-8111-aaaaaaaaaaaa', 'GoTrue');
+SELECT tests.as_jwt('{"role":"authenticated","sub":"11111111-1111-4111-8111-aaaaaaaaaaaa"}'::jsonb);
+SET ROLE authenticated;
+INSERT INTO user_flights (
+  flight_id, user_id, origin, destination, flight_type,
+  departure_date, airline, passengers, total_price, date_found
+) VALUES (
+  '66666666-6666-4666-8666-666666666666',
+  '11111111-1111-4111-8111-aaaaaaaaaaaa', 'Уфа', 'Сочи', 'oneWay',
+  '2026-09-01', 'SU', 1, 7000, '2026-08-01'
+);
+SELECT tests.expect(
+  (SELECT count(*) FROM user_flights WHERE user_id = '11111111-1111-4111-8111-aaaaaaaaaaaa') = 1,
+  'GoTrue owner JWT with only sub should insert own flights'
+);
+RESET ROLE;
+
+SELECT tests.as_jwt('{"role":"authenticated","sub":"email_owner","user_id":"email_owner"}'::jsonb);
+SET ROLE authenticated;
+INSERT INTO user_flights (
+  flight_id, user_id, origin, destination, flight_type,
+  departure_date, airline, passengers, total_price, date_found
+) VALUES (
+  '55555555-5555-4555-8555-555555555555',
+  'email_owner', 'Казань', 'Сочи', 'oneWay',
+  '2026-09-01', 'SU', 1, 8000, '2026-08-01'
+);
+SELECT tests.expect(
+  (SELECT count(*) FROM user_flights WHERE user_id = 'email_owner') = 1,
+  'email owner without app_role should insert own flights'
+);
+RESET ROLE;
+
+-- Guest JWT must not become owner just because role=authenticated.
+SELECT tests.as_jwt('{"role":"authenticated","user_id":"owner_a","app_role":"guest","permissions":"view","share_session_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"}'::jsonb);
+SET ROLE authenticated;
+SELECT tests.expect(
+  NOT EXISTS (SELECT 1 FROM user_flights WHERE user_id = 'email_owner'),
+  'guest must not see email-owner flights'
+);
+RESET ROLE;
+
 -- Anon can look up an active invite and cannot read flights.
 SET ROLE anon;
 SELECT tests.expect(

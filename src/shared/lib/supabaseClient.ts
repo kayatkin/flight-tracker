@@ -9,8 +9,9 @@ const supabaseAnonKey = env.supabaseAnonKey || 'public-anon-key';
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
-    autoRefreshToken: false,
-    detectSessionInUrl: false,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce',
     storage: typeof window !== 'undefined' ? localStorage : undefined,
   },
   global: {

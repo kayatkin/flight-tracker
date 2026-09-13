@@ -4,6 +4,22 @@ import { getDevelopmentUserId } from '@shared/utils/telegram';
 import { isRealTelegramUser } from '@shared/utils/telegramUserType';
 import { GuestUser } from '@shared/types/shared';
 import { devLog, logError } from '@shared/utils/logger';
+import {
+  authRedirectUrl,
+  mapAuthError,
+  ownerFromCustomAccessToken,
+  ownerFromGoTrueUser,
+  validateEmailAuthForm,
+} from './emailAuth';
+
+export {
+  AuthRequiredError,
+  isAuthRequiredError,
+  mapAuthError,
+  ownerFromCustomAccessToken,
+  ownerFromGoTrueUser,
+  validateEmailAuthForm,
+} from './emailAuth';
 
 interface AuthTokensResponse {
   access_token: string;
@@ -18,6 +34,20 @@ export interface OwnerAuthResult {
   userName: string;
 }
 
+export interface EmailAuthResult {
+  ok: boolean;
+  needsConfirmation?: boolean;
+  error?: string;
+}
+
+const stopCustomJwtRefresh = (): void => {
+  supabase.auth.stopAutoRefresh();
+};
+
+const startGoTrueRefresh = (): void => {
+  supabase.auth.startAutoRefresh();
+};
+
 const applySession = async (accessToken: string, refreshToken: string): Promise<void> => {
   const { error } = await supabase.auth.setSession({
     access_token: accessToken,
@@ -25,6 +55,20 @@ const applySession = async (accessToken: string, refreshToken: string): Promise<
   });
   if (error) {
     throw error;
+  }
+};
+
+const ensurePublicUser = async (userId: string, name: string): Promise<void> => {
+  const { error } = await supabase.from('users').upsert(
+    {
+      user_id: userId,
+      name,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id' }
+  );
+  if (error) {
+    logError('[AUTH] Failed to upsert public user', error);
   }
 };
 
@@ -45,6 +89,7 @@ const invokeAuth = async <T extends AuthTokensResponse>(
   }
 
   await applySession(data.access_token, data.refresh_token ?? data.access_token);
+  stopCustomJwtRefresh();
   devLog(`[AUTH] ${functionName} session applied for`, data.userId);
   return data;
 };
@@ -88,10 +133,113 @@ export const authenticateGuest = async (shareToken: string): Promise<GuestUser |
   }
 
   await applySession(data.access_token, data.refresh_token ?? data.access_token);
+  stopCustomJwtRefresh();
   return data.guestUser;
 };
 
-/** Picks Telegram → dev auth for owner sessions. */
+export const restoreGoTrueOwner = async (): Promise<OwnerAuthResult | null> => {
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session) return null;
+
+  const refresh = data.session.refresh_token;
+  const access = data.session.access_token;
+  if (!refresh || !access) return null;
+
+  if (refresh === access) {
+    const owner = ownerFromCustomAccessToken(access);
+    if (!owner) return null;
+    stopCustomJwtRefresh();
+    await ensurePublicUser(owner.userId, owner.userName);
+    return owner;
+  }
+
+  if (!data.session.user) return null;
+  const owner = ownerFromGoTrueUser(data.session.user);
+  startGoTrueRefresh();
+  await ensurePublicUser(owner.userId, owner.userName);
+  return owner;
+};
+
+export const signInWithEmail = async (
+  email: string,
+  password: string
+): Promise<EmailAuthResult> => {
+  const invalid = validateEmailAuthForm({ email, password, mode: 'login' });
+  if (invalid) return { ok: false, error: invalid };
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email.trim(),
+    password,
+  });
+  if (error || !data.user) {
+    return { ok: false, error: mapAuthError(error?.message) };
+  }
+  const owner = ownerFromGoTrueUser(data.user);
+  startGoTrueRefresh();
+  await ensurePublicUser(owner.userId, owner.userName);
+  return { ok: true };
+};
+
+export const signUpWithEmail = async (
+  email: string,
+  password: string
+): Promise<EmailAuthResult> => {
+  const invalid = validateEmailAuthForm({ email, password, mode: 'register' });
+  if (invalid) return { ok: false, error: invalid };
+
+  const { data, error } = await supabase.auth.signUp({
+    email: email.trim(),
+    password,
+    options: {
+      emailRedirectTo: authRedirectUrl(),
+      data: { name: email.trim().split('@')[0] },
+    },
+  });
+  if (error) {
+    return { ok: false, error: mapAuthError(error.message) };
+  }
+  if (!data.session || !data.user) {
+    return { ok: true, needsConfirmation: true };
+  }
+  const owner = ownerFromGoTrueUser(data.user);
+  startGoTrueRefresh();
+  await ensurePublicUser(owner.userId, owner.userName);
+  return { ok: true };
+};
+
+export const requestPasswordReset = async (email: string): Promise<EmailAuthResult> => {
+  const invalid = validateEmailAuthForm({ email, password: 'unused1', mode: 'forgot' });
+  if (invalid) return { ok: false, error: invalid };
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+    redirectTo: authRedirectUrl(),
+  });
+  if (error) {
+    return { ok: false, error: mapAuthError(error.message) };
+  }
+  return { ok: true };
+};
+
+export const updatePassword = async (password: string): Promise<EmailAuthResult> => {
+  if (password.length < 6) {
+    return { ok: false, error: 'Пароль не короче 6 символов' };
+  }
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) {
+    return { ok: false, error: mapAuthError(error.message) };
+  }
+  return { ok: true };
+};
+
+export const signOutOwner = async (): Promise<void> => {
+  await supabase.auth.signOut();
+};
+
+export const signInAsDeveloper = async (): Promise<OwnerAuthResult | null> => {
+  return authenticateDev(getDevelopmentUserId(), 'Разработчик');
+};
+
+/** Picks Telegram → saved email/dev owner session. Dev auth is opt-in from the login screen. */
 export const authenticateOwner = async (): Promise<OwnerAuthResult | null> => {
   const initData = typeof window !== 'undefined' ? window.Telegram?.WebApp?.initData : '';
 
@@ -100,10 +248,15 @@ export const authenticateOwner = async (): Promise<OwnerAuthResult | null> => {
     if (tg) return tg;
   }
 
-  if (env.isDev) {
-    return authenticateDev(getDevelopmentUserId(), 'Разработчик');
+  const restored = await restoreGoTrueOwner();
+  if (restored) return restored;
+
+  const { data } = await supabase.auth.getSession();
+  const access = data.session?.access_token;
+  const refresh = data.session?.refresh_token;
+  if (access && refresh === access) {
+    await supabase.auth.signOut();
   }
 
   return null;
 };
-
