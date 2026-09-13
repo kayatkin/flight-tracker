@@ -5,9 +5,11 @@ import {
   initializeApp, 
   getFallbackInitResult, 
   initGuestMode,
-  clearTokenFromUrl 
+  clearTokenFromUrl,
+  resetInitialization,
 } from '../../services/appInitService';
 import { persistFlightChanges } from '../../services/dataService';
+import { isAuthRequiredError, signOutOwner } from '../../services/authService';
 import { getTelegramUserType } from '../utils/telegramUserType';
 import { duplicateFlight } from '../utils/flightFormMapping';
 import { toast } from '@shared/ui/Toast';
@@ -39,6 +41,9 @@ interface UseFlightTrackerResult {
   handleJoinSession: (token: string) => Promise<void>;
   handleLeaveGuestMode: () => void;
   retrySave: () => void;
+  needsAuth: boolean;
+  completeAuth: () => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 export const useFlightTracker = (): UseFlightTrackerResult => {
@@ -52,6 +57,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
   const [loading, setLoading] = useState(true);
   const [isCheckingToken, setIsCheckingToken] = useState<boolean>(true);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [needsAuth, setNeedsAuth] = useState(false);
 
   const hydratedRef = useRef(false);
   const skipNextSaveRef = useRef(true);
@@ -117,7 +123,12 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
         });
         
         applyInitResult(initResult, true);
+        setNeedsAuth(false);
       } catch (err) {
+        if (isAuthRequiredError(err)) {
+          setNeedsAuth(true);
+          return;
+        }
         logError('[HOOK] App initialization failed:', err);
         applyInitResult(getFallbackInitResult(err), false);
       } finally {
@@ -385,6 +396,50 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     }
   }, [applyInitResult]);
 
+  const resetLocalSession = useCallback(() => {
+    setUserName('Гость');
+    setUserId('');
+    setAppUser(null);
+    setFlights([]);
+    setAirlines([]);
+    setOriginCities([]);
+    setDestinationCities([]);
+    hydratedRef.current = false;
+    skipNextSaveRef.current = true;
+    changeStampRef.current = new Map();
+    deletedIdsRef.current = new Set();
+    setSaveStatus('idle');
+  }, []);
+
+  const completeAuth = useCallback(async () => {
+    resetInitialization();
+    setNeedsAuth(false);
+    setLoading(true);
+    setIsCheckingToken(true);
+    try {
+      const initResult = await initializeApp();
+      applyInitResult(initResult, true);
+      setNeedsAuth(false);
+    } catch (err) {
+      if (isAuthRequiredError(err)) {
+        setNeedsAuth(true);
+        return;
+      }
+      logError('[HOOK] Auth completion failed:', err);
+      applyInitResult(getFallbackInitResult(err), false);
+    } finally {
+      setLoading(false);
+      setIsCheckingToken(false);
+    }
+  }, [applyInitResult]);
+
+  const signOut = useCallback(async () => {
+    await signOutOwner();
+    resetInitialization();
+    resetLocalSession();
+    setNeedsAuth(true);
+  }, [resetLocalSession]);
+
   const handleLeaveGuestMode = useCallback(() => {
     try {
       const userType = getTelegramUserType();
@@ -445,5 +500,8 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     handleJoinSession,
     handleLeaveGuestMode,
     retrySave,
+    needsAuth,
+    completeAuth,
+    signOut,
   };
 };
