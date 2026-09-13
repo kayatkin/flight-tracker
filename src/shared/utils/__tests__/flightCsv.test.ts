@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { Flight } from '../../types';
-import { downloadFlightsCsv, flightsToCsv } from '../flightCsv';
+import { downloadFlightsCsv, flightsToCsv, buildCsvFilename } from '../flightCsv';
 
 const makeFlight = (overrides: Partial<Flight> = {}): Flight => ({
   id: '1',
@@ -71,5 +71,35 @@ describe('downloadFlightsCsv', () => {
     expect(link.href).toBe('blob:csv');
     expect(click).toHaveBeenCalledTimes(1);
     expect(revoke).toHaveBeenCalledWith('blob:csv');
+  });
+
+  it('includes the route in the filename when exporting one destination', () => {
+    const click = vi.fn();
+    const link = {
+      href: '',
+      download: '',
+      click,
+    } as unknown as HTMLAnchorElement;
+
+    vi.spyOn(document, 'createElement').mockReturnValue(link);
+    vi.spyOn(document.body, 'appendChild').mockImplementation((node) => node);
+    vi.spyOn(document.body, 'removeChild').mockImplementation((node) => node);
+    URL.createObjectURL = vi.fn(() => 'blob:csv');
+    URL.revokeObjectURL = vi.fn();
+
+    downloadFlightsCsv([makeFlight()], 'Москва → Стамбул');
+
+    expect(link.download).toMatch(/^flight-tracker-Москва-Стамбул-\d{4}-\d{2}-\d{2}\.csv$/);
+  });
+});
+
+describe('buildCsvFilename', () => {
+  it('uses only the date for the full history file', () => {
+    expect(buildCsvFilename()).toMatch(/^flight-tracker-\d{4}-\d{2}-\d{2}\.csv$/);
+    expect(buildCsvFilename('   ')).toMatch(/^flight-tracker-\d{4}-\d{2}-\d{2}\.csv$/);
+  });
+
+  it('strips characters that break filenames', () => {
+    expect(buildCsvFilename('A/B:C')).toMatch(/^flight-tracker-A B C-\d{4}-\d{2}-\d{2}\.csv$/);
   });
 });

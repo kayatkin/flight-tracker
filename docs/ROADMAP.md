@@ -22,6 +22,7 @@
 - Error Boundary, черновик правки, per-row save, хеш share-токена, CORS allowlist
 - Деплой Pages ждёт полный CI, включая RLS и Deno functions
 - Coverage в CI, ESLint бота, deno lint functions, чистка мёртвого CSS
+- Компактная панель истории, потолок высоты заметки, CSV по маршруту
 
 ## Можно делать дальше без ломки продукта
 

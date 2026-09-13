@@ -43,12 +43,24 @@ export const flightsToCsv = (flights: Flight[]): string => {
   return `\uFEFF${[header, ...rows].join('\n')}`;
 };
 
-export const downloadFlightsCsv = (flights: Flight[]): void => {
+export const buildCsvFilename = (scope?: string): string => {
+  const date = toLocalISODate();
+  if (!scope?.trim()) return `flight-tracker-${date}.csv`;
+  const slug = scope
+    .replace(/\s*[→]\s*/g, '-')
+    .replace(/[\\/:*?"<>|]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 80);
+  return `flight-tracker-${slug || 'route'}-${date}.csv`;
+};
+
+export const downloadFlightsCsv = (flights: Flight[], scope?: string): void => {
   const blob = new Blob([flightsToCsv(flights)], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `flight-tracker-${toLocalISODate()}.csv`;
+  link.download = buildCsvFilename(scope);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

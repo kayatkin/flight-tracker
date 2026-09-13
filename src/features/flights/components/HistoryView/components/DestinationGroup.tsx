@@ -1,5 +1,7 @@
 import React from 'react';
 import { Flight } from '@shared/types';
+import { downloadFlightsCsv } from '@shared/utils';
+import { toast } from '@shared/ui/Toast';
 import { FlightCard } from './FlightCard';
 import { formatPrice, formatDateToDMY, splitBestAndOthers, type HistorySort } from '../utils/historyViewHelpers';
 import styles from '../HistoryView.module.css';
@@ -67,17 +69,34 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
               {guestPermissions === 'edit' ? '✏️' : '👁️'}
             </span>
           )}
-          <button
-            className={styles.chartButton}
-            onClick={(e) => {
-              e.stopPropagation();
-              onShowChart();
-            }}
-            title="График сезонности цен"
-            disabled={flights.length < 2}
-          >
-            📈
-          </button>
+          <div className={styles.headerActions}>
+            <button
+              type="button"
+              className={styles.chartButton}
+              onClick={(e) => {
+                e.stopPropagation();
+                onShowChart();
+              }}
+              title="График сезонности цен"
+              aria-label="График сезонности цен"
+              disabled={flights.length < 2}
+            >
+              📈
+            </button>
+            <button
+              type="button"
+              className={styles.routeExportButton}
+              onClick={(e) => {
+                e.stopPropagation();
+                downloadFlightsCsv(flights, destination);
+                toast(`Скачан маршрут: ${destination} (${flights.length})`, 'success');
+              }}
+              title={`Скачать маршрут «${destination}» в CSV`}
+              aria-label={`Скачать маршрут ${destination} в CSV`}
+            >
+              ⬇️
+            </button>
+          </div>
         </div>
 
         <div className={styles.cardPrice}>

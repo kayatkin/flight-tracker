@@ -49,10 +49,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         onChange={(e) => onSearchChange(e.target.value)}
         className={styles.searchInput}
       />
-      <div className={styles.sortRow}>
-        <label className={styles.sortLabel} htmlFor="history-sort">
-          Сортировка
-        </label>
+      <div className={styles.searchToolbar}>
         <select
           id="history-sort"
           className={styles.sortSelect}
@@ -69,24 +66,40 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             </option>
           ))}
         </select>
-      </div>
-      <div className={styles.searchToolbar}>
-        <div className={styles.flightCount}>
+        <span
+          className={styles.flightCount}
+          title={
+            isFiltering
+              ? `Найдено ${visibleCount} из ${totalFlights}`
+              : `Всего билетов: ${totalFlights}`
+          }
+        >
           {isFiltering ? (
-            <>Найдено: <strong>{visibleCount}</strong> из {totalFlights}</>
+            <>
+              <strong>{visibleCount}</strong>/{totalFlights}
+            </>
           ) : (
-            <>Всего билетов: <strong>{totalFlights}</strong></>
+            <strong>{totalFlights}</strong>
           )}
-        </div>
+        </span>
         {totalFlights > 0 && (
           <button
             type="button"
             className={styles.exportButton}
             onClick={handleExport}
             disabled={visibleCount === 0}
-            aria-label="Экспортировать видимые билеты в CSV"
+            title={
+              isFiltering
+                ? 'Скачать найденные билеты в CSV'
+                : 'Скачать все билеты на экране в CSV'
+            }
+            aria-label={
+              isFiltering
+                ? 'Скачать найденные билеты в CSV'
+                : 'Скачать все билеты на экране в CSV'
+            }
           >
-            ⬇️ CSV
+            CSV
           </button>
         )}
       </div>
