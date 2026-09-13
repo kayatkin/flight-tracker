@@ -120,11 +120,12 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
         Войдите по email, чтобы пользоваться приложением в браузере без Telegram.
       </p>
 
+      {mode !== 'forgot' && (
       <div className={styles.tabs} role="tablist">
         <button
           type="button"
           role="tab"
-          aria-selected={mode !== 'forgot' && mode === 'login'}
+          aria-selected={mode === 'login'}
           className={`${styles.tab} ${mode === 'login' ? styles.tabActive : ''}`}
           onClick={() => { setMode('login'); setError(null); setInfo(null); }}
         >
@@ -140,6 +141,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
           Регистрация
         </button>
       </div>
+      )}
 
       <form className={styles.form} onSubmit={submit}>
         <label className={styles.label} htmlFor="auth-email">Email</label>
