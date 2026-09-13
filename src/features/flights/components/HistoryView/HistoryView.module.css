@@ -182,7 +182,7 @@
 
 .searchContainer {
   position: relative;
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-3);
 }
 
 .searchInput {
@@ -205,21 +205,16 @@
   border-color: var(--tg-link);
 }
 
-.sortRow {
+.searchToolbar {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   margin-top: var(--space-2);
 }
 
-.sortLabel {
-  flex-shrink: 0;
-  font-size: var(--font-size-sm);
-  color: var(--tg-hint);
-}
-
 .sortSelect {
   flex: 1;
+  min-width: 0;
   min-height: 36px;
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--tg-hint);
@@ -228,6 +223,42 @@
   color: var(--tg-text);
   font-size: var(--font-size-sm);
   font-weight: 600;
+}
+
+.flightCount {
+  flex-shrink: 0;
+  font-size: var(--font-size-sm);
+  color: var(--tg-hint);
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.flightCount strong {
+  color: var(--tg-text);
+  font-weight: 600;
+}
+
+.exportButton {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--tg-hint);
+  border-radius: var(--radius-lg);
+  background-color: var(--tg-card-bg);
+  color: var(--tg-text);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 36px;
+}
+
+.exportButton:hover {
+  background-color: var(--tg-active-bg);
+  border-color: var(--tg-link);
+}
+
+.exportButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .emptyState {
@@ -303,8 +334,16 @@
   font-weight: var(--font-weight-normal);
 }
 
-.chartButton {
+.headerActions {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 0;
+}
+
+.chartButton,
+.routeExportButton {
   background: none;
   border: none;
   font-size: var(--font-size-xl);
@@ -315,9 +354,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
 }
 
-.chartButton:hover {
+.chartButton:hover,
+.routeExportButton:hover {
   opacity: 0.8;
 }
 
@@ -498,54 +540,6 @@
   font-size: var(--font-size-xs);
   margin-left: var(--space-2);
   font-weight: var(--font-weight-semibold);
-}
-
-/* Счетчик билетов */
-.searchToolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-}
-
-.flightCount {
-  margin-top: 0;
-  flex: 1;
-  font-size: var(--font-size-sm);
-  color: var(--tg-hint);
-  text-align: center;
-  padding: var(--space-2);
-  background: var(--tg-active-bg);
-  border-radius: var(--radius-lg);
-}
-
-.flightCount strong {
-  color: var(--tg-text);
-  font-size: var(--font-size-lg);
-}
-
-.exportButton {
-  flex-shrink: 0;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--tg-hint);
-  border-radius: var(--radius-lg);
-  background-color: var(--tg-card-bg);
-  color: var(--tg-text);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  cursor: pointer;
-  min-height: 36px;
-}
-
-.exportButton:hover {
-  background-color: var(--tg-active-bg);
-  border-color: var(--tg-link);
-}
-
-.exportButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 /* Улучшенные стили для карточек */
