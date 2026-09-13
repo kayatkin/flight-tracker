@@ -1,4 +1,4 @@
-import { analyzeFlightPrice, FlightAnalysis } from '../flightAnalysis';
+import { analyzeFlightPrice } from '../flightAnalysis';
 import { Flight } from '../../types';
 
 const makeFlight = (overrides: Partial<Flight> = {}): Flight => ({

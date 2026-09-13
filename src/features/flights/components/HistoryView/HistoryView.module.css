@@ -176,31 +176,6 @@
   line-height: var(--line-height-normal);
 }
 
-/* Удаляем старый контейнер кнопок */
-.actionButtonsContainer {
-  display: none;
-}
-
-.actionHint {
-  display: none;
-}
-
-/* Контейнер для формы присоединения внутри аккордеона */
-.joinFormWrapper {
-  margin: var(--space-5) 0;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-md);
-}
-
-/* Контейнер для списка приглашений */
-.sessionsListWrapper {
-  margin: var(--space-5) 0;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-md);
-}
-
 /* ====================== */
 /* ПОИСК И ОСНОВНОЙ КОНТЕНТ */
 /* ====================== */
@@ -456,12 +431,6 @@
   color: var(--tg-link);
 }
 
-.perPerson {
-  font-size: var(--font-size-xs);
-  color: var(--tg-hint);
-  margin-top: var(--space-1);
-}
-
 /* НОВЫЕ СТИЛИ ДЛЯ МЕТА-СТРОКИ С КНОПКОЙ УДАЛЕНИЯ */
 .meta {
   display: flex;
@@ -522,73 +491,6 @@
   transform: scale(1.05);
 }
 
-/* Фильтры */
-.filters {
-  display: flex;
-  gap: var(--space-2);
-  margin-bottom: var(--space-4);
-  flex-wrap: wrap;
-}
-
-.filterGroup {
-  flex: 1;
-  min-width: 120px;
-}
-
-.filterLabel {
-  font-size: var(--font-size-xs);
-  color: var(--tg-hint);
-  margin-bottom: var(--space-1);
-  display: block;
-}
-
-.filterSelect {
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--tg-hint);
-  border-radius: var(--radius-md);
-  background-color: var(--tg-card-bg);
-  color: var(--tg-text);
-  font-size: var(--font-size-sm);
-}
-
-/* Индикатор гостевого режима */
-.guestIndicator {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-4) var(--space-5);
-  background: var(--gradient-warning);
-  border-radius: var(--radius-xl);
-  margin-bottom: var(--space-5);
-  color: var(--tg-button-text);
-  box-shadow: var(--shadow-warning);
-}
-
-.guestIcon {
-  font-size: var(--font-size-xxxl);
-  flex-shrink: 0;
-}
-
-.guestInfo {
-  flex: 1;
-}
-
-.guestTitle {
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-md);
-  opacity: 0.95;
-  margin-bottom: var(--space-1);
-}
-
-.guestPermissions {
-  font-size: var(--font-size-sm);
-  opacity: 0.9;
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-
 .guestBadge {
   background: var(--color-overlay-light-25);
   padding: 3px var(--space-2);
@@ -596,23 +498,6 @@
   font-size: var(--font-size-xs);
   margin-left: var(--space-2);
   font-weight: var(--font-weight-semibold);
-}
-
-/* Дополнительные стили для пустого состояния */
-.guestHint {
-  margin-top: var(--space-5);
-  padding: var(--space-4);
-  background: var(--tg-active-bg);
-  border-radius: var(--radius-lg);
-  border-left: 5px solid var(--tg-link);
-  box-shadow: var(--shadow-primary);
-}
-
-.guestHint p {
-  margin: var(--space-2) 0;
-  color: var(--tg-text);
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-normal);
 }
 
 /* Счетчик билетов */
@@ -747,26 +632,6 @@
     gap: var(--space-1);
   }
   
-  .guestIndicator {
-    flex-direction: column;
-    text-align: center;
-    gap: var(--space-2);
-    padding: var(--space-3);
-  }
-  
-  .guestIcon {
-    font-size: var(--font-size-xxl);
-  }
-  
-  .filters {
-    flex-direction: column;
-    gap: var(--space-2);
-  }
-  
-  .filterGroup {
-    min-width: 100%;
-  }
-  
   .cardHeader {
     padding: var(--space-2) var(--space-3);
   }
@@ -828,18 +693,6 @@
   .accessFooter {
     margin-top: var(--space-5);
     padding-top: var(--space-4);
-  }
-  
-  .guestIndicator {
-    padding: var(--space-3);
-  }
-  
-  .guestTitle {
-    font-size: var(--font-size-sm);
-  }
-  
-  .guestPermissions {
-    font-size: var(--font-size-sm);
   }
 }
 

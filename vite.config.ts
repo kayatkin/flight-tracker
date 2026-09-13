@@ -40,5 +40,22 @@ export default defineConfig({
       VITE_SUPABASE_ANON_KEY: 'test-anon-key',
       VITE_TELEGRAM_BOT_USERNAME: 'test_flight_bot',
     },
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'text-summary'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/**/*.d.ts',
+        'src/**/__tests__/**',
+        'src/**/*.test.*',
+        'src/index.tsx',
+      ],
+      thresholds: {
+        lines: 20,
+        functions: 60,
+        statements: 20,
+        branches: 60,
+      },
+    },
   },
 });

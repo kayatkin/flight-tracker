@@ -5,6 +5,23 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
 версионирование — [SemVer](https://semver.org/lang/ru/).
 
+## [1.5.1] — 2026-09-13
+
+### Добавлено
+
+- Coverage Vitest в CI (`npm run test:coverage`): пол ≥ 20% lines/statements, ≥ 60% functions/branches
+- ESLint для `bot/**/*.js` вместе с корневым `npm run lint`
+- `deno lint` для Edge Functions рядом с `deno check` (URL-импорты `esm.sh` как у Supabase; убран лишний `async` у HMAC)
+
+### Изменено
+
+- Vitest 3.2.7 (патч закрывает critical path-traversal UI, без перехода на Vitest 5)
+
+### Исправлено
+
+- Убраны неиспользуемые CSS-классы в форме, истории, шаринге и графике
+- `lookup` бота больше не оставляет неиспользуемый `catch (error)`
+
 ## [1.5.0] — 2026-09-11
 
 ### Добавлено

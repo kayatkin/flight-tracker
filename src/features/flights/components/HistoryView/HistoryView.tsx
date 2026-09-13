@@ -145,7 +145,6 @@ const HistoryView: React.FC<HistoryViewProps> = ({
     return (
       <EmptyState
         isGuest={isGuest}
-        guestPermissions={guestPermissions}
         flights={flights}
         userId={userId}
         onJoin={onJoin}

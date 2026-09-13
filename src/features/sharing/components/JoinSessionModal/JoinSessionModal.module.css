@@ -44,21 +44,6 @@
     }
   }
   
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--space-6) var(--space-6) var(--space-4);
-    border-bottom: 1px solid var(--tg-border);
-  }
-  
-  .header h3 {
-    margin: 0;
-    font-size: var(--font-size-lg);
-    color: var(--tg-text);
-    font-weight: var(--font-weight-semibold);
-  }
-  
   .closeButton {
     background: none;
     border: none;

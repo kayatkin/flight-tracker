@@ -105,7 +105,7 @@ bot.onText(/\/start(.+)?/, async (msg, match) => {
           : undefined,
       }
     );
-  } catch (error) {
+  } catch {
     console.error('/start failed');
     await bot.sendMessage(
       chatId,

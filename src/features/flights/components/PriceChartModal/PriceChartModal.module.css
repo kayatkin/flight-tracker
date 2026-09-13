@@ -86,31 +86,6 @@
   border-top: 1px solid var(--tg-border-color, #eee);
 }
 
-.legendItem {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-  gap: 10px;
-}
-
-.legendColor {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.legendText {
-  flex: 1;
-  font-size: 13px;
-  color: var(--tg-text-color, #333);
-}
-
-.legendValue {
-  font-weight: 600;
-  color: var(--tg-link-color, #0088cc);
-}
-
 /* Адаптивность */
 @media (max-width: 480px) {
   .modalContent {
@@ -169,49 +144,4 @@
 /* Стили для Chart.js в темной теме */
 [data-tg-theme] .chartContainer canvas {
   filter: brightness(0.9);
-}
-
-/* Дополнительные элементы управления */
-.modalControls {
-  display: flex;
-  gap: 10px;
-  padding: 0 20px 16px;
-  justify-content: center;
-}
-
-.controlButton {
-  padding: 8px 16px;
-  background: var(--tg-bg-color, #f0f0f0);
-  border: 1px solid var(--tg-border-color, #ddd);
-  border-radius: 8px;
-  color: var(--tg-text-color, #333);
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.controlButton:hover {
-  background: var(--tg-active-bg, rgba(0, 0, 0, 0.05));
-  border-color: var(--tg-link-color, #0088cc);
-}
-
-.controlButton.active {
-  background: var(--tg-link-color, #0088cc);
-  color: white;
-  border-color: var(--tg-link-color, #0088cc);
-}
-
-/* Информационная панель */
-.infoPanel {
-  padding: 12px 20px;
-  background: var(--tg-active-bg, rgba(0, 136, 204, 0.1));
-  border-radius: 8px;
-  margin: 0 20px 16px;
-  font-size: 14px;
-  color: var(--tg-text-color, #333);
-  border-left: 4px solid var(--tg-link-color, #0088cc);
-}
-
-.infoPanel strong {
-  color: var(--tg-link-color, #0088cc);
 }
