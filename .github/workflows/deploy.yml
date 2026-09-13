@@ -45,7 +45,8 @@ jobs:
       - name: Typecheck Edge Functions
         run: deno check supabase/functions/_shared/*.ts supabase/functions/auth-telegram/index.ts supabase/functions/auth-guest/index.ts supabase/functions/auth-dev/index.ts
       - name: Lint Edge Functions
-        run: deno lint supabase/functions
+        working-directory: supabase/functions
+        run: deno lint
 
   bot:
     runs-on: ubuntu-latest

@@ -11,7 +11,7 @@
 
 - Coverage Vitest в CI (`npm run test:coverage`): пол ≥ 20% lines/statements, ≥ 60% functions/branches
 - ESLint для `bot/**/*.js` вместе с корневым `npm run lint`
-- `deno lint` для Edge Functions рядом с `deno check`
+- `deno lint` для Edge Functions рядом с `deno check` (URL-импорты `esm.sh` как у Supabase; убран лишний `async` у HMAC)
 
 ### Изменено
 
