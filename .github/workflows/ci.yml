@@ -50,6 +50,8 @@ jobs:
       - name: Lint Edge Functions
         working-directory: supabase/functions
         run: deno lint
+      - name: Test JWT helpers
+        run: deno test --allow-env supabase/functions/_shared/jwt_test.ts
 
   bot:
     runs-on: ubuntu-latest

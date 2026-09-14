@@ -26,6 +26,7 @@
 - Вход по email в браузере (регистрация, сброс пароля), Mini App в Telegram без изменений
 - Связка Telegram ↔ email: кнопка «Аккаунт», пароль обязателен, истории сливаются без молчаливой потери билетов
 - Настоящий refresh для Telegram/гостя (opaque-токен, не копия access) и каталог русских строк вместо JSX
+- Dual-key JWT: ES256 с `kid` при своём JWK, проверка HS256 и JWKS, `link-email` без gateway verify
 
 ## Можно делать дальше без ломки продукта
 
@@ -36,6 +37,6 @@
 - Монетизация / Stars / i18n EN+RU с ветки `feature/monetization-i18n` — большой конфликт с текущей `main`, не мержить вслепую.
 - Сайт-аналог на VPS: тот же SPA уже умеет вход по email; VPS — отдельный хостинг, не форк кода.
 - Смена визуального языка карточек и сетки экрана.
-- Asymmetric JWT Supabase (нужна ротация ключей в Dashboard).
+- Отозвать legacy JWT Secret и перейти на publishable/`sb_` API keys — ломает GitHub Pages `VITE_SUPABASE_ANON_KEY`, пока клиент не сменит ключ.
 
 Подробности по дырам прошлого: [CODE_AUDIT.md](./CODE_AUDIT.md). Как пользоваться: [USER_GUIDE.md](./USER_GUIDE.md).

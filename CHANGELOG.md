@@ -1,3 +1,15 @@
+## [1.9.0] — 2026-09-14
+
+### Добавлено
+
+- Dual-key JWT в Edge Functions: при `JWT_SIGNING_PRIVATE_JWK` access подписывается ES256 с `kid`, иначе по-прежнему HS256
+- `verifyOwnerToken` проверяет ES256/RS256 по JWKS и HS256 по `JWT_SECRET` (гости по-прежнему отклоняются)
+- Deno-тесты roundtrip HS256/ES256/RS256 в CI
+
+### Изменено
+
+- `link-email` деплоится с `--no-verify-jwt`: после ротации signing keys шлюз Auth ломает gateway-verify; проверка владельца остаётся в функции
+
 ## [1.8.0] — 2026-09-14
 
 ### Добавлено

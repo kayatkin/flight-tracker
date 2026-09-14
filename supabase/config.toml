@@ -20,7 +20,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.link-email]
-verify_jwt = true
+verify_jwt = false
 
 [functions.auth-refresh]
 verify_jwt = false

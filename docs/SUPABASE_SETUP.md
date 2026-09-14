@@ -31,6 +31,8 @@ supabase secrets set ALLOW_DEV_AUTH="false"
 
 Для staging-окружения (не production) можно отдельно включить `ALLOW_DEV_AUTH=true` и задеплоить `auth-dev` через `DEPLOY_AUTH_DEV=true`.
 
+`JWT_SIGNING_PRIVATE_JWK` пока не ставьте: без него functions подписывают HS256, как раньше. Импорт ES256-ключа — отдельный шаг после деплоя кода, см. раздел 9. Не кладите private JWK в git, `.env.local` и чаты.
+
 Опционально сузить CORS ещё сильнее:
 
 ```bash
@@ -81,10 +83,10 @@ DEPLOY_AUTH_DEV=true npm run supabase:deploy
 supabase functions deploy auth-telegram --no-verify-jwt
 supabase functions deploy auth-guest --no-verify-jwt
 supabase functions deploy auth-refresh --no-verify-jwt
-supabase functions deploy link-email
+supabase functions deploy link-email --no-verify-jwt
 ```
 
-`--no-verify-jwt` нужен для `auth-*`, потому что клиент ещё не авторизован. `link-email` деплоится **с** проверкой JWT (владелец уже вошёл).
+`--no-verify-jwt` нужен для `auth-*`, потому что клиент ещё не авторизован. Для `link-email` шлюз тоже выключен: после ротации signing keys gateway-verify ломается, а владелец проверяется внутри функции (`verifyOwnerToken`).
 
 ## 6. Переменные фронтенда
 
@@ -127,7 +129,7 @@ GitHub Actions secrets (уже есть `SUPABASE_URL`, `SUPABASE_ANON_KEY`).
    - Redirect URLs: `https://kayatkin.github.io/flight-tracker/`, `https://kayatkin.github.io/flight-tracker/**`, `http://localhost:5173/flight-tracker/`, `http://localhost:5173/flight-tracker/**`
 3. Authentication → Hooks → **Custom Access Token** → `custom_access_token_hook` (после `007`; `008` только обновляет функцию).
 4. Применить миграции `007_email_owner_auth.sql` и `008_user_identities.sql`.
-5. Задеплоить `link-email` **без** `--no-verify-jwt` (`npm run supabase:deploy`).
+5. Задеплоить `link-email` с `--no-verify-jwt` (`npm run supabase:deploy`). Проверка владельца — в `verifyOwnerToken`.
 
 После `008` email-JWT получает канонический `user_id` из `user_identities`. Telegram `auth-telegram` тоже выдаёт этот id. Связка: Mini App → **Аккаунт** → email + пароль. Два Telegram к одному email не сливаются.
 
@@ -139,16 +141,17 @@ GitHub Actions secrets (уже есть `SUPABASE_URL`, `SUPABASE_ANON_KEY`).
 | Anon key | Нет прямого доступа к таблицам без JWT |
 | `ALLOW_DEV_AUTH` | `false` |
 | `auth-dev` | Не задеплоен в production |
-| `JWT_SECRET` | Установлен в secrets |
+| `JWT_SECRET` | Установлен в secrets (пока не отзываем, даже после ES256) |
 | `BOT_TOKEN` | Совпадает с ботом Mini App |
-| `link-email` | Задеплоен **с** проверкой JWT |
+| `link-email` | Задеплоен с `--no-verify-jwt`; проверка JWT внутри функции |
 | Отзыв шаринга | После revoke гостевой JWT с `share_session_id` теряет доступ |
 
 ## Устранение проблем
 
 | Симптом | Решение |
 |---------|---------|
-| `JWT_SECRET is not set` | `supabase secrets set JWT_SECRET=...` |
+| `JWT_SECRET is not set` | `supabase secrets set JWT_SECRET=...` (нужен, пока нет `JWT_SIGNING_PRIVATE_JWK`) |
+| `JWT_SIGNING_PRIVATE_JWK is not valid JSON` | Секрет должен быть одним JSON-объектом JWK, в одинарных кавычках в shell |
 | `Invalid Telegram initData` | Проверьте `BOT_TOKEN` (тот же бот, что открывает Mini App) |
 | `new row violates row-level security` | Не вызван auth-* или истёк JWT — перезагрузите приложение |
 | `Dev auth is disabled` | `ALLOW_DEV_AUTH=true` или откройте через Telegram |
@@ -167,3 +170,31 @@ GitHub Actions secrets (уже есть `SUPABASE_URL`, `SUPABASE_ANON_KEY`).
 
 JWT содержит `user_id`, `app_role` (`owner` | `guest`), `permissions` (`view` | `edit`) и для гостей `share_session_id`.
 Email GoTrue JWT до включения хука может быть без `app_role`; `is_owner()` это учитывает.
+
+Custom JWT от `auth-*` подписывается HS256 (`JWT_SECRET`) или ES256 (`JWT_SIGNING_PRIVATE_JWK` + `kid`). Issuer остаётся `supabase`, чтобы не путать с GoTrue `…/auth/v1`.
+
+## 9. Asymmetric JWT (отдельный шаг после деплоя кода)
+
+Это **не** часть `git pull`. Сначала выкатайте functions из раздела 5 — они уже умеют dual-key. Пока `JWT_SIGNING_PRIVATE_JWK` не задан, подпись остаётся HS256.
+
+Когда будете готовы включить ES256:
+
+1. Сгенерируйте ключ локально (private JWK целиком сохраните у себя, Dashboard его обратно не отдаст):
+
+   ```bash
+   supabase gen signing-key --algorithm ES256
+   ```
+
+2. Dashboard → Project Settings → JWT Keys → **Import** этот JWK как **standby** (не сразу current).
+3. Тот же JSON положите в секрет функции:
+
+   ```bash
+   supabase secrets set JWT_SIGNING_PRIVATE_JWK='{"kty":"EC","kid":"...","crv":"P-256","x":"...","y":"...","d":"..."}'
+   ```
+
+   Опционально `JWT_SIGNING_KID`, если `kid` в JSON другой.
+4. Подождите не меньше ~20 минут: JWKS на Edge кэшируется (~10 мин), плюс запас.
+5. В Dashboard нажмите **Rotate**, чтобы standby стал current. GoTrue и PostgREST начнут принимать ES256; старые HS256 access ещё живут до `exp` (1 час), refresh выдаст уже ES256.
+6. **Не отзывайте** legacy JWT Secret на этом шаге. Отзыв и переход на publishable/`sb_` ключи — отдельное явное «да»: GitHub Pages сейчас ходит с JWT-based `VITE_SUPABASE_ANON_KEY`.
+
+После Rotate не включайте снова gateway «Verify JWT» на `link-email`.
