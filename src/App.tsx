@@ -5,7 +5,11 @@ import { GuestModeIndicator } from '@features/guest-mode';
 import { AuthScreen } from '@features/auth';
 import { Flight } from '@shared/types';
 import { KNOWN_AIRLINES, KNOWN_CITIES } from '@shared/data';
-import { supabase } from '@shared/lib';
+import {
+  clearPasswordRecovery,
+  isPasswordRecoveryPending,
+  subscribePasswordRecovery,
+} from '@services/authRecovery';
 import {
   mergeSuggestions,
   saveStatusText,
@@ -50,7 +54,7 @@ const App: React.FC = () => {
     completeAuth,
     signOut,
   } = useFlightTracker();
-  const [passwordRecovery, setPasswordRecovery] = useState(false);
+  const [passwordRecovery, setPasswordRecovery] = useState(isPasswordRecoveryPending);
 
   const isViewGuest = Boolean(appUser?.isGuest && appUser.permissions === 'view');
   const canSignOut = Boolean(appUser && !appUser.isGuest && !appUser.isTelegram);
@@ -68,16 +72,9 @@ const App: React.FC = () => {
     [airlines]
   );
 
-  useEffect(() => {
-    const { data } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setPasswordRecovery(true);
-      }
-    });
-    return () => {
-      data.subscription.unsubscribe();
-    };
-  }, []);
+  useEffect(() => subscribePasswordRecovery(() => {
+    setPasswordRecovery(true);
+  }), []);
 
   useEffect(() => {
     if (isViewGuest) {
@@ -149,6 +146,19 @@ const App: React.FC = () => {
     next();
   };
 
+  if (passwordRecovery) {
+    return (
+      <AuthScreen
+        recoveryMode
+        onAuthenticated={async () => {
+          clearPasswordRecovery();
+          setPasswordRecovery(false);
+          await completeAuth();
+        }}
+      />
+    );
+  }
+
   if (loading || isCheckingToken) {
     return (
       <div className={`${styles.app} ${styles.loadingScreen}`}>
@@ -159,12 +169,10 @@ const App: React.FC = () => {
     );
   }
 
-  if (passwordRecovery || needsAuth) {
+  if (needsAuth) {
     return (
       <AuthScreen
-        recoveryMode={passwordRecovery}
         onAuthenticated={async () => {
-          setPasswordRecovery(false);
           await completeAuth();
         }}
       />

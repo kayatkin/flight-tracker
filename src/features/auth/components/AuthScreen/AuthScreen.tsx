@@ -23,6 +23,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
   const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -34,6 +35,10 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
     setBusy(true);
     try {
       if (recoveryMode) {
+        if (password !== confirmPassword) {
+          setError('Пароли не совпадают');
+          return;
+        }
         const result = await updatePassword(password);
         if (!result.ok) {
           setError(result.error ?? 'Не удалось сохранить пароль');
@@ -49,7 +54,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
           setError(result.error ?? 'Не удалось отправить письмо');
           return;
         }
-        setInfo('Если аккаунт есть, отправили ссылку для сброса пароля.');
+        setInfo('Если аккаунт есть, отправили ссылку. Откройте её в этом же браузере.');
         return;
       }
 
@@ -101,6 +106,17 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
             autoComplete="new-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
+            minLength={6}
+            required
+          />
+          <label className={styles.label} htmlFor="auth-password-confirm">Повторите пароль</label>
+          <input
+            id="auth-password-confirm"
+            className={styles.input}
+            type="password"
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
             minLength={6}
             required
           />

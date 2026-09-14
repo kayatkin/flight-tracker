@@ -4,9 +4,11 @@ import {
   authRedirectUrl,
   decodeJwtPayload,
   isAuthRequiredError,
+  isRecoveryCallback,
   mapAuthError,
   ownerFromCustomAccessToken,
   ownerFromGoTrueUser,
+  parseAuthCallbackParams,
   validateEmailAuthForm,
 } from '../emailAuth';
 
@@ -89,7 +91,31 @@ describe('emailAuth helpers', () => {
     );
     expect(mapAuthError('Too many requests')).toBe('Слишком много попыток. Подождите минуту.');
     expect(mapAuthError('User not found')).toBe('Аккаунт с таким email не найден');
+    expect(mapAuthError('invalid pkce code verifier')).toBe(
+      'Откройте ссылку из письма в том же браузере, где нажали «Забыли пароль».'
+    );
+    expect(mapAuthError('otp_expired')).toBe('Ссылка устарела. Запросите сброс пароля ещё раз.');
     expect(mapAuthError('something else')).toBe('Не удалось войти. Попробуйте ещё раз.');
+  });
+
+  it('parses recovery callbacks from query and hash', () => {
+    expect(parseAuthCallbackParams(
+      'https://kayatkin.github.io/flight-tracker/?token_hash=abc&type=recovery'
+    )).toEqual({
+      type: 'recovery',
+      token_hash: 'abc',
+      access_token: undefined,
+      refresh_token: undefined,
+      code: undefined,
+      error: undefined,
+      error_description: undefined,
+    });
+    expect(isRecoveryCallback(parseAuthCallbackParams(
+      'https://example.test/flight-tracker/#access_token=tok&refresh_token=ref&type=recovery'
+    ))).toBe(true);
+    expect(isRecoveryCallback(parseAuthCallbackParams(
+      'https://example.test/flight-tracker/?code=pkce'
+    ))).toBe(false);
   });
 
   it('validates email/password forms', () => {

@@ -67,10 +67,26 @@ describe('AuthScreen', () => {
     render(<AuthScreen onAuthenticated={onAuthenticated} recoveryMode />);
 
     await user.type(screen.getByLabelText('Новый пароль'), 'secret1');
+    await user.type(screen.getByLabelText('Повторите пароль'), 'secret1');
     await user.click(screen.getByRole('button', { name: 'Сохранить пароль' }));
 
     expect(updatePassword).toHaveBeenCalledWith('secret1');
     expect(onAuthenticated).toHaveBeenCalled();
+  });
+
+  it('rejects mismatched recovery passwords', async () => {
+    const user = userEvent.setup();
+    const onAuthenticated = vi.fn();
+
+    render(<AuthScreen onAuthenticated={onAuthenticated} recoveryMode />);
+
+    await user.type(screen.getByLabelText('Новый пароль'), 'secret1');
+    await user.type(screen.getByLabelText('Повторите пароль'), 'secret2');
+    await user.click(screen.getByRole('button', { name: 'Сохранить пароль' }));
+
+    expect(updatePassword).not.toHaveBeenCalled();
+    expect(onAuthenticated).not.toHaveBeenCalled();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Пароли не совпадают');
   });
 
   it('requests a reset email from the forgot-password view', async () => {

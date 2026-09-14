@@ -11,7 +11,68 @@ export const isAuthRequiredError = (error: unknown): boolean =>
 
 export const authRedirectUrl = (): string | undefined => {
   if (typeof window === 'undefined') return undefined;
-  return `${window.location.origin}${window.location.pathname}`;
+  const url = `${window.location.origin}${window.location.pathname}`;
+  return url.endsWith('/') ? url : `${url}/`;
+};
+
+export type AuthCallbackParams = {
+  type?: string;
+  token_hash?: string;
+  access_token?: string;
+  refresh_token?: string;
+  code?: string;
+  error?: string;
+  error_description?: string;
+};
+
+export const parseAuthCallbackParams = (href?: string): AuthCallbackParams => {
+  const raw = href ?? (typeof window !== 'undefined' ? window.location.href : '');
+  if (!raw) return {};
+  try {
+    const url = new URL(raw);
+    const hash = new URLSearchParams(url.hash.startsWith('#') ? url.hash.slice(1) : url.hash);
+    const pick = (key: string): string | undefined =>
+      url.searchParams.get(key) || hash.get(key) || undefined;
+    return {
+      type: pick('type'),
+      token_hash: pick('token_hash'),
+      access_token: pick('access_token'),
+      refresh_token: pick('refresh_token'),
+      code: pick('code'),
+      error: pick('error'),
+      error_description: pick('error_description'),
+    };
+  } catch {
+    return {};
+  }
+};
+
+export const isRecoveryCallback = (params: AuthCallbackParams): boolean =>
+  params.type === 'recovery';
+
+export const AUTH_CALLBACK_KEYS = [
+  'code',
+  'type',
+  'token_hash',
+  'access_token',
+  'refresh_token',
+  'expires_in',
+  'expires_at',
+  'token_type',
+  'error',
+  'error_description',
+  'error_code',
+] as const;
+
+export const stripAuthCallbackFromUrl = (): void => {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  for (const key of AUTH_CALLBACK_KEYS) {
+    url.searchParams.delete(key);
+  }
+  url.hash = '';
+  const next = `${url.pathname}${url.search}${url.hash}`;
+  window.history.replaceState(window.history.state, '', next);
 };
 
 export const decodeJwtPayload = (token: string): Record<string, unknown> | null => {
@@ -76,6 +137,12 @@ export const mapAuthError = (message: string | undefined): string => {
   }
   if (text.includes('user not found')) {
     return 'Аккаунт с таким email не найден';
+  }
+  if (text.includes('pkce') || text.includes('code verifier')) {
+    return 'Откройте ссылку из письма в том же браузере, где нажали «Забыли пароль».';
+  }
+  if (text.includes('expired') || text.includes('otp_expired') || text.includes('invalid token')) {
+    return 'Ссылка устарела. Запросите сброс пароля ещё раз.';
   }
   return 'Не удалось войти. Попробуйте ещё раз.';
 };
