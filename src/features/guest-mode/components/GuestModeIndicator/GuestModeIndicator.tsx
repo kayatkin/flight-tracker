@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '@shared/i18n';
 import styles from './GuestModeIndicator.module.css';
 
 interface GuestModeIndicatorProps {
@@ -7,26 +8,26 @@ interface GuestModeIndicatorProps {
   onLeave: () => void;
 }
 
-const GuestModeIndicator: React.FC<GuestModeIndicatorProps> = ({ 
-  ownerName, 
-  permissions, 
-  onLeave 
+const GuestModeIndicator: React.FC<GuestModeIndicatorProps> = ({
+  ownerName,
+  permissions,
+  onLeave,
 }) => {
   return (
     <div className={styles.container}>
       <div className={styles.content}>
         <div className={styles.icon}>👤</div>
         <div className={styles.info}>
-          <div className={styles.mode}>Режим гостя</div>
+          <div className={styles.mode}>{t('guest.mode')}</div>
           <div className={styles.details}>
-            Вы просматриваете историю <strong>{ownerName}</strong>
+            {t('guest.viewing')} <strong>{ownerName}</strong>
           </div>
           <div className={styles.permissions}>
-            Права: {permissions === 'view' ? '📖 Только просмотр' : '✏️ Просмотр и редактирование'}
+            {t('guest.rights')} {permissions === 'view' ? t('guest.viewOnly') : t('guest.viewEdit')}
           </div>
         </div>
         <button onClick={onLeave} className={styles.leaveButton}>
-          Выйти
+          {t('guest.leave')}
         </button>
       </div>
     </div>

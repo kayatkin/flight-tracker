@@ -1,4 +1,5 @@
 // src/utils/getSeasonalChartData.ts
+import { t } from '@shared/i18n';
 import { Flight } from '../../shared/types';
 import { ChartData, ChartOptions } from 'chart.js';
 import { monthIndexFromISODate } from './date';
@@ -33,7 +34,7 @@ export const getSeasonalChartData = (flights: Flight[]): ChartData<'line'> => {
     labels: MONTHS,
     datasets: [
       {
-        label: 'Туда',
+        label: t('chart.oneWay'),
         data: oneWay,
         borderColor: 'rgba(255, 99, 132, 1)', // 🔴 красный
         backgroundColor: 'rgba(255, 99, 132, 0.1)',
@@ -42,7 +43,7 @@ export const getSeasonalChartData = (flights: Flight[]): ChartData<'line'> => {
         pointBackgroundColor: 'rgba(255, 99, 132, 1)',
       },
       {
-        label: 'Туда-обратно',
+        label: t('chart.roundTrip'),
         data: roundTrip,
         borderColor: 'rgba(54, 162, 235, 1)', // 🔵 синий
         backgroundColor: 'rgba(54, 162, 235, 0.1)',
@@ -65,7 +66,7 @@ export const chartOptions: ChartOptions<'line'> = {
       callbacks: {
         label: (context) => {
           const val = context.parsed.y;
-          if (val === null) return 'Нет данных';
+          if (val === null) return t('chart.noData');
           return `${context.dataset.label}: ${Math.round(val)} ₽`;
         }
       }
@@ -76,13 +77,13 @@ export const chartOptions: ChartOptions<'line'> = {
       beginAtZero: false,
       title: {
         display: true,
-        text: 'Цена на человека (₽)'
+        text: t('chart.priceAxis')
       }
     },
     x: {
       title: {
         display: true,
-        text: 'Месяц вылета'
+        text: t('chart.monthAxis')
       }
     }
   }

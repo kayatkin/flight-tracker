@@ -1,3 +1,4 @@
+import { t } from '@shared/i18n';
 import { Flight } from '../types';
 import type { FlightFormData } from '../hooks/useFlightForm';
 import { generateUUID } from './id';
@@ -35,11 +36,8 @@ export const isFlightFormDirty = (
     (key) => current[key] !== baseline[key]
   );
 
-export const DISCARD_UNSAVED_MESSAGE =
-  'Есть несохранённые изменения. Уйти без сохранения?';
-
 export const confirmDiscardUnsaved = (): boolean =>
-  window.confirm(DISCARD_UNSAVED_MESSAGE);
+  window.confirm(t('save.discard'));
 
 export const flightToFormData = (flight: Flight): FlightFormData => ({
   origin: flight.origin ?? '',

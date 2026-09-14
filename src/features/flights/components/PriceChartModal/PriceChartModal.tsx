@@ -10,6 +10,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import { t } from '@shared/i18n';
 import { Flight } from '@shared/types';
 import { getSeasonalChartData, chartOptions } from '@shared/utils';
 import { useEscapeToClose } from '@shared/hooks';
@@ -43,12 +44,12 @@ const PriceChartModal: React.FC<PriceChartModalProps> = ({ flights, destination,
         tabIndex={-1}
       >
         <div className={styles.modalHeader}>
-          <h3 id="price-chart-title">📈 Сезонность цен: {destination}</h3>
+          <h3 id="price-chart-title">{t('chart.title', { destination })}</h3>
           <button
             type="button"
             className={styles.closeButton}
             onClick={onClose}
-            aria-label="Закрыть график"
+            aria-label={t('chart.close')}
           >
             ✕
           </button>
@@ -57,9 +58,9 @@ const PriceChartModal: React.FC<PriceChartModalProps> = ({ flights, destination,
           <Line data={chartData} options={chartOptions} />
         </div>
         <div className={styles.legend}>
-          <div>Красная линия — рейсы «туда»</div>
-          <div>Синяя линия — рейсы «туда-обратно»</div>
-          <div>Точка = минимальная цена в этом месяце</div>
+          <div>{t('chart.red')}</div>
+          <div>{t('chart.blue')}</div>
+          <div>{t('chart.point')}</div>
         </div>
       </div>
     </div>

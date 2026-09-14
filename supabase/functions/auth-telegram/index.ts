@@ -1,7 +1,12 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleOptions, jsonResponse } from '../_shared/cors.ts';
 import { parseTelegramUser, validateTelegramInitData } from '../_shared/telegram.ts';
-import { OWNER_TOKEN_TTL_SECONDS, signAccessToken } from '../_shared/jwt.ts';
+import {
+  ACCESS_TOKEN_TTL_SECONDS,
+  OWNER_REFRESH_TTL_SECONDS,
+  issueAuthSession,
+  revokeActiveForOwner,
+} from '../_shared/authSession.ts';
 
 Deno.serve(async (req) => {
   const options = handleOptions(req);
@@ -85,18 +90,26 @@ Deno.serve(async (req) => {
     });
   }
 
-  const access_token = await signAccessToken({
-    sub: userId,
-    user_id: userId,
-    app_role: 'owner',
-    name,
-  }, OWNER_TOKEN_TTL_SECONDS);
+  try {
+    await revokeActiveForOwner(admin, userId);
+    const issued = await issueAuthSession(admin, {
+      sub: userId,
+      user_id: userId,
+      app_role: 'owner',
+      name,
+    }, {
+      accessTtl: ACCESS_TOKEN_TTL_SECONDS,
+      refreshTtl: OWNER_REFRESH_TTL_SECONDS,
+    });
 
-  return jsonResponse({
-    access_token,
-    refresh_token: access_token,
-    userId,
-    name,
-    expires_in: OWNER_TOKEN_TTL_SECONDS,
-  }, 200, req);
+    return jsonResponse({
+      access_token: issued.access_token,
+      refresh_token: issued.refresh_token,
+      userId,
+      name,
+      expires_in: issued.expires_in,
+    }, 200, req);
+  } catch {
+    return jsonResponse({ error: 'Failed to persist session' }, 500, req);
+  }
 });

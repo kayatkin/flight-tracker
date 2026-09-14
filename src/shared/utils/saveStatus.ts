@@ -1,3 +1,5 @@
+import { t } from '@shared/i18n';
+
 export type SaveStatus =
   | 'idle'
   | 'pending'
@@ -11,15 +13,15 @@ export function saveStatusText(status: SaveStatus): string | null {
   switch (status) {
     case 'pending':
     case 'saving':
-      return 'Сохранение…';
+      return t('save.saving');
     case 'saved':
-      return 'Сохранено';
+      return t('save.saved');
     case 'error':
-      return 'Не сохранено';
+      return t('save.error');
     case 'offline':
-      return 'Только на устройстве';
+      return t('save.offline');
     case 'readonly':
-      return 'Только просмотр';
+      return t('save.readonly');
     case 'idle':
     default:
       return null;

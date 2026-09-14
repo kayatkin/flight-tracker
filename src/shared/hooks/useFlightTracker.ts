@@ -12,6 +12,7 @@ import { persistFlightChanges } from '../../services/dataService';
 import { isAuthRequiredError, signOutOwner } from '../../services/authService';
 import { getTelegramUserType } from '../utils/telegramUserType';
 import { duplicateFlight } from '../utils/flightFormMapping';
+import { t, permWord } from '@shared/i18n';
 import { toast } from '@shared/ui/Toast';
 import { devLog, logError } from '../utils/logger';
 import {
@@ -47,7 +48,7 @@ interface UseFlightTrackerResult {
 }
 
 export const useFlightTracker = (): UseFlightTrackerResult => {
-  const [userName, setUserName] = useState<string>('Гость');
+  const [userName, setUserName] = useState<string>(t('guest.name'));
   const [userId, setUserId] = useState<string>('');
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [flights, setFlights] = useState<Flight[]>([]);
@@ -195,7 +196,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
         }
       } catch (err) {
         logError('[HOOK] Save error:', err);
-        toast('Не удалось сохранить изменения. Проверьте соединение.', 'error');
+        toast(t('errors.saveFailed'), 'error');
         if (generation === saveGenerationRef.current) {
           setSaveStatus('error');
         }
@@ -274,7 +275,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
 
   const handleAddFlight = useCallback((newFlight: Flight) => {
     if (!canMutate()) {
-      toast('У вас нет прав для добавления билетов. Только просмотр.', 'warning');
+      toast(t('errors.noAdd'), 'warning');
       return;
     }
     devLog('[HOOK] Adding flight:', newFlight.id);
@@ -285,7 +286,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
 
   const handleUpdateFlight = useCallback((updatedFlight: Flight) => {
     if (!canMutate()) {
-      toast('У вас нет прав для изменения билетов. Только просмотр.', 'warning');
+      toast(t('errors.noEdit'), 'warning');
       return;
     }
     devLog('[HOOK] Updating flight:', updatedFlight.id);
@@ -303,7 +304,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
 
   const handleDuplicateFlight = useCallback((flight: Flight) => {
     if (!canMutate()) {
-      toast('У вас нет прав для добавления билетов. Только просмотр.', 'warning');
+      toast(t('errors.noAdd'), 'warning');
       return;
     }
     const cloned = duplicateFlight(flight);
@@ -311,12 +312,12 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     markFlightChanged(cloned.id);
     setFlights((prev) => [...prev, cloned]);
     rememberFlightLookups(cloned);
-    toast('Копия билета сохранена', 'success');
+    toast(t('history.copied'), 'success');
   }, [canMutate, rememberFlightLookups, markFlightChanged]);
 
   const handleDeleteFlight = useCallback((id: string) => {
     if (!canMutate()) {
-      toast('У вас нет прав для удаления билетов. Только просмотр.', 'warning');
+      toast(t('errors.noDelete'), 'warning');
       return;
     }
     devLog('[HOOK] Deleting flight');
@@ -344,7 +345,7 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
       if (guestResult) {
         const { guestUser, ownerData } = guestResult;
         if (!ownerData.ok) {
-          toast('Не удалось загрузить историю владельца', 'error');
+          toast(t('errors.loadOwner'), 'error');
           return;
         }
         
@@ -354,17 +355,17 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
         switch (userType) {
           case 'real_telegram': {
             const tgUser = window.Telegram!.WebApp!.initDataUnsafe!.user!;
-            displayName = tgUser.first_name || tgUser.username || 'Telegram пользователь';
+            displayName = tgUser.first_name || tgUser.username || t('guest.telegramUser');
             break;
           }
             
           case 'anonymous_telegram':
-            displayName = `Анонимный гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
+            displayName = t('guest.anonLabel', { perm: permWord(guestUser.permissions) });
             break;
             
           case 'web_browser':
           default:
-            displayName = `Веб-гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
+            displayName = t('guest.webLabel', { perm: permWord(guestUser.permissions) });
             break;
         }
         
@@ -381,23 +382,23 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
         clearTokenFromUrl();
         
         toast(
-          `Вы присоединились. Права: ${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'}`,
+          t('guest.joined', { perm: permWord(guestUser.permissions) }),
           'success'
         );
       } else {
         devLog('[HOOK] Invalid or expired token');
-        toast('Неверный или просроченный токен', 'error');
+        toast(t('errors.badToken'), 'error');
       }
     } catch (err) {
       logError('[HOOK] Join error:', err);
-      toast('Ошибка при присоединении', 'error');
+      toast(t('errors.joinFailed'), 'error');
     } finally {
       setLoading(false);
     }
   }, [applyInitResult]);
 
   const resetLocalSession = useCallback(() => {
-    setUserName('Гость');
+    setUserName(t('guest.name'));
     setUserId('');
     setAppUser(null);
     setFlights([]);

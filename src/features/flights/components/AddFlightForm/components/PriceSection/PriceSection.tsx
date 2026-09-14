@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { t } from '@shared/i18n';
 import { FlightFormData } from '@shared/hooks';
 import styles from './PriceSection.module.css';
 
@@ -67,7 +68,7 @@ const PriceSection: React.FC<PriceSectionProps> = ({
 
   return (
     <div className={styles.section}>
-      <h4 className={styles.sectionTitle}>💰 Стоимость</h4>
+      <h4 className={styles.sectionTitle}>{t('form.priceTitle')}</h4>
       
       <div className={styles.priceContainer}>
         {/* Основное поле ввода с форматированием */}
@@ -82,7 +83,7 @@ const PriceSection: React.FC<PriceSectionProps> = ({
               placeholder="12 500"
               inputMode="numeric"
               className={styles.input}
-              aria-label="Общая стоимость билета в рублях"
+              aria-label={t('form.priceAria')}
             />
             <span className={styles.currency}>₽</span>
           </div>
@@ -91,7 +92,7 @@ const PriceSection: React.FC<PriceSectionProps> = ({
         {/* Стоимость на человека (только если пассажиров > 1 и есть общая стоимость) */}
         {formData.totalPrice && formData.passengers > 1 && (
           <div className={styles.perPersonBlock}>
-            <div className={styles.perPersonLabel}>На человека:</div>
+            <div className={styles.perPersonLabel}>{t('form.perPerson')}</div>
             <div className={styles.perPersonValue}>
               {formattedPricePerPerson}
             </div>
@@ -102,7 +103,7 @@ const PriceSection: React.FC<PriceSectionProps> = ({
         {formData.totalPrice && formData.passengers === 1 && (
           <div className={styles.singlePassengerNote}>
             <span className={styles.noteIcon}>💡</span>
-            Вы летите один, поэтому общая стоимость = стоимость на человека
+            {t('form.soloPrice')}
           </div>
         )}
       </div>

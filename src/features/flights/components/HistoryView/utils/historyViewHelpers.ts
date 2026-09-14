@@ -1,4 +1,5 @@
 import { Flight } from '@shared/types';
+import { t } from '@shared/i18n';
 import { pluralize } from '@shared/lib/i18n/pluralize';
 
 // Утилита: YYYY-MM-DD → DD-MM-YYYY
@@ -16,20 +17,20 @@ export const formatLayover = (flight: Flight): string => {
   const parts: string[] = [];
 
   if (flight.isDirectThere) {
-    parts.push('Туда: прямой');
+    parts.push(t('history.layoverDirectThere'));
   } else if (flight.layoverCityThere && flight.layoverDurationThere) {
     const h = Math.floor(flight.layoverDurationThere / 60);
     const m = flight.layoverDurationThere % 60;
-    parts.push(`Туда: ${flight.layoverCityThere} (${h}ч ${m}м)`);
+    parts.push(t('history.layoverThere', { city: flight.layoverCityThere, hours: h, minutes: m }));
   }
 
   if (flight.type === 'roundTrip') {
     if (flight.isDirectBack) {
-      parts.push('Обратно: прямой');
+      parts.push(t('history.layoverDirectBack'));
     } else if (flight.layoverCityBack && flight.layoverDurationBack) {
       const h = Math.floor(flight.layoverDurationBack / 60);
       const m = flight.layoverDurationBack % 60;
-      parts.push(`Обратно: ${flight.layoverCityBack} (${h}ч ${m}м)`);
+      parts.push(t('history.layoverBack', { city: flight.layoverCityBack, hours: h, minutes: m }));
     }
   }
 

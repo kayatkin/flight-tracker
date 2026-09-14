@@ -1,3 +1,5 @@
+import { t } from '@shared/i18n';
+
 export class AuthRequiredError extends Error {
   constructor(message = 'Authentication required') {
     super(message);
@@ -100,11 +102,34 @@ export const ownerFromGoTrueUser = (user: {
   const emailName = user.email?.split('@')[0]?.trim() ?? '';
   return {
     userId: user.id,
-    userName: metaName || emailName || 'Владелец',
+    userName: metaName || emailName || t('auth.ownerFallback'),
   };
 };
 
-/** Custom Edge Function JWT (Telegram / auth-dev): refresh_token === access_token. */
+export const isJwtExpired = (accessToken: string, skewSeconds = 30): boolean => {
+  const claims = decodeJwtPayload(accessToken);
+  const exp = typeof claims?.exp === 'number' ? claims.exp : 0;
+  if (!exp) return false;
+  return exp < Math.floor(Date.now() / 1000) + skewSeconds;
+};
+
+/** Custom Edge JWT (Telegram / guest / auth-dev), not a GoTrue email session. */
+export const isCustomEdgeSession = (accessToken: string, refreshToken: string): boolean => {
+  const claims = decodeJwtPayload(accessToken);
+  if (!claims) return false;
+  if (claims.ft === 'custom') return true;
+  return accessToken === refreshToken
+    && (claims.app_role === 'owner' || claims.app_role === 'guest');
+};
+
+/** Seconds until we should rotate a custom access token (1 minute before exp). */
+export const msUntilCustomRefresh = (accessToken: string, leadMs = 60_000): number => {
+  const claims = decodeJwtPayload(accessToken);
+  const exp = typeof claims?.exp === 'number' ? claims.exp : 0;
+  if (!exp) return 60_000;
+  return Math.max(5_000, exp * 1000 - Date.now() - leadMs);
+};
+
 export const ownerFromCustomAccessToken = (accessToken: string): {
   userId: string;
   userName: string;
@@ -114,7 +139,7 @@ export const ownerFromCustomAccessToken = (accessToken: string): {
   const userId = String(claims.user_id ?? claims.sub ?? '');
   if (!userId) return null;
   const name = typeof claims.name === 'string' ? claims.name.trim() : '';
-  return { userId, userName: name || 'Владелец' };
+  return { userId, userName: name || t('auth.ownerFallback') };
 };
 
 export const ownerFromSession = (session: {
@@ -135,32 +160,32 @@ export const ownerFromSession = (session: {
 
 export const mapAuthError = (message: string | undefined): string => {
   const text = (message ?? '').toLowerCase();
-  if (!text) return 'Не удалось войти. Попробуйте ещё раз.';
+  if (!text) return t('errors.generic');
   if (text.includes('invalid login') || text.includes('invalid credentials')) {
-    return 'Неверный email или пароль';
+    return t('errors.invalidCredentials');
   }
   if (text.includes('email not confirmed')) {
-    return 'Подтвердите email по ссылке из письма';
+    return t('errors.emailNotConfirmed');
   }
   if (text.includes('already registered') || text.includes('already been registered')) {
-    return 'Этот email уже зарегистрирован. Войдите или сбросьте пароль.';
+    return t('errors.alreadyRegistered');
   }
   if (text.includes('password should be') || text.includes('password is known')) {
-    return 'Пароль слишком короткий. Минимум 6 символов.';
+    return t('errors.passwordTooShort');
   }
   if (text.includes('rate limit') || text.includes('too many requests')) {
-    return 'Слишком много попыток. Подождите минуту.';
+    return t('errors.rateLimit');
   }
   if (text.includes('user not found')) {
-    return 'Аккаунт с таким email не найден';
+    return t('errors.userNotFound');
   }
   if (text.includes('pkce') || text.includes('code verifier')) {
-    return 'Откройте ссылку из письма в том же браузере, где нажали «Забыли пароль».';
+    return t('errors.pkce');
   }
   if (text.includes('expired') || text.includes('otp_expired') || text.includes('invalid token')) {
-    return 'Ссылка устарела. Запросите сброс пароля ещё раз.';
+    return t('errors.expired');
   }
-  return 'Не удалось войти. Попробуйте ещё раз.';
+  return t('errors.generic');
 };
 
 export const validateEmailAuthForm = (params: {
@@ -170,11 +195,11 @@ export const validateEmailAuthForm = (params: {
 }): string | null => {
   const email = params.email.trim();
   if (!email || !email.includes('@')) {
-    return 'Укажите действующий email';
+    return t('auth.invalidEmail');
   }
   if (params.mode === 'forgot') return null;
   if (params.password.length < 6) {
-    return 'Пароль не короче 6 символов';
+    return t('auth.shortPassword');
   }
   return null;
 };

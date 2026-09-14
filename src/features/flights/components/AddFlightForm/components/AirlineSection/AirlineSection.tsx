@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { t } from '@shared/i18n';
 import { AutocompleteInput } from '@shared/ui';
 import { useAutocomplete, FlightFormData } from '@shared/hooks';
 import styles from './AirlineSection.module.css';
@@ -29,7 +30,7 @@ const AirlineSection: React.FC<AirlineSectionProps> = ({
 
   return (
     <div className={styles.section}>
-      <h4 className={styles.sectionTitle}>✈️ Авиакомпания</h4>
+      <h4 className={styles.sectionTitle}>{t('form.airlineTitle')}</h4>
       
       <div className={styles.inputContainer}>
         <div className={styles.autocompleteInput}>
@@ -40,10 +41,10 @@ const AirlineSection: React.FC<AirlineSectionProps> = ({
             isOpen={airlineAutocomplete.isOpen}
             onSelectSuggestion={handleAirlineSelect}
             onCloseSuggestions={airlineAutocomplete.closeSuggestions}
-            placeholder="Аэрофлот, S7, Победа..."
-            label="Авиакомпания"
+            placeholder={t('form.airlinePlaceholder')}
+            label={t('form.airlineTitle')}
             hideLabel={true}
-            aria-label="Название авиакомпании"
+            aria-label={t('form.airlineAria')}
           />
         </div>
         {/* УБИРАЕМ ЭТУ ПОДСКАЗКУ - она избыточна */}

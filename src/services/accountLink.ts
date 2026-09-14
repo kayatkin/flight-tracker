@@ -1,3 +1,5 @@
+import { t } from '@shared/i18n';
+
 export const MIN_LINK_PASSWORD_LENGTH = 6;
 
 export type AccountIdentity = {
@@ -21,13 +23,13 @@ export const validateLinkEmailForm = (params: {
 }): string | null => {
   const email = normalizeLinkEmail(params.email);
   if (!email || !email.includes('@')) {
-    return 'Укажите действующий email';
+    return t('auth.invalidEmail');
   }
   if (params.password.length < MIN_LINK_PASSWORD_LENGTH) {
-    return 'Пароль не короче 6 символов';
+    return t('auth.shortPassword');
   }
   if (params.confirmPassword !== undefined && params.password !== params.confirmPassword) {
-    return 'Пароли не совпадают';
+    return t('auth.mismatch');
   }
   return null;
 };

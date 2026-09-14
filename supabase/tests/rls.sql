@@ -267,6 +267,28 @@ SELECT tests.expect(
   'reassign_owner should move identities to the canonical user'
 );
 
+INSERT INTO refresh_tokens (
+  family_id, token_hash, subject, user_id, app_role, expires_at
+) VALUES (
+  'ffffffff-ffff-4fff-8fff-ffffffffffff',
+  'refresh_hash_rls',
+  'owner_a',
+  'owner_a',
+  'owner',
+  NOW() + INTERVAL '1 day'
+);
+
+SELECT tests.as_jwt('{"role":"authenticated","user_id":"owner_a","app_role":"owner"}'::jsonb);
+SET ROLE authenticated;
+DO $$
+BEGIN
+  PERFORM 1 FROM refresh_tokens;
+  RAISE EXCEPTION 'RLS test failed: authenticated selected refresh_tokens';
+EXCEPTION
+  WHEN insufficient_privilege THEN NULL;
+END $$;
+RESET ROLE;
+
 -- Anon can look up an active invite and cannot read flights.
 SET ROLE anon;
 SELECT tests.expect(

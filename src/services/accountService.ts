@@ -1,3 +1,4 @@
+import { t } from '@shared/i18n';
 import { supabase } from '@shared/lib';
 import { isRealTelegramUser } from '@shared/utils/telegramUserType';
 import { logError } from '@shared/utils/logger';
@@ -63,10 +64,10 @@ export const linkEmailAccount = async (
 
   if (error) {
     logError('[ACCOUNT] link-email invoke error:', error);
-    return { ok: false, error: 'Не удалось связать аккаунт. Попробуйте ещё раз.' };
+    return { ok: false, error: t('account.linkFailedRetry') };
   }
   if (!data?.ok) {
-    return { ok: false, error: data?.error ?? 'Не удалось связать аккаунт. Попробуйте ещё раз.' };
+    return { ok: false, error: data?.error ?? t('account.linkFailedRetry') };
   }
   return data;
 };

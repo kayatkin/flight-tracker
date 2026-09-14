@@ -1,3 +1,5 @@
+import { t } from '@shared/i18n';
+
 export const NOTES_MAX_LENGTH = 500;
 
 export const validateFlightForm = (
@@ -17,28 +19,28 @@ export const validateFlightForm = (
     const destination = (formData.destination ?? '').trim();
   
     if (!origin || !destination) {
-      errors.push('Укажите города вылета и назначения');
+      errors.push(t('form.cities'));
     }
     
     if (!formData.departureDate) {
-      errors.push('Укажите дату вылета');
+      errors.push(t('form.departureDate'));
     }
   
     if (formData.type === 'roundTrip' && !(formData.returnDate ?? '').trim()) {
-      errors.push('Укажите дату возвращения');
+      errors.push(t('form.returnDate'));
     }
 
     if (formData.airline !== undefined && !formData.airline.trim()) {
-      errors.push('Укажите авиакомпанию');
+      errors.push(t('form.airline'));
     }
   
     const priceNum = Number(formData.totalPrice);
     if (!(formData.totalPrice ?? '').trim() || !Number.isFinite(priceNum) || priceNum <= 0) {
-      errors.push('Укажите корректную стоимость (только цифры, больше 0)');
+      errors.push(t('form.price'));
     }
 
     if ((formData.notes ?? '').length > NOTES_MAX_LENGTH) {
-      errors.push(`Заметка не длиннее ${NOTES_MAX_LENGTH} символов`);
+      errors.push(t('form.notesTooLong', { max: NOTES_MAX_LENGTH }));
     }
   
     return errors;

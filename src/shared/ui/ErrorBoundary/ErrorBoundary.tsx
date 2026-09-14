@@ -1,5 +1,6 @@
 import React, { Component, type ErrorInfo, type ReactNode } from 'react';
 import styles from './ErrorBoundary.module.css';
+import { t } from '@shared/i18n';
 import { logError } from '@shared/utils';
 
 interface Props {
@@ -26,14 +27,14 @@ export class ErrorBoundary extends Component<Props, State> {
 
     return (
       <div className={styles.wrap} role="alert">
-        <p className={styles.title}>Не удалось показать приложение</p>
-        <p className={styles.copy}>Обновите страницу. Если ошибка повторяется, закройте Mini App и откройте снова.</p>
+        <p className={styles.title}>{t('crash.title')}</p>
+        <p className={styles.copy}>{t('crash.copy')}</p>
         <button
           type="button"
           className={styles.retry}
           onClick={() => window.location.reload()}
         >
-          Обновить
+          {t('crash.reload')}
         </button>
       </div>
     );

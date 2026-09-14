@@ -33,8 +33,11 @@ async function signHs256(message: string, secret: string): Promise<string> {
 }
 
 /** Signs a Supabase-compatible access token (HS256). */
-export const OWNER_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7;
-export const DEFAULT_TOKEN_TTL_SECONDS = 60 * 60 * 24;
+export const ACCESS_TOKEN_TTL_SECONDS = 60 * 60;
+export const OWNER_REFRESH_TTL_SECONDS = 60 * 60 * 24 * 7;
+/** @deprecated Use ACCESS_TOKEN_TTL_SECONDS; kept for older imports. */
+export const OWNER_TOKEN_TTL_SECONDS = ACCESS_TOKEN_TTL_SECONDS;
+export const DEFAULT_TOKEN_TTL_SECONDS = ACCESS_TOKEN_TTL_SECONDS;
 
 export async function signAccessToken(
   claims: AppJwtClaims,
@@ -49,6 +52,7 @@ export async function signAccessToken(
   const header = { alg: 'HS256', typ: 'JWT' };
   const payload = {
     ...claims,
+    ft: 'custom',
     aud: 'authenticated',
     exp: now + expiresInSeconds,
     iat: now,

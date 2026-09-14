@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { t } from '@shared/i18n';
 import { FlightFormData } from '@shared/hooks';
 import { toLocalISODate } from '@shared/utils/date';
 import styles from './DateTimeSection.module.css';
@@ -30,13 +31,13 @@ const DateTimeSection: React.FC<DateTimeSectionProps> = ({
 
   return (
     <div className={styles.section}>
-      <h4 className={styles.sectionTitle}>📅 Дата и время</h4>
+      <h4 className={styles.sectionTitle}>{t('form.dateTime')}</h4>
       
       <div className={styles.dateTimeGroup}>
         {/* Дата вылета */}
         <div className={styles.dateField}>
           <label className={styles.label}>
-            Дата вылета
+            {t('form.departureDateLabel')}
             <input
               type="date"
               name="departureDate"
@@ -45,7 +46,7 @@ const DateTimeSection: React.FC<DateTimeSectionProps> = ({
               min={today}
               required
               className={styles.dateInput}
-              aria-label="Дата вылета"
+              aria-label={t('form.departureDateLabel')}
             />
           </label>
         </div>
@@ -54,28 +55,28 @@ const DateTimeSection: React.FC<DateTimeSectionProps> = ({
         <div className={styles.timeRow}>
           <div className={styles.timeField}>
             <label className={styles.label}>
-              Вылет (время)
+              {t('form.departureTime')}
               <input
                 type="time"
                 name="departureTime"
                 value={formData.departureTime}
                 onChange={handleChange}
                 className={styles.timeInput}
-                aria-label="Время вылета"
+                aria-label={t('form.departureTime')}
               />
             </label>
           </div>
           
           <div className={styles.timeField}>
             <label className={styles.label}>
-              Прилёт (время)
+              {t('form.arrivalTime')}
               <input
                 type="time"
                 name="arrivalTime"
                 value={formData.arrivalTime}
                 onChange={handleChange}
                 className={styles.timeInput}
-                aria-label="Время прилета"
+                aria-label={t('form.arrivalTime')}
               />
             </label>
             <label className={styles.checkboxLabel}>
@@ -84,9 +85,9 @@ const DateTimeSection: React.FC<DateTimeSectionProps> = ({
                 name="arrivalNextDay"
                 checked={formData.arrivalNextDay}
                 onChange={handleChange}
-                aria-label="Прилёт на следующий день"
+                aria-label={t('form.nextDay')}
               />
-              Прилёт на следующий день (+1)
+              {t('form.nextDay')}
             </label>
           </div>
         </div>
@@ -96,7 +97,7 @@ const DateTimeSection: React.FC<DateTimeSectionProps> = ({
           <>
             <div className={styles.dateField}>
               <label className={styles.label}>
-                Дата возвращения
+                {t('form.returnDateLabel')}
                 <input
                   type="date"
                   name="returnDate"
@@ -105,7 +106,7 @@ const DateTimeSection: React.FC<DateTimeSectionProps> = ({
                   min={minReturnDate}
                   required={formData.type === 'roundTrip'}
                   className={styles.dateInput}
-                  aria-label="Дата возвращения"
+                  aria-label={t('form.returnDateLabel')}
                 />
               </label>
             </div>
@@ -113,28 +114,28 @@ const DateTimeSection: React.FC<DateTimeSectionProps> = ({
             <div className={styles.timeRow}>
               <div className={styles.timeField}>
                 <label className={styles.label}>
-                  Обратный вылет
+                  {t('form.returnDeparture')}
                   <input
                     type="time"
                     name="returnDepartureTime"
                     value={formData.returnDepartureTime || ''}
                     onChange={handleChange}
                     className={styles.timeInput}
-                    aria-label="Время обратного вылета"
+                    aria-label={t('form.returnDeparture')}
                   />
                 </label>
               </div>
               
               <div className={styles.timeField}>
                 <label className={styles.label}>
-                  Обратный прилёт
+                  {t('form.returnArrival')}
                   <input
                     type="time"
                     name="returnArrivalTime"
                     value={formData.returnArrivalTime || ''}
                     onChange={handleChange}
                     className={styles.timeInput}
-                    aria-label="Время обратного прилета"
+                    aria-label={t('form.returnArrival')}
                   />
                 </label>
                 <label className={styles.checkboxLabel}>
@@ -143,9 +144,9 @@ const DateTimeSection: React.FC<DateTimeSectionProps> = ({
                     name="returnArrivalNextDay"
                     checked={formData.returnArrivalNextDay}
                     onChange={handleChange}
-                    aria-label="Обратный прилёт на следующий день"
+                    aria-label={t('form.nextDay')}
                   />
-                  Прилёт на следующий день (+1)
+                  {t('form.nextDay')}
                 </label>
               </div>
             </div>

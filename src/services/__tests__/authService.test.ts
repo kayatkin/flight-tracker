@@ -50,8 +50,10 @@ vi.mock('@shared/config/env', () => ({
 
 import {
   authenticateOwner,
+  refreshCustomSession,
   requestPasswordReset,
   restoreGoTrueOwner,
+  restoreGuestSession,
   signInWithEmail,
   signUpWithEmail,
   updatePassword,
@@ -128,6 +130,27 @@ describe('authService email sessions', () => {
     expect(stopAutoRefresh).toHaveBeenCalled();
   });
 
+  it('restores a custom owner session with a separate refresh token', async () => {
+    const access = jwtWith({
+      ft: 'custom',
+      app_role: 'owner',
+      user_id: 'tg_1',
+      name: 'Кай',
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    });
+    getSession.mockResolvedValue({
+      data: { session: { access_token: access, refresh_token: 'opaque-refresh', user: { id: 'tg_1' } } },
+      error: null,
+    });
+
+    await expect(restoreGoTrueOwner()).resolves.toEqual({
+      userId: 'tg_1',
+      userName: 'Кай',
+    });
+    expect(stopAutoRefresh).toHaveBeenCalled();
+    expect(startAutoRefresh).not.toHaveBeenCalled();
+  });
+
   it('does not treat a leftover guest JWT as an owner session', async () => {
     const access = jwtWith({ app_role: 'guest', user_id: 'owner_a', permissions: 'view' });
     getSession.mockResolvedValue({
@@ -187,7 +210,7 @@ describe('authService email sessions', () => {
     });
   });
 
-  it('drops a leftover custom guest session when no owner is found', async () => {
+  it('does not destroy a leftover guest session while looking for an owner', async () => {
     const access = jwtWith({ app_role: 'guest', user_id: 'owner_a' });
     getSession.mockResolvedValue({
       data: { session: { access_token: access, refresh_token: access, user: { id: 'g' } } },
@@ -196,6 +219,58 @@ describe('authService email sessions', () => {
     signOut.mockResolvedValue({ error: null });
 
     await expect(authenticateOwner()).resolves.toBeNull();
-    expect(signOut).toHaveBeenCalled();
+    expect(signOut).not.toHaveBeenCalled();
+  });
+
+  it('rotates a custom session through auth-refresh', async () => {
+    const access = jwtWith({
+      ft: 'custom',
+      app_role: 'owner',
+      user_id: 'tg_1',
+      exp: Math.floor(Date.now() / 1000) + 120,
+    });
+    getSession.mockResolvedValue({
+      data: { session: { access_token: access, refresh_token: 'opaque-refresh' } },
+      error: null,
+    });
+    invoke.mockResolvedValue({
+      data: { ok: true, access_token: 'new-access', refresh_token: 'new-refresh' },
+      error: null,
+    });
+
+    await expect(refreshCustomSession()).resolves.toBe(true);
+    expect(invoke).toHaveBeenCalledWith('auth-refresh', {
+      body: { refresh_token: 'opaque-refresh' },
+    });
+    expect(setSession).toHaveBeenCalledWith({
+      access_token: 'new-access',
+      refresh_token: 'new-refresh',
+    });
+  });
+
+  it('restores a guest custom session', async () => {
+    const access = jwtWith({
+      ft: 'custom',
+      app_role: 'guest',
+      user_id: 'owner_a',
+      sub: 'guest_1',
+      permissions: 'view',
+      name: 'Alice',
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    });
+    getSession.mockResolvedValue({
+      data: { session: { access_token: access, refresh_token: 'opaque-refresh' } },
+      error: null,
+    });
+
+    await expect(restoreGuestSession()).resolves.toEqual({
+      userId: 'guest_1',
+      name: 'Гость',
+      isGuest: true,
+      sessionToken: '',
+      permissions: 'view',
+      ownerId: 'owner_a',
+      ownerName: 'Alice',
+    });
   });
 });

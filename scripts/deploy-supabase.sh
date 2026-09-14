@@ -8,6 +8,7 @@ echo "Deploying Edge Functions..."
 
 supabase functions deploy auth-telegram --no-verify-jwt
 supabase functions deploy auth-guest --no-verify-jwt
+supabase functions deploy auth-refresh --no-verify-jwt
 supabase functions deploy link-email
 
 if [ "${DEPLOY_AUTH_DEV:-}" = "true" ]; then

@@ -1,4 +1,5 @@
 import React from 'react';
+import { t, passengerWord } from '@shared/i18n';
 import { FlightFormData } from '@shared/hooks';
 import styles from './PassengersSection.module.css';
 
@@ -20,7 +21,7 @@ const PassengersSection: React.FC<PassengersSectionProps> = ({
 
   return (
     <div className={styles.section}>
-      <h4 className={styles.sectionTitle}>👥 Пассажиры</h4>
+      <h4 className={styles.sectionTitle}>{t('form.passengers')}</h4>
       
       <div className={styles.selectContainer}>
         <label className={styles.label}>
@@ -29,11 +30,11 @@ const PassengersSection: React.FC<PassengersSectionProps> = ({
             value={formData.passengers}
             onChange={handleChange}
             className={styles.select}
-            aria-label="Количество пассажиров"
+            aria-label={t('form.passengersAria')}
           >
             {passengersOptions.map(num => (
               <option key={num} value={num}>
-                {num} {num === 1 ? 'пассажир' : num < 5 ? 'пассажира' : 'пассажиров'}
+                {num} {passengerWord(num)}
               </option>
             ))}
           </select>

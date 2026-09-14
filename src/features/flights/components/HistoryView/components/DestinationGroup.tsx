@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '@shared/i18n';
 import { Flight } from '@shared/types';
 import { downloadFlightsCsv } from '@shared/utils';
 import { toast } from '@shared/ui/Toast';
@@ -59,7 +60,7 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
         role="button"
         tabIndex={0}
         aria-expanded={isActive}
-        aria-label={`${destination}, ${flights.length} билетов`}
+        aria-label={t('history.groupAria', { destination, count: flights.length })}
       >
         <div className={styles.cardTitleWithMeta}>
           <span>📍 {destination}</span>
@@ -77,8 +78,8 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
                 e.stopPropagation();
                 onShowChart();
               }}
-              title="График сезонности цен"
-              aria-label="График сезонности цен"
+              title={t('history.chart')}
+              aria-label={t('history.chart')}
               disabled={flights.length < 2}
             >
               📈
@@ -89,10 +90,10 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
               onClick={(e) => {
                 e.stopPropagation();
                 downloadFlightsCsv(flights, destination);
-                toast(`Скачан маршрут: ${destination} (${flights.length})`, 'success');
+                toast(t('history.downloadedRoute', { destination, count: flights.length }), 'success');
               }}
-              title={`Скачать маршрут «${destination}» в CSV`}
-              aria-label={`Скачать маршрут ${destination} в CSV`}
+              title={t('history.downloadRouteTitle', { destination })}
+              aria-label={t('history.downloadRouteAria', { destination })}
             >
               ⬇️
             </button>
@@ -100,7 +101,7 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
         </div>
 
         <div className={styles.cardPrice}>
-          💰 {formatPrice(bestFlight.totalPrice / bestFlight.passengers)} на человека
+          💰 {formatPrice(bestFlight.totalPrice / bestFlight.passengers)} {t('history.perPerson')}
         </div>
         <div className={styles.cardDate}>
           📅 {formatDateToDMY(bestFlight.departureDate)}
@@ -117,7 +118,7 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
           onKeyDown={(event) => event.stopPropagation()}
         >
           <div className={styles.bestFlightNote}>
-            ⭐ Лучшее предложение по цене за человека
+            {t('history.bestOffer')}
           </div>
           <FlightCard
             key={bestFlight.id}
@@ -133,7 +134,7 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
           {otherFlights.length > 0 && (
             <>
               <div className={styles.otherFlightsTitle}>
-                Другие предложения ({otherFlights.length}):
+                {t('history.otherOffers', { count: otherFlights.length })}
               </div>
               {otherFlights.map((flight) => (
                 <FlightCard

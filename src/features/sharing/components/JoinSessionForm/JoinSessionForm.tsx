@@ -1,5 +1,6 @@
 // src/features/sharing/components/JoinSessionForm/JoinSessionForm.tsx
 import React, { useState } from 'react';
+import { t } from '@shared/i18n';
 import { extractShareToken } from '@shared/utils/shareToken';
 import styles from './JoinSessionForm.module.css';
 
@@ -18,12 +19,12 @@ const JoinSessionForm: React.FC<JoinSessionFormProps> = ({ onJoin, onCancel }) =
     const resolvedToken = extractShareToken(token) ?? token.trim();
 
     if (!resolvedToken) {
-      setError('Введите токен доступа');
+      setError(t('join.empty'));
       return;
     }
 
     if (resolvedToken.length < 10) {
-      setError('Некорректный формат токена');
+      setError(t('join.short'));
       return;
     }
 
@@ -34,7 +35,7 @@ const JoinSessionForm: React.FC<JoinSessionFormProps> = ({ onJoin, onCancel }) =
     const inputValue = token.trim();
     
     if (!inputValue) {
-      setError('Сначала вставьте URL с токеном в поле выше');
+      setError(t('join.needUrl'));
       return;
     }
 
@@ -44,30 +45,30 @@ const JoinSessionForm: React.FC<JoinSessionFormProps> = ({ onJoin, onCancel }) =
       setToken(extractedToken);
       setError('');
     } else {
-      setError('Не удалось найти токен. Вставьте ссылку или сам токен.');
+      setError(t('join.notFound'));
     }
   };
 
   return (
     <div className={styles.container}>
-      <h3>🔗 Присоединиться к истории перелетов</h3>
+      <h3>{t('join.title')}</h3>
       
       <p className={styles.description}>
-        Введите токен доступа, который вам предоставил владелец истории.
+        {t('join.lead')}
       </p>
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.inputGroup}>
-          <label htmlFor="token">Токен доступа:</label>
+          <label htmlFor="token">{t('join.token')}</label>
           <input
             type="text"
             id="token"
             value={token}
             onChange={(e) => {
               setToken(e.target.value);
-              setError(''); // Очищаем ошибку при изменении
+              setError('');
             }}
-            placeholder="Введите токен или ссылку с токеном..."
+            placeholder={t('join.placeholder')}
             className={styles.input}
           />
           <button 
@@ -75,7 +76,7 @@ const JoinSessionForm: React.FC<JoinSessionFormProps> = ({ onJoin, onCancel }) =
             onClick={extractTokenFromUrl}
             className={styles.extractButton}
           >
-            Извлечь из URL
+            {t('join.extract')}
           </button>
         </div>
 
@@ -83,20 +84,20 @@ const JoinSessionForm: React.FC<JoinSessionFormProps> = ({ onJoin, onCancel }) =
 
         <div className={styles.buttonGroup}>
           <button type="button" onClick={onCancel} className={styles.cancelButton}>
-            Отмена
+            {t('join.cancel')}
           </button>
           <button type="submit" className={styles.joinButton}>
-            Присоединиться
+            {t('join.submit')}
           </button>
         </div>
       </form>
 
       <div className={styles.hint}>
-        <strong>Как получить доступ?</strong>
+        <strong>{t('join.how')}</strong>
         <ol>
-          <li>Попросите у владельца истории ссылку для совместного доступа</li>
-          <li>Скопируйте токен из ссылки или вставьте полную ссылку</li>
-          <li>Нажмите "Извлечь из URL" или введите токен вручную</li>
+          <li>{t('join.step1')}</li>
+          <li>{t('join.step2')}</li>
+          <li>{t('join.step3')}</li>
         </ol>
       </div>
     </div>

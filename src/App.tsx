@@ -20,6 +20,7 @@ import {
   peekEditFormDraft,
 } from '@shared/utils';
 import { useFlightTracker } from '@shared/hooks';
+import { t } from '@shared/i18n';
 import styles from './App.module.css';
 
 const restoredEditFlight = (): Flight | null => {
@@ -166,7 +167,7 @@ const App: React.FC = () => {
     return (
       <div className={`${styles.app} ${styles.loadingScreen}`}>
         <div className={styles.loadingLabel}>
-          Загрузка данных...
+          {t('app.loading')}
         </div>
       </div>
     );
@@ -186,16 +187,16 @@ const App: React.FC = () => {
     <div className={styles.app}>
       {appUser?.isGuest && (
         <GuestModeIndicator
-          ownerName={appUser.ownerName || 'Владельца'}
+          ownerName={appUser.ownerName || t('guest.ownerFallback')}
           permissions={appUser.permissions}
           onLeave={handleLeaveGuestMode}
         />
       )}
 
-      <h2 className={styles.title}>✈️ Flight Tracker</h2>
+      <h2 className={styles.title}>{t('app.title')}</h2>
       <div className={styles.headerCopy}>
         <p className={styles.greeting}>
-          Привет, <strong>{userName}</strong>!
+          {t('app.greetingPrefix')}<strong>{userName}</strong>{t('app.greetingSuffix')}
         </p>
         {isOwner && (
           <div className={styles.headerActions}>
@@ -204,7 +205,7 @@ const App: React.FC = () => {
               className={styles.headerAction}
               onClick={() => setAccountOpen(true)}
             >
-              Аккаунт
+              {t('app.account')}
             </button>
             {canSignOut && (
               <button
@@ -212,7 +213,7 @@ const App: React.FC = () => {
                 className={styles.headerAction}
                 onClick={() => { void signOut(); }}
               >
-                Выйти
+                {t('app.signOut')}
               </button>
             )}
           </div>
@@ -233,7 +234,7 @@ const App: React.FC = () => {
                 className={styles.saveStatusRetry}
                 onClick={retrySave}
               >
-                Повторить
+                {t('app.retry')}
               </button>
             )}
           </p>
@@ -249,10 +250,10 @@ const App: React.FC = () => {
           disabled={isViewGuest}
         >
           {isViewGuest
-            ? '👁️ Добавить перелет'
+            ? t('app.tabAddView')
             : editingFlight
-              ? '✏️ Изменить перелет'
-              : '➕ Добавить перелет'}
+              ? t('app.tabEdit')
+              : t('app.tabAdd')}
         </button>
         <button
           onClick={() => {
@@ -261,7 +262,7 @@ const App: React.FC = () => {
           }}
           className={`${styles.tabButton} ${activeTab === 'history' ? styles.active : ''}`}
         >
-          📚 История
+          {t('app.tabHistory')}
         </button>
       </div>
 

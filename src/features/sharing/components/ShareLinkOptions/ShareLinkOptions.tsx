@@ -1,5 +1,6 @@
 // src/features/sharing/components/ShareLinkOptions/ShareLinkOptions.tsx
 import React, { useState, useEffect } from 'react';
+import { t } from '@shared/i18n';
 import styles from './ShareLinkOptions.module.css';
 
 interface ShareLinkOptionsProps {
@@ -18,31 +19,9 @@ const ShareLinkOptions: React.FC<ShareLinkOptionsProps> = ({
 
   // Генерируем текст инструкции
   useEffect(() => {
-    if (permissions === 'edit') {
-      setInstructionsText(`Привет! Приглашаю тебя посмотреть мою историю перелётов.
-
-📱 КАК ОТКРЫТЬ:
-1. Нажми на полученную ссылку
-2. Запусти Telegram MiniApp кнопкой "Старт"
-3. Нажми кнопку "RunApp"
-4. Готово! Можешь просматривать и редактировать мою историю перелётов.
-
-🔗 Ссылка: `);
-    } else {
-      setInstructionsText(`Привет! Приглашаю тебя посмотреть мою историю перелётов.
-
-🌐 КАК ОТКРЫТЬ:
-Через браузер - 
-1. Просто открой эту ссылку в любом браузере — всё откроется автоматически.
-2. Готово! Можешь просматривать мою историю перелётов.
-Через Telegram MiniApp -
-1. Запусти Telegram MiniApp
-2. Зайди в раздел "История" -> "Присоединиться"
-3. Вставь полученную ссылку в соответствующее поле  
-4. Готово! Можешь просматривать мою историю перелётов.
-
-🔗 Ссылка: `);
-    }
+    setInstructionsText(
+      permissions === 'edit' ? t('share.inviteEdit') : t('share.inviteView')
+    );
   }, [permissions]);
 
   // Основная функция копирования (зависит от чекбокса)
@@ -65,9 +44,9 @@ const ShareLinkOptions: React.FC<ShareLinkOptionsProps> = ({
     if (navigator.share) {
       try {
         const shareData: ShareData = {
-          title: permissions === 'edit' 
-            ? 'Приглашение редактировать историю перелётов ✈️' 
-            : 'Приглашение посмотреть историю перелётов ✈️',
+          title: permissions === 'edit'
+            ? t('share.nativeEdit')
+            : t('share.nativeView'),
           text: shareWithInstructions ? instructionsText + shareUrl : shareUrl,
           url: shareWithInstructions ? undefined : shareUrl,
         };
@@ -97,12 +76,12 @@ const ShareLinkOptions: React.FC<ShareLinkOptionsProps> = ({
             className={styles.checkboxInput}
           />
           <span className={styles.checkboxCustom}></span>
-          📋 Отправить с инструкцией
+          {t('share.withInstructions')}
         </label>
         <p className={styles.optionHint}>
-          {shareWithInstructions 
-            ? 'Ссылка будет отправлена с инструкцией'
-            : 'Будет отправлена только чистая ссылка'}
+          {shareWithInstructions
+            ? t('share.withInstructionsHint')
+            : t('share.linkOnlyHint')}
         </p>
       </div>
 
@@ -110,7 +89,7 @@ const ShareLinkOptions: React.FC<ShareLinkOptionsProps> = ({
       {shareWithInstructions && (
         <div className={styles.previewSection}>
           <div className={styles.previewHeader}>
-            <span>👁️ Предпросмотр сообщения:</span>
+            <span>{t('share.preview')}</span>
           </div>
           <div className={styles.previewContent}>
             <div className={styles.previewText}>
@@ -129,9 +108,9 @@ const ShareLinkOptions: React.FC<ShareLinkOptionsProps> = ({
             <button
               onClick={handleCopyLinkOnly}
               className={styles.copyButtonSecondary}
-              title="Скопировать только ссылку (без инструкции)"
+              title={t('share.copyLinkOnly')}
             >
-              📎 Только ссылка
+              {t('share.linkOnly')}
             </button>
           )}
           
@@ -139,21 +118,21 @@ const ShareLinkOptions: React.FC<ShareLinkOptionsProps> = ({
           <button
             onClick={handleCopyPrimary}
             className={shareWithInstructions ? styles.copyButtonPrimary : styles.copyButtonFull}
-            title={shareWithInstructions 
-              ? "Скопировать ссылку с инструкцией" 
-              : "Скопировать ссылку"
+            title={shareWithInstructions
+              ? t('share.copyWithHelp')
+              : t('share.copyLink')
             }
           >
-            📋 {shareWithInstructions ? 'Скопировать с инструкцией' : 'Скопировать ссылку'}
+            📋 {shareWithInstructions ? t('share.copyWithHelpBtn') : t('share.copyLink')}
           </button>
         </div>
         
         <button
           onClick={handleShareViaNative}
           className={styles.shareNativeButton}
-          title="Поделиться через мессенджеры"
+          title={t('share.nativeTitle')}
         >
-          📤 Поделиться
+          {t('share.native')}
         </button>
       </div>
     </div>

@@ -1,5 +1,6 @@
 // src/components/PriceAnalysis.tsx
 import React from 'react';
+import { t } from '@shared/i18n';
 import styles from './PriceAnalysis.module.css';
 
 export interface PriceAnalysisProps {
@@ -30,7 +31,7 @@ const PriceAnalysis: React.FC<PriceAnalysisProps> = ({ type, message, diff }) =>
       </div>
       {diff !== undefined && (
         <div className={styles.diff}>
-          Разница: {diff > 0 ? '+' : ''}{diff} ₽
+          {t('analysis.diff', { signed: `${diff > 0 ? '+' : ''}${diff}` })}
         </div>
       )}
     </div>

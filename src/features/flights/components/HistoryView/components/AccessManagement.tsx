@@ -4,6 +4,7 @@ import { Flight } from '@shared/types';
 import { ShareFlightModal } from '@features/sharing';
 import { SharedSessionsList } from '@features/sharing';
 import { JoinSessionModal } from '@features/sharing';
+import { t } from '@shared/i18n';
 import { toast } from '@shared/ui/Toast';
 import styles from '../HistoryView.module.css';
 
@@ -52,25 +53,23 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
           tabIndex={0}
           aria-expanded={accessExpanded}
           aria-label={isEmptyState
-            ? 'Управление доступом. Начните отслеживать перелеты и делитесь историей'
-            : 'Управление доступом к вашей истории перелетов'}
+            ? t('access.ariaEmpty')
+            : t('access.ariaFilled')}
         >
           <div className={styles.accessHeaderContent}>
             <span className={styles.accessIcon}>🔐</span>
             <span className={styles.accessTitle}>
-              {isEmptyState 
-                ? 'Начните отслеживать перелеты и делитесь историей' 
-                : 'Управляйте доступом к вашей истории перелетов'
-              }
+              {isEmptyState
+                ? t('access.titleEmpty')
+                : t('access.titleFilled')}
             </span>
             <span className={styles.accessArrow}>{accessExpanded ? '▼' : '▶'}</span>
           </div>
           {!accessExpanded && (
             <div className={styles.accessHint}>
-              {isEmptyState 
-                ? 'Создайте первую запись или присоединитесь к истории друга' 
-                : 'Нажмите чтобы развернуть'
-              }
+              {isEmptyState
+                ? t('access.hintEmpty')
+                : t('access.hintFilled')}
             </div>
           )}
         </div>
@@ -85,23 +84,23 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
                   if (flights.length > 0 && userId) {
                     setShowShareModal(true);
                   } else {
-                    toast('Сначала добавьте хотя бы один перелёт, чтобы поделиться историей', 'warning');
+                    toast(t('access.needFlightShare'), 'warning');
                   }
                 }}
                 className={styles.shareButton}
-                title={flights.length === 0 ? "Сначала добавьте перелет" : "Поделиться историей перелетов"}
+                title={flights.length === 0 ? t('access.addFirstTitle') : t('access.shareTitle')}
                 disabled={flights.length === 0 || !userId}
               >
-                📤 {flights.length === 0 ? 'Добавьте перелет' : 'Поделиться'}
+                📤 {flights.length === 0 ? t('access.addFirst') : t('access.share')}
               </button>
               
               {/* Кнопка Присоединиться */}
               <button
                 onClick={() => setShowJoinModal(true)}
                 className={styles.joinHistoryButton}
-                title="Присоединиться к истории друга"
+                title={t('access.joinTitle')}
               >
-                🔗 Присоединиться
+                {t('access.join')}
               </button>
               
               {/* Кнопка Приглашения */}
@@ -111,14 +110,14 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
                     if (flights.length > 0) {
                       setShowSessionsModal(true);
                     } else {
-                      toast('Сначала добавьте хотя бы один перелёт', 'warning');
+                      toast(t('access.needFlight'), 'warning');
                     }
                   }}
                   className={styles.sessionsListButton}
-                  title={flights.length === 0 ? "Сначала добавьте перелет" : "Показать выданные приглашения"}
+                  title={flights.length === 0 ? t('access.addFirstTitle') : t('access.invitesTitle')}
                   disabled={flights.length === 0}
                 >
-                  📋 Приглашения
+                  {t('access.invites')}
                 </button>
               )}
             </div>
@@ -126,11 +125,11 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
             {/* Информационное сообщение если нет перелетов */}
             {flights.length === 0 && (
               <div className={styles.noFlightsMessage}>
-                <p>📝 <strong>Создайте свою историю перелетов:</strong></p>
+                <p>📝 <strong>{t('access.createTitle')}</strong></p>
                 <ol className={styles.noFlightsList}>
-                  <li>Добавьте первый перелет во вкладке «➕ Добавить»</li>
-                  <li>Затем сможете поделиться историей с другими</li>
-                  <li>Или присоединитесь к истории друга прямо сейчас!</li>
+                  <li>{t('access.createStep1')}</li>
+                  <li>{t('access.createStep2')}</li>
+                  <li>{t('access.createStep3')}</li>
                 </ol>
               </div>
             )}
@@ -138,10 +137,9 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
             {/* Подсказка внизу аккордеона */}
             <div className={styles.accessFooter}>
               <span className={styles.accessFooterHint}>
-                {flights.length === 0 
-                  ? '💡 Начните с добавления первого перелета или присоединитесь к истории друга'
-                  : '💡 Создавайте приглашения, присоединяйтесь к другим и управляйте доступом'
-                }
+                {flights.length === 0
+                  ? t('access.footerEmpty')
+                  : t('access.footerFilled')}
               </span>
             </div>
           </div>
