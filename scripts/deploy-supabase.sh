@@ -9,7 +9,8 @@ echo "Deploying Edge Functions..."
 supabase functions deploy auth-telegram --no-verify-jwt
 supabase functions deploy auth-guest --no-verify-jwt
 supabase functions deploy auth-refresh --no-verify-jwt
-supabase functions deploy link-email
+# Gateway JWT verify breaks after Auth signing-key rotation; link-email checks the owner JWT in-function.
+supabase functions deploy link-email --no-verify-jwt
 
 if [ "${DEPLOY_AUTH_DEV:-}" = "true" ]; then
   echo "DEPLOY_AUTH_DEV=true — deploying auth-dev (staging only)"
@@ -21,6 +22,7 @@ fi
 echo "Done. Ensure secrets are set:"
 echo "  supabase secrets set BOT_TOKEN=..."
 echo "  supabase secrets set JWT_SECRET=..."
+echo "  supabase secrets set JWT_SIGNING_PRIVATE_JWK='...'  # optional; ES256 after importing a signing key"
 echo "  supabase secrets set ALLOW_DEV_AUTH=false  # production"
 echo "Apply pending migrations with: supabase db push"
-echo "link-email is deployed WITH JWT verification (unlike auth-*)."
+echo "link-email is deployed with --no-verify-jwt; verifyOwnerToken still runs inside the function."

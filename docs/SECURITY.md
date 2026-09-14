@@ -9,6 +9,7 @@
 | Telegram `BOT_TOKEN` | `bot/.env`, Supabase secrets | git, Issues, скриншоты логов |
 | `SUPABASE_SERVICE_ROLE_KEY` | только Edge Functions (`auth-*`) | фронт, git, бот, чаты |
 | `JWT_SECRET` | Supabase secrets | фронт и git |
+| `JWT_SIGNING_PRIVATE_JWK` | Supabase secrets (ES256 private JWK) | фронт, git, логи, чаты |
 | `VITE_SUPABASE_ANON_KEY` | `.env.local`, GitHub Actions secrets | публичные gist; anon + RLS допустим во фронте |
 | Share-токен приглашения | одноразовая ссылка | логи, URL после входа |
 
@@ -34,5 +35,6 @@
 - CORS Edge Functions — allowlist GitHub Pages и localhost, не `*`.
 - Telegram-бот ходит в БД только через RPC `lookup_share_invite` с anon-ключом (или сразу открывает Mini App, если RPC ещё не применён).
 - Связка Telegram ↔ email идёт только через `link-email` (service role): клиент не пишет в `user_identities`. Новый email создаётся неподтверждённым; существующий — только после `signInWithPassword`. Два разных Telegram к одному ящику не сливаются.
+- Custom access JWT: HS256, пока нет `JWT_SIGNING_PRIVATE_JWK`; иначе ES256 с `kid`. `link-email` проверяет токен в функции (шлюз Auth после ротации ключей не подходит). Legacy JWT Secret пока не отзываем.
 
 Подробный чеклист деплоя: [SUPABASE_SETUP.md](./SUPABASE_SETUP.md). Разбор прошлых дыр: [CODE_AUDIT.md](./CODE_AUDIT.md).

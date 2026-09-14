@@ -27,7 +27,7 @@
 
 Это мировой стандарт для Mini App + BaaS, но каждое изменение либо операционное, либо требует отдельного окна миграции.
 
-1. **Asymmetric JWT Supabase** вместо общего HS256 `JWT_SECRET`. Dual-key, `kid`, ротация.
+1. **Отозвать legacy JWT Secret** и перейти на publishable/`sb_` API keys. Код уже умеет ES256 + dual verify; отзыв секрета и смена anon-ключа ломают GitHub Pages, пока фронт не уйдёт с JWT-based `anon`. Только с явным «да».
 
 ## Файл за файлом
 
@@ -42,7 +42,7 @@
 | `index.html` | Telegram script | Нет CSP | CSP-lite + `favicon.svg` относительно `base` |
 | `public/manifest.json` | PWA | CRA sample, битые иконки | Имя приложения, без фейковых иконок |
 | `.github/workflows/deploy.yml` | Pages | Деплой без обязательного CI | `needs`: quality, functions, bot, rls |
-| `.github/workflows/ci.yml` | lint/test/build | Нет аудита бэкенда | `deno check` + `deno lint`, coverage фронта, тесты бота, RLS на Postgres 15, `npm audit` |
+| `.github/workflows/ci.yml` | lint/test/build | Нет аудита бэкенда | `deno check` + `deno lint` + `deno test` JWT, coverage фронта, тесты бота, RLS на Postgres 15, `npm audit` |
 | `scripts/deploy-supabase.sh` | Деплой functions | Всегда деплоил `auth-dev` | Skip по умолчанию |
 | `docs/SUPABASE_SETUP.md` | Прод-инструкция | Копипаста включала `ALLOW_DEV_AUTH=true` | Staging отдельно, добавлены `003`–`008` |
 
@@ -99,12 +99,12 @@
 | `007_email_owner_auth.sql` | `is_owner()` только `app_role=owner` | GoTrue без `app_role` тоже owner; access-token hook |
 | `008_user_identities.sql` | Email и Telegram — разные `user_id` | `user_identities`, канонический id в хуке и `auth-telegram` |
 | `_shared/telegram.ts` | Нет TTL, `===` для HMAC | `auth_date` + timing-safe |
-| `_shared/jwt.ts` | Claims могли перекрыть `role`; guest TTL 7д | Reserved claims последними; access 1 час; `ft=custom` |
+| `_shared/jwt.ts` | Claims могли перекрыть `role`; guest TTL 7д; только HS256 | Reserved claims последними; access 1 час; `ft=custom`; ES256 + JWKS dual-key |
 | `auth-refresh` | — | Ротация hashed refresh, reuse отзывает family |
 | `009_refresh_tokens.sql` | — | Opaque refresh, клиент не читает таблицу |
 | `auth-guest` | 7д JWT, `expires_in: 1д` | Lookup по hash, bind edit Telegram id, CORS allowlist |
 | `auth-telegram` | JWT даже если upsert users упал | Ошибка 500; JWT с каноническим `user_id` из identities |
-| `link-email` | — | Пароль обязателен, merge по числу билетов, гости отклоняются |
+| `link-email` | — | Пароль обязателен, merge по числу билетов, гости отклоняются; `--no-verify-jwt`, проверка в `verifyOwnerToken` |
 | `auth-dev` | Account takeover если секрет true | Не деплоить в prod; upsert error → 500 |
 | `_shared/cors.ts` | `*` | Allowlist Pages + localhost, `Vary: Origin` |
 
