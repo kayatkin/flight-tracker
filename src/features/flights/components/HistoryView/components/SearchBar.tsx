@@ -1,9 +1,17 @@
 import React from 'react';
+import { t, type MessageKey } from '@shared/i18n';
 import { Flight } from '@shared/types';
 import { downloadFlightsCsv } from '@shared/utils';
 import { toast } from '@shared/ui/Toast';
 import { HISTORY_SORT_OPTIONS, isHistorySort, type HistorySort } from '../utils/historyViewHelpers';
 import styles from '../HistoryView.module.css';
+
+const SORT_LABELS: Record<HistorySort, MessageKey> = {
+  route: 'history.sortRoute',
+  'price-asc': 'history.sortCheap',
+  'found-desc': 'history.sortNew',
+  'found-asc': 'history.sortOld',
+};
 
 interface SearchBarProps {
   searchTerm: string;
@@ -27,14 +35,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   const handleExport = () => {
     if (visibleCount === 0) {
-      toast('Нет билетов для экспорта', 'warning');
+      toast(t('history.noExport'), 'warning');
       return;
     }
     downloadFlightsCsv(visibleFlights);
     toast(
       isFiltering
-        ? `Скачаны найденные билеты: ${visibleCount}`
-        : `Скачана история: ${visibleCount}`,
+        ? t('history.downloadedFound', { count: visibleCount })
+        : t('history.downloadedAll', { count: visibleCount }),
       'success'
     );
   };
@@ -43,8 +51,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     <div className={styles.searchContainer}>
       <input
         type="search"
-        placeholder="Город, авиакомпания или заметка"
-        aria-label="Поиск по городам, авиакомпаниям и заметкам"
+        placeholder={t('history.searchPlaceholder')}
+        aria-label={t('history.searchAria')}
         value={searchTerm}
         onChange={(e) => onSearchChange(e.target.value)}
         className={styles.searchInput}
@@ -58,11 +66,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             const value = event.target.value;
             if (isHistorySort(value)) onSortChange(value);
           }}
-          aria-label="Сортировка истории"
+          aria-label={t('history.sortAria')}
         >
           {HISTORY_SORT_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
-              {option.label}
+              {t(SORT_LABELS[option.value])}
             </option>
           ))}
         </select>
@@ -70,8 +78,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           className={styles.flightCount}
           title={
             isFiltering
-              ? `Найдено ${visibleCount} из ${totalFlights}`
-              : `Всего билетов: ${totalFlights}`
+              ? t('history.foundOf', { visible: visibleCount, total: totalFlights })
+              : t('history.totalTickets', { total: totalFlights })
           }
         >
           {isFiltering ? (
@@ -90,13 +98,13 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             disabled={visibleCount === 0}
             title={
               isFiltering
-                ? 'Скачать найденные билеты в CSV'
-                : 'Скачать все билеты на экране в CSV'
+                ? t('history.exportFound')
+                : t('history.exportAll')
             }
             aria-label={
               isFiltering
-                ? 'Скачать найденные билеты в CSV'
-                : 'Скачать все билеты на экране в CSV'
+                ? t('history.exportFound')
+                : t('history.exportAll')
             }
           >
             CSV

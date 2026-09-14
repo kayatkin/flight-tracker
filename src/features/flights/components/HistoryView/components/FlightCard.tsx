@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '@shared/i18n';
 import { Flight } from '@shared/types';
 import { formatDateToDMY, formatPrice, formatLayover, formatPassengerCount } from '../utils/historyViewHelpers';
 import styles from '../HistoryView.module.css';
@@ -31,11 +32,11 @@ export const FlightCard: React.FC<FlightCardProps> = ({
       key={flight.id}
       className={`${styles.fullCard} ${isBest ? styles.best : styles.normal}`}
     >
-      {isBest && <div className={styles.bestTag}>✅ Самый выгодный</div>}
+      {isBest && <div className={styles.bestTag}>{t('history.bestTag')}</div>}
 
       <div className={styles.route}>
         <strong>{flight.origin} → {flight.destination}</strong>
-        {flight.type === 'roundTrip' && ' (туда-обратно)'}
+        {flight.type === 'roundTrip' && t('history.roundTripSuffix')}
       </div>
 
       <div className={styles.dateTime}>
@@ -62,15 +63,15 @@ export const FlightCard: React.FC<FlightCardProps> = ({
       {flight.notes ? <div className={styles.notes}>📝 {flight.notes}</div> : null}
 
       <div className={styles.price}>
-        💰 Всего: {formatPrice(flight.totalPrice)} |{' '}
-        <strong>{formatPrice(flight.totalPrice / flight.passengers)} на человека</strong>
+        💰 {t('history.totalPrice')} {formatPrice(flight.totalPrice)} |{' '}
+        <strong>{formatPrice(flight.totalPrice / flight.passengers)} {t('history.perPerson')}</strong>
       </div>
 
       <div className={styles.meta}>
         <span className={styles.metaText}>
-          👥 {formatPassengerCount(flight.passengers)} • Найдено: {formatDateToDMY(flight.dateFound)}
+          👥 {formatPassengerCount(flight.passengers)} • {t('history.foundOn')} {formatDateToDMY(flight.dateFound)}
           {isGuest && <span className={styles.guestMeta}>
-            {guestPermissions === 'edit' ? '✏️ Редактирование' : '👁️ Только просмотр'}
+            {guestPermissions === 'edit' ? t('history.guestEdit') : t('history.guestView')}
           </span>}
         </span>
         <div className={styles.actionButtons}>
@@ -78,8 +79,8 @@ export const FlightCard: React.FC<FlightCardProps> = ({
             type="button"
             onClick={(e) => onEdit(flight, e)}
             className={styles.editButton}
-            title={canMutate ? 'Изменить билет' : 'Нет прав для изменения'}
-            aria-label={canMutate ? 'Изменить билет' : 'Нет прав для изменения'}
+            title={canMutate ? t('history.editTicket') : t('history.noEdit')}
+            aria-label={canMutate ? t('history.editTicket') : t('history.noEdit')}
             disabled={!canMutate}
           >
             ✏️
@@ -88,8 +89,8 @@ export const FlightCard: React.FC<FlightCardProps> = ({
             type="button"
             onClick={(e) => onDuplicate(flight, e)}
             className={styles.duplicateButton}
-            title={canMutate ? 'Дублировать билет' : 'Нет прав для копирования'}
-            aria-label={canMutate ? 'Дублировать билет' : 'Нет прав для копирования'}
+            title={canMutate ? t('history.duplicateTicket') : t('history.noCopy')}
+            aria-label={canMutate ? t('history.duplicateTicket') : t('history.noCopy')}
             disabled={!canMutate}
           >
             📄
@@ -98,8 +99,8 @@ export const FlightCard: React.FC<FlightCardProps> = ({
             type="button"
             onClick={(e) => onDelete(flight.id, e)}
             className={styles.deleteButton}
-            title={canMutate ? 'Удалить билет' : 'Нет прав для удаления'}
-            aria-label={canMutate ? 'Удалить билет' : 'Нет прав для удаления'}
+            title={canMutate ? t('history.deleteTicket') : t('history.noDelete')}
+            aria-label={canMutate ? t('history.deleteTicket') : t('history.noDelete')}
             disabled={!canMutate}
           >
             🗑️

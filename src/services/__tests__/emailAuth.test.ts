@@ -4,6 +4,8 @@ import {
   authRedirectUrl,
   decodeJwtPayload,
   isAuthRequiredError,
+  isCustomEdgeSession,
+  isJwtExpired,
   isRecoveryCallback,
   mapAuthError,
   ownerFromCustomAccessToken,
@@ -94,6 +96,20 @@ describe('emailAuth helpers', () => {
       access_token: 'not-a-jwt',
       user: { id: 'uuid-2', email: 'ann@example.com', user_metadata: {} },
     })).toEqual({ userId: 'uuid-2', userName: 'ann' });
+  });
+
+  it('detects custom Edge sessions without treating hooked GoTrue as custom', () => {
+    const custom = jwtWith({ ft: 'custom', app_role: 'owner', user_id: 'tg_1' });
+    expect(isCustomEdgeSession(custom, 'opaque')).toBe(true);
+    expect(isCustomEdgeSession(custom, custom)).toBe(true);
+
+    const legacy = jwtWith({ app_role: 'owner', user_id: 'tg_1' });
+    expect(isCustomEdgeSession(legacy, legacy)).toBe(true);
+
+    const hooked = jwtWith({ app_role: 'owner', user_id: 'tg_1' });
+    expect(isCustomEdgeSession(hooked, 'gotrue-refresh')).toBe(false);
+    expect(isJwtExpired(jwtWith({ exp: 1 }))).toBe(true);
+    expect(isJwtExpired(jwtWith({ exp: Math.floor(Date.now() / 1000) + 3600 }))).toBe(false);
   });
 
   it('maps GoTrue error strings to Russian copy', () => {

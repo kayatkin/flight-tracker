@@ -55,6 +55,7 @@ supabase secrets set CORS_ALLOWED_ORIGINS="https://kayatkin.github.io,http://loc
     - `supabase/migrations/006_share_token_hash.sql` (lookup uses `search_path = public, extensions`, because on Supabase `digest` is in `extensions`)
     - `supabase/migrations/007_email_owner_auth.sql` (`is_owner()` для GoTrue JWT; `custom_access_token_hook`)
     - `supabase/migrations/008_user_identities.sql` (связка Telegram ↔ email, канонический `user_id` в хуке)
+    - `supabase/migrations/009_refresh_tokens.sql` (opaque refresh для Telegram/гостя)
 
 **Вариант B — CLI:**
 
@@ -79,6 +80,7 @@ DEPLOY_AUTH_DEV=true npm run supabase:deploy
 ```bash
 supabase functions deploy auth-telegram --no-verify-jwt
 supabase functions deploy auth-guest --no-verify-jwt
+supabase functions deploy auth-refresh --no-verify-jwt
 supabase functions deploy link-email
 ```
 
@@ -133,7 +135,7 @@ GitHub Actions secrets (уже есть `SUPABASE_URL`, `SUPABASE_ANON_KEY`).
 
 | Шаг | Действие |
 |-----|----------|
-| RLS | Миграции `002`, `003`, `004_lookup_share_invite.sql`, `005_flight_notes.sql`, `006_share_token_hash.sql`, `007_email_owner_auth.sql`, `008_user_identities.sql` применены |
+| RLS | Миграции `002`–`009` применены |
 | Anon key | Нет прямого доступа к таблицам без JWT |
 | `ALLOW_DEV_AUTH` | `false` |
 | `auth-dev` | Не задеплоен в production |

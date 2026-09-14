@@ -28,8 +28,6 @@
 Это мировой стандарт для Mini App + BaaS, но каждое изменение либо операционное, либо требует отдельного окна миграции.
 
 1. **Asymmetric JWT Supabase** вместо общего HS256 `JWT_SECRET`. Dual-key, `kid`, ротация.
-2. **Настоящий refresh для Telegram/гостя** (сейчас копия access JWT). Email-владельцы уже на GoTrue refresh + PKCE.
-3. **i18n-каталог** вместо строк в JSX (сейчас продукт только на русском).
 
 ## Файл за файлом
 
@@ -54,7 +52,7 @@
 |------|----------|---------|
 | `dataService.ts` | Пустая загрузка при ошибке; wipe всей таблицы; prune `NOT IN` | `ok`, prune известных id, UUID сохраняется, `persistFlightChanges` пишет только dirty-строки |
 | `appInitService.ts` | Логи токена; boolean `processed_invitation_token`; браузер как Telegram | Без логов секретов; in-memory promise; `initData` |
-| `authService.ts` | Access JWT как refresh | Email: GoTrue refresh; Telegram/гость: `stopAutoRefresh()`; после связки `user_id` из JWT хука |
+| `authService.ts` | Access JWT как refresh | Email: GoTrue refresh; Telegram/гость: opaque refresh + `auth-refresh`; после связки `user_id` из JWT хука |
 | `accountService.ts` | — | `link-email` + `user_identities`; клиент не пишет identities |
 | `shareService.ts` | Plaintext token в строке | Новые строки: `token_hash`, `token` NULL; fallback на старую схему |
 | `shareUrls.ts` | Хардкод origin/бота | Origin из `window`, бот из env, без выдуманного username |
@@ -68,7 +66,8 @@
 | `utils/telegramUserType.ts` | SDK ⇒ Mini App | Только launch data |
 | `utils/telegramUtils.ts` | Логи токена | Возврат без логов |
 | `utils/logger.ts` | Секреты в console | `redactSecrets` |
-| `utils/validation.ts` | Пробелы, Infinity, нет airline | Trim, `Number.isFinite`, airline |
+| `utils/validation.ts` | Пробелы, Infinity, нет airline | Trim, `Number.isFinite`, airline; тексты из каталога |
+| `i18n/` | Строки в JSX | `src/shared/i18n/ru.ts` + `t()`; без EN-переключателя |
 | `utils/id.ts` | Math.random fallback для share token | Share token требует Web Crypto |
 | `utils/url.ts` | Стирает весь query/hash | Удаляет только token-параметры |
 | `utils/getSeasonalChartData.ts` | UTC parse месяца | Разбор `YYYY-MM-DD` |
@@ -100,7 +99,9 @@
 | `007_email_owner_auth.sql` | `is_owner()` только `app_role=owner` | GoTrue без `app_role` тоже owner; access-token hook |
 | `008_user_identities.sql` | Email и Telegram — разные `user_id` | `user_identities`, канонический id в хуке и `auth-telegram` |
 | `_shared/telegram.ts` | Нет TTL, `===` для HMAC | `auth_date` + timing-safe |
-| `_shared/jwt.ts` | Claims могли перекрыть `role`; guest TTL 7д | Reserved claims последними; default TTL 1 сутки |
+| `_shared/jwt.ts` | Claims могли перекрыть `role`; guest TTL 7д | Reserved claims последними; access 1 час; `ft=custom` |
+| `auth-refresh` | — | Ротация hashed refresh, reuse отзывает family |
+| `009_refresh_tokens.sql` | — | Opaque refresh, клиент не читает таблицу |
 | `auth-guest` | 7д JWT, `expires_in: 1д` | Lookup по hash, bind edit Telegram id, CORS allowlist |
 | `auth-telegram` | JWT даже если upsert users упал | Ошибка 500; JWT с каноническим `user_id` из identities |
 | `link-email` | — | Пароль обязателен, merge по числу билетов, гости отклоняются |

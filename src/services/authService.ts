@@ -1,3 +1,4 @@
+import { t } from '@shared/i18n';
 import { supabase } from '@shared/lib';
 import { env } from '@shared/config/env';
 import { getDevelopmentUserId } from '@shared/utils/telegram';
@@ -6,7 +7,11 @@ import { GuestUser } from '@shared/types/shared';
 import { devLog, logError } from '@shared/utils/logger';
 import {
   authRedirectUrl,
+  decodeJwtPayload,
+  isCustomEdgeSession,
+  isJwtExpired,
   mapAuthError,
+  msUntilCustomRefresh,
   ownerFromCustomAccessToken,
   ownerFromGoTrueUser,
   ownerFromSession,
@@ -16,6 +21,7 @@ import {
 export {
   AuthRequiredError,
   isAuthRequiredError,
+  isCustomEdgeSession,
   mapAuthError,
   ownerFromCustomAccessToken,
   ownerFromGoTrueUser,
@@ -42,12 +48,91 @@ export interface EmailAuthResult {
   error?: string;
 }
 
-const stopCustomJwtRefresh = (): void => {
+const stopGoTrueRefresh = (): void => {
   supabase.auth.stopAutoRefresh();
 };
 
 const startGoTrueRefresh = (): void => {
   supabase.auth.startAutoRefresh();
+};
+
+let customRefreshTimer: number | undefined;
+let customRefreshBound = false;
+
+const stopCustomRefreshTimer = (): void => {
+  if (typeof window === 'undefined') return;
+  if (customRefreshTimer !== undefined) {
+    window.clearTimeout(customRefreshTimer);
+    customRefreshTimer = undefined;
+  }
+};
+
+export const refreshCustomSession = async (): Promise<boolean> => {
+  const { data } = await supabase.auth.getSession();
+  const access = data.session?.access_token;
+  const refresh = data.session?.refresh_token;
+  if (!access || !refresh || !isCustomEdgeSession(access, refresh)) return false;
+  if (access === refresh) {
+    return !isJwtExpired(access);
+  }
+
+  const { data: rotated, error } = await supabase.functions.invoke<{
+    ok?: boolean;
+    access_token?: string;
+    refresh_token?: string;
+  }>('auth-refresh', { body: { refresh_token: refresh } });
+
+  if (error || !rotated?.access_token || !rotated?.refresh_token) {
+    logError('[AUTH] auth-refresh failed:', error);
+    return false;
+  }
+
+  await applySession(rotated.access_token, rotated.refresh_token);
+  stopGoTrueRefresh();
+  scheduleCustomRefresh();
+  return true;
+};
+
+const scheduleCustomRefresh = (): void => {
+  stopCustomRefreshTimer();
+  if (typeof window === 'undefined') return;
+  void supabase.auth.getSession().then(({ data }) => {
+    const access = data.session?.access_token;
+    const refresh = data.session?.refresh_token;
+    if (!access || !refresh || !isCustomEdgeSession(access, refresh)) return;
+    if (access === refresh) return;
+    customRefreshTimer = window.setTimeout(() => {
+      void refreshCustomSession();
+    }, msUntilCustomRefresh(access));
+  });
+};
+
+const onVisibilityRefresh = (): void => {
+  if (typeof document === 'undefined' || document.visibilityState !== 'visible') return;
+  void supabase.auth.getSession().then(({ data }) => {
+    const access = data.session?.access_token;
+    const refresh = data.session?.refresh_token;
+    if (!access || !refresh || !isCustomEdgeSession(access, refresh)) return;
+    if (access === refresh) return;
+    if (isJwtExpired(access, 90)) {
+      void refreshCustomSession();
+    }
+  });
+};
+
+const unbindCustomRefresh = (): void => {
+  stopCustomRefreshTimer();
+  if (typeof document === 'undefined' || !customRefreshBound) return;
+  document.removeEventListener('visibilitychange', onVisibilityRefresh);
+  customRefreshBound = false;
+};
+
+export const startCustomRefreshTimer = (): void => {
+  stopGoTrueRefresh();
+  scheduleCustomRefresh();
+  if (typeof document === 'undefined' || customRefreshBound) return;
+  customRefreshBound = true;
+  document.addEventListener('visibilitychange', onVisibilityRefresh);
 };
 
 const applySession = async (accessToken: string, refreshToken: string): Promise<void> => {
@@ -58,6 +143,11 @@ const applySession = async (accessToken: string, refreshToken: string): Promise<
   if (error) {
     throw error;
   }
+};
+
+const applyCustomSession = async (accessToken: string, refreshToken: string): Promise<void> => {
+  await applySession(accessToken, refreshToken);
+  startCustomRefreshTimer();
 };
 
 const ensurePublicUser = async (userId: string, name: string): Promise<void> => {
@@ -90,10 +180,29 @@ const invokeAuth = async <T extends AuthTokensResponse>(
     return null;
   }
 
-  await applySession(data.access_token, data.refresh_token ?? data.access_token);
-  stopCustomJwtRefresh();
+  await applyCustomSession(data.access_token, data.refresh_token ?? data.access_token);
   devLog(`[AUTH] ${functionName} session applied for`, data.userId);
   return data;
+};
+
+export const guestFromCustomAccessToken = (accessToken: string): GuestUser | null => {
+  const claims = decodeJwtPayload(accessToken);
+  if (!claims || claims.app_role !== 'guest') return null;
+  const ownerId = String(claims.user_id ?? '');
+  const sub = String(claims.sub ?? '');
+  if (!ownerId || !sub) return null;
+  const ownerName = typeof claims.name === 'string' && claims.name.trim()
+    ? claims.name.trim()
+    : t('guest.ownerFallback');
+  return {
+    userId: sub,
+    name: t('guest.name'),
+    isGuest: true,
+    sessionToken: '',
+    permissions: claims.permissions === 'edit' ? 'edit' : 'view',
+    ownerId,
+    ownerName,
+  };
 };
 
 /** Telegram Mini App — validates initData server-side and issues JWT. */
@@ -106,7 +215,7 @@ export const authenticateTelegram = async (initData: string): Promise<OwnerAuthR
 /** Browser dev mode — only when ALLOW_DEV_AUTH=true on Supabase. */
 export const authenticateDev = async (
   userId: string,
-  name = 'Разработчик'
+  name = t('auth.developer')
 ): Promise<OwnerAuthResult | null> => {
   if (!env.isDev) {
     logError('[AUTH] Dev auth is only available in development builds');
@@ -134,9 +243,32 @@ export const authenticateGuest = async (shareToken: string): Promise<GuestUser |
     return null;
   }
 
-  await applySession(data.access_token, data.refresh_token ?? data.access_token);
-  stopCustomJwtRefresh();
+  await applyCustomSession(data.access_token, data.refresh_token ?? data.access_token);
   return data.guestUser;
+};
+
+const ensureFreshCustomAccess = async (access: string, refresh: string): Promise<string | null> => {
+  if (!isJwtExpired(access)) return access;
+  if (access === refresh) return null;
+  const ok = await refreshCustomSession();
+  if (!ok) return null;
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token ?? null;
+};
+
+export const restoreGuestSession = async (): Promise<GuestUser | null> => {
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session) return null;
+  const refresh = data.session.refresh_token;
+  const access = data.session.access_token;
+  if (!refresh || !access || !isCustomEdgeSession(access, refresh)) return null;
+
+  const fresh = await ensureFreshCustomAccess(access, refresh);
+  if (!fresh) return null;
+  const guest = guestFromCustomAccessToken(fresh);
+  if (!guest) return null;
+  startCustomRefreshTimer();
+  return guest;
 };
 
 export const restoreGoTrueOwner = async (): Promise<OwnerAuthResult | null> => {
@@ -147,10 +279,13 @@ export const restoreGoTrueOwner = async (): Promise<OwnerAuthResult | null> => {
   const access = data.session.access_token;
   if (!refresh || !access) return null;
 
-  if (refresh === access) {
-    const owner = ownerFromCustomAccessToken(access);
+  if (isCustomEdgeSession(access, refresh)) {
+    if (guestFromCustomAccessToken(access)) return null;
+    const fresh = await ensureFreshCustomAccess(access, refresh);
+    if (!fresh) return null;
+    const owner = ownerFromCustomAccessToken(fresh);
     if (!owner) return null;
-    stopCustomJwtRefresh();
+    startCustomRefreshTimer();
     await ensurePublicUser(owner.userId, owner.userName);
     return owner;
   }
@@ -230,7 +365,7 @@ export const requestPasswordReset = async (email: string): Promise<EmailAuthResu
 
 export const updatePassword = async (password: string): Promise<EmailAuthResult> => {
   if (password.length < 6) {
-    return { ok: false, error: 'Пароль не короче 6 символов' };
+    return { ok: false, error: t('auth.shortPassword') };
   }
   const { error } = await supabase.auth.updateUser({ password });
   if (error) {
@@ -240,11 +375,20 @@ export const updatePassword = async (password: string): Promise<EmailAuthResult>
 };
 
 export const signOutOwner = async (): Promise<void> => {
+  const { data } = await supabase.auth.getSession();
+  const access = data.session?.access_token;
+  const refresh = data.session?.refresh_token;
+  if (access && refresh && isCustomEdgeSession(access, refresh) && access !== refresh) {
+    await supabase.functions.invoke('auth-refresh', {
+      body: { refresh_token: refresh, revoke: true },
+    });
+  }
+  unbindCustomRefresh();
   await supabase.auth.signOut();
 };
 
 export const signInAsDeveloper = async (): Promise<OwnerAuthResult | null> => {
-  return authenticateDev(getDevelopmentUserId(), 'Разработчик');
+  return authenticateDev(getDevelopmentUserId(), t('auth.developer'));
 };
 
 /** Picks Telegram → saved email/dev owner session. Dev auth is opt-in from the login screen. */
@@ -258,13 +402,6 @@ export const authenticateOwner = async (): Promise<OwnerAuthResult | null> => {
 
   const restored = await restoreGoTrueOwner();
   if (restored) return restored;
-
-  const { data } = await supabase.auth.getSession();
-  const access = data.session?.access_token;
-  const refresh = data.session?.refresh_token;
-  if (access && refresh === access) {
-    await supabase.auth.signOut();
-  }
 
   return null;
 };

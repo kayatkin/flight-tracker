@@ -6,6 +6,7 @@ import {
   summarizeIdentities,
   type AccountIdentity,
 } from '@services/accountService';
+import { t } from '@shared/i18n';
 import { useEscapeToClose } from '@shared/hooks';
 import { toast } from '@shared/ui/Toast';
 import styles from './AccountModal.module.css';
@@ -49,14 +50,14 @@ const AccountModal: React.FC<AccountModalProps> = ({ isTelegram, onClose, onLink
     try {
       const result = await linkEmailAccount(email, password, confirmPassword);
       if (!result.ok) {
-        setError(result.error ?? 'Не удалось связать аккаунт');
+        setError(result.error ?? t('account.linkFailed'));
         return;
       }
       if (result.identities) setIdentities(result.identities);
       toast(
         result.needsConfirmation
-          ? 'Email привязан. Подтвердите ящик по письму, прежде чем входить в браузере.'
-          : 'Аккаунты связаны. История теперь общая.',
+          ? t('account.toastConfirm')
+          : t('account.toastLinked'),
         'success'
       );
       await refreshOwnerAfterLink();
@@ -78,30 +79,28 @@ const AccountModal: React.FC<AccountModalProps> = ({ isTelegram, onClose, onLink
         aria-labelledby="account-title"
         tabIndex={-1}
       >
-        <h3 id="account-title">Аккаунт</h3>
+        <h3 id="account-title">{t('account.title')}</h3>
 
         {loading ? (
-          <p className={styles.hint}>Загрузка…</p>
+          <p className={styles.hint}>{t('account.loading')}</p>
         ) : (
           <>
             <ul className={styles.statusList}>
               <li>
-                <span className={styles.statusLabel}>Telegram</span>
-                <span>{summary.hasTelegram || isTelegram ? 'привязан' : 'не привязан'}</span>
+                <span className={styles.statusLabel}>{t('account.telegram')}</span>
+                <span>{summary.hasTelegram || isTelegram ? t('account.linked') : t('account.notLinked')}</span>
               </li>
               <li>
-                <span className={styles.statusLabel}>Email</span>
-                <span>{summary.email || (summary.hasEmail ? 'привязан' : 'не привязан')}</span>
+                <span className={styles.statusLabel}>{t('account.email')}</span>
+                <span>{summary.email || (summary.hasEmail ? t('account.linked') : t('account.notLinked'))}</span>
               </li>
             </ul>
 
             {showLinkForm && (
               <>
-                <p className={styles.lead}>
-                  Привяжите email и пароль — та же история откроется в браузере.
-                </p>
+                <p className={styles.lead}>{t('account.leadLink')}</p>
                 <form className={styles.form} onSubmit={(event) => { void submit(event); }}>
-                  <label className={styles.label} htmlFor="account-email">Email</label>
+                  <label className={styles.label} htmlFor="account-email">{t('auth.email')}</label>
                   <input
                     id="account-email"
                     className={styles.input}
@@ -111,7 +110,7 @@ const AccountModal: React.FC<AccountModalProps> = ({ isTelegram, onClose, onLink
                     onChange={(event) => setEmail(event.target.value)}
                     required
                   />
-                  <label className={styles.label} htmlFor="account-password">Пароль</label>
+                  <label className={styles.label} htmlFor="account-password">{t('auth.password')}</label>
                   <input
                     id="account-password"
                     className={styles.input}
@@ -122,7 +121,7 @@ const AccountModal: React.FC<AccountModalProps> = ({ isTelegram, onClose, onLink
                     minLength={6}
                     required
                   />
-                  <label className={styles.label} htmlFor="account-password-confirm">Повторите пароль</label>
+                  <label className={styles.label} htmlFor="account-password-confirm">{t('auth.confirmPassword')}</label>
                   <input
                     id="account-password-confirm"
                     className={styles.input}
@@ -135,27 +134,19 @@ const AccountModal: React.FC<AccountModalProps> = ({ isTelegram, onClose, onLink
                   />
                   {error && <p className={styles.error} role="alert">{error}</p>}
                   <button type="submit" className={styles.submit} disabled={busy}>
-                    {busy ? 'Привязка…' : 'Привязать email'}
+                    {busy ? t('account.submitting') : t('account.submit')}
                   </button>
                 </form>
-                <p className={styles.hint}>
-                  Пароль обязателен: так нельзя занять чужой ящик. Новый email нужно
-                  подтвердить письмом перед входом в браузере.
-                </p>
+                <p className={styles.hint}>{t('account.hint')}</p>
               </>
             )}
 
             {!showLinkForm && !summary.hasTelegram && (
-              <p className={styles.lead}>
-                Откройте Mini App в Telegram и введите этот email с паролем —
-                истории объединятся. В браузере Telegram привязать нельзя.
-              </p>
+              <p className={styles.lead}>{t('account.leadTelegram')}</p>
             )}
 
             {!showLinkForm && (summary.hasTelegram || isTelegram) && (
-              <p className={styles.lead}>
-                Один аккаунт: история общая в Telegram и в браузере.
-              </p>
+              <p className={styles.lead}>{t('account.leadDone')}</p>
             )}
 
             {error && !showLinkForm && <p className={styles.error} role="alert">{error}</p>}
@@ -164,7 +155,7 @@ const AccountModal: React.FC<AccountModalProps> = ({ isTelegram, onClose, onLink
 
         <div className={styles.buttonGroup}>
           <button type="button" className={styles.closeButton} onClick={onClose}>
-            Закрыть
+            {t('account.close')}
           </button>
         </div>
       </div>

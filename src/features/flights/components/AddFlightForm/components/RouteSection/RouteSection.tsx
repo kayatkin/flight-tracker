@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { t } from '@shared/i18n';
 import { AutocompleteInput } from '@shared/ui';
 import { useAutocomplete, FlightFormData } from '@shared/hooks';
 import styles from './RouteSection.module.css';
@@ -44,7 +45,7 @@ const RouteSection: React.FC<RouteSectionProps> = ({
 
   return (
     <div className={styles.section}>
-      <h4 className={styles.sectionTitle}>📍 Маршрут</h4>
+      <h4 className={styles.sectionTitle}>{t('form.route')}</h4>
       
       <div className={styles.inputsContainer}>
         {/* Обертка с классом для первого автодополнения */}
@@ -56,9 +57,9 @@ const RouteSection: React.FC<RouteSectionProps> = ({
             isOpen={originAutocomplete.isOpen}
             onSelectSuggestion={handleOriginSelect}
             onCloseSuggestions={originAutocomplete.closeSuggestions}
-            placeholder="Москва"
-            label="Город вылета"
-            aria-label="Город вылета"
+            placeholder={t('form.originPlaceholder')}
+            label={t('form.origin')}
+            aria-label={t('form.origin')}
           />
         </div>
 
@@ -71,9 +72,9 @@ const RouteSection: React.FC<RouteSectionProps> = ({
             isOpen={destinationAutocomplete.isOpen}
             onSelectSuggestion={handleDestinationSelect}
             onCloseSuggestions={destinationAutocomplete.closeSuggestions}
-            placeholder="Тбилиси"
-            label="Город назначения"
-            aria-label="Город назначения"
+            placeholder={t('form.destinationPlaceholder')}
+            label={t('form.destination')}
+            aria-label={t('form.destination')}
           />
         </div>
       </div>

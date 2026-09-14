@@ -12,7 +12,7 @@ Flight Tracker — это Telegram Mini App (React SPA), которое рабо
 │  features/flights, features/sharing, features/guest-mode, features/auth, features/account │
 ├─────────────────────────────────────────────────────────┤
 │                 Services (бизнес-логика)                   │
-│          dataService.ts, appInitService.ts               │
+│   dataService, appInitService, authService, i18n catalog  │
 ├─────────────────────────────────────────────────────────┤
 │              Shared (переиспользуемый код)                 │
 │    hooks, utils, ui, lib, types, styles/tokens           │
@@ -126,7 +126,14 @@ Flight Tracker — это Telegram Mini App (React SPA), которое рабо
 | Файл | Описание |
 |------|----------|
 | `supabaseClient.ts` | Инициализация Supabase-клиента с проверкой ENV |
-| `i18n/` | Интернационализация (плюрализация, приглашения) |
+| `i18n/` | Плюрализация и фразы приглашений |
+
+#### `shared/i18n/` — каталог строк
+
+| Файл | Описание |
+|------|----------|
+| `ru.ts` | Русские строки UI (без переключателя языка) |
+| `t.ts` | `t('key')` и подстановка `{{var}}` |
 
 #### `shared/ui/` — общие UI-компоненты
 

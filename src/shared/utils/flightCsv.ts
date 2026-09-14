@@ -1,18 +1,19 @@
+import { t } from '@shared/i18n';
 import { Flight } from '../types';
 import { toLocalISODate } from './date';
 
 const CSV_COLUMNS: { key: keyof Flight | 'pricePerPerson'; header: string }[] = [
-  { key: 'origin', header: 'Откуда' },
-  { key: 'destination', header: 'Куда' },
-  { key: 'type', header: 'Тип' },
-  { key: 'departureDate', header: 'Дата вылета' },
-  { key: 'returnDate', header: 'Дата обратно' },
-  { key: 'airline', header: 'Авиакомпания' },
-  { key: 'passengers', header: 'Пассажиры' },
-  { key: 'totalPrice', header: 'Цена всего' },
-  { key: 'pricePerPerson', header: 'Цена на человека' },
-  { key: 'dateFound', header: 'Найдено' },
-  { key: 'notes', header: 'Заметка' },
+  { key: 'origin', header: t('csv.origin') },
+  { key: 'destination', header: t('csv.destination') },
+  { key: 'type', header: t('csv.type') },
+  { key: 'departureDate', header: t('csv.departureDate') },
+  { key: 'returnDate', header: t('csv.returnDate') },
+  { key: 'airline', header: t('csv.airline') },
+  { key: 'passengers', header: t('csv.passengers') },
+  { key: 'totalPrice', header: t('csv.totalPrice') },
+  { key: 'pricePerPerson', header: t('csv.pricePerPerson') },
+  { key: 'dateFound', header: t('csv.dateFound') },
+  { key: 'notes', header: t('csv.notes') },
 ];
 
 const csvCell = (value: unknown): string => {
@@ -29,7 +30,7 @@ const cellFor = (flight: Flight, key: (typeof CSV_COLUMNS)[number]['key']): stri
     return Math.round(flight.totalPrice / passengers);
   }
   if (key === 'type') {
-    return flight.type === 'roundTrip' ? 'туда-обратно' : 'туда';
+    return flight.type === 'roundTrip' ? t('csv.roundTrip') : t('csv.oneWay');
   }
   const value = flight[key];
   return value == null ? '' : (value as string | number);

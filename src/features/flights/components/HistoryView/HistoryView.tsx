@@ -17,6 +17,7 @@ import {
   sortDestinationKeys,
   type HistorySort,
 } from './utils/historyViewHelpers';
+import { t } from '@shared/i18n';
 import { toast } from '@shared/ui/Toast';
 
 interface HistoryViewProps {
@@ -89,19 +90,19 @@ const HistoryView: React.FC<HistoryViewProps> = ({
     e.stopPropagation();
 
     if (isGuest && guestPermissions === 'view') {
-      toast('У вас нет прав для удаления билетов. Только просмотр.', 'warning');
+      toast(t('errors.noDelete'), 'warning');
       return;
     }
 
-    if (window.confirm('Удалить этот билет?')) {
+    if (window.confirm(t('history.confirmDelete'))) {
       const snapshot = flights.find((flight) => flight.id === id);
       onDelete(id);
       if (!snapshot || !onRestore) return;
-      toast('Билет удалён', {
+      toast(t('history.deleted'), {
         variant: 'info',
         durationMs: 8000,
         action: {
-          label: 'Вернуть',
+          label: t('history.undo'),
           onClick: () => onRestore(snapshot),
         },
       });
@@ -112,7 +113,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
     e.stopPropagation();
 
     if (isGuest && guestPermissions === 'view') {
-      toast('У вас нет прав для изменения билетов. Только просмотр.', 'warning');
+      toast(t('errors.noEdit'), 'warning');
       return;
     }
 
@@ -123,7 +124,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
     e.stopPropagation();
 
     if (isGuest && guestPermissions === 'view') {
-      toast('У вас нет прав для добавления билетов. Только просмотр.', 'warning');
+      toast(t('errors.noAdd'), 'warning');
       return;
     }
 
@@ -175,7 +176,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
 
       {filteredDestinations.length === 0 && searchTerm ? (
         <div className={styles.noResults}>
-          Ничего не найдено по запросу «{searchTerm}»
+          {t('history.noResults', { query: searchTerm })}
         </div>
       ) : (
         <div className={styles.cardList}>

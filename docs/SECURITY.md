@@ -16,8 +16,8 @@
 
 ## Production-минимум
 
-1. Миграции `001_schema.sql`, `002_rls.sql`, `003_guest_session_rls.sql`, `004_lookup_share_invite.sql`, `005_flight_notes.sql`, `006_share_token_hash.sql`, `007_email_owner_auth.sql`, `008_user_identities.sql`.
-2. Edge Functions `auth-telegram`, `auth-guest` и `link-email`. Функцию `auth-dev` в production не деплоить.
+1. Миграции `001_schema.sql` … `009_refresh_tokens.sql`.
+2. Edge Functions `auth-telegram`, `auth-guest`, `auth-refresh` и `link-email`. Функцию `auth-dev` в production не деплоить.
 3. `ALLOW_DEV_AUTH=false`.
 4. После любой утечки в git или логах — **сразу ротация**: BotFather → Revoke, Supabase → новый anon/service/JWT, бот и фронт обновить, старые share-ссылки считать скомпрометированными.
 
@@ -28,7 +28,7 @@
 - Autosave пишет только изменённые строки и явные удаления, а не полный снимок истории.
 - Удаляются только id, которые этот клиент уже знал, а не «всё, чего нет в локальном снимке».
 - Telegram-сессия принимается только с живым `initData` не старше 24 часов.
-- Гостевой JWT привязан к `share_session_id` и не живёт дольше сессии (макс. 1 сутки).
+- Гостевой JWT привязан к `share_session_id` и не живёт дольше сессии (макс. 1 сутки). Access для Telegram/гостя — 1 час; opaque refresh хешируется в `refresh_tokens`, ротируется через `auth-refresh`, повтор отозванного токена закрывает всю family.
 - Новые share-ссылки хранят `token_hash`; plaintext остаётся только в ссылке, которую копируют сразу после создания.
 - Edit-приглашение привязывается к первому Telegram user id, который его открыл; чужой Telegram получает просмотр.
 - CORS Edge Functions — allowlist GitHub Pages и localhost, не `*`.

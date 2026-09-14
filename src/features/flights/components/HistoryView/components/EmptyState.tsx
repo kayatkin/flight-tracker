@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '@shared/i18n';
 import { Flight } from '@shared/types';
 import { AccessManagement } from './AccessManagement';
 import styles from '../HistoryView.module.css';
@@ -28,8 +29,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       )}
 
       <div className={styles.emptyState}>
-        <p>📭 Нет сохранённых билетов.</p>
-        <p>Добавьте первый рейс во вкладке «➕ Добавить перелет»!</p>
+        <p>{t('history.empty')}</p>
+        <p>{t('history.emptyHint')}</p>
       </div>
     </div>
   );

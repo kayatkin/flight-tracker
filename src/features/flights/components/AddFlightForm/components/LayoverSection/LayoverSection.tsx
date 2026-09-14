@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '@shared/i18n';
 import { FlightFormData } from '@shared/hooks';
 import styles from './LayoverSection.module.css';
 
@@ -25,7 +26,7 @@ const LayoverSection: React.FC<LayoverSectionProps> = ({
 
   return (
     <div className={styles.section}>
-      <h4 className={styles.sectionTitle}>🔄 Пересадки</h4>
+      <h4 className={styles.sectionTitle}>{t('form.layover')}</h4>
       
       {/* Пересадка туда */}
       <div className={styles.layoverGroup}>
@@ -35,31 +36,31 @@ const LayoverSection: React.FC<LayoverSectionProps> = ({
             name="isDirectThere"
             checked={formData.isDirectThere}
             onChange={handleChange}
-            aria-label="Прямой рейс туда"
+            aria-label={t('form.directThere')}
           />
-          Прямой рейс туда
+          {t('form.directThere')}
         </label>
         
         {!formData.isDirectThere && (
           <div className={styles.layoverFields}>
             <div className={styles.layoverField}>
               <label className={styles.label}>
-                Город пересадки (туда)
+                {t('form.layoverCityThere')}
                 <input
                   type="text"
                   name="layoverCityThere"
                   value={formData.layoverCityThere || ''}
                   onChange={handleChange}
-                  placeholder="Стамбул"
+                  placeholder={t('form.layoverCityTherePlaceholder')}
                   className={styles.layoverInput}
-                  aria-label="Город пересадки туда"
+                  aria-label={t('form.layoverCityThereAria')}
                 />
               </label>
             </div>
             
             <div className={styles.layoverField}>
               <label className={styles.label}>
-                Длительность (мин)
+                {t('form.layoverMinutes')}
                 <input
                   type="number"
                   name="layoverDurationThere"
@@ -68,7 +69,7 @@ const LayoverSection: React.FC<LayoverSectionProps> = ({
                   min="30"
                   max="1440"
                   className={styles.layoverInput}
-                  aria-label="Длительность пересадки туда в минутах"
+                  aria-label={t('form.layoverMinutesThereAria')}
                 />
               </label>
             </div>
@@ -85,31 +86,31 @@ const LayoverSection: React.FC<LayoverSectionProps> = ({
               name="isDirectBack"
               checked={formData.isDirectBack}
               onChange={handleChange}
-              aria-label="Прямой рейс обратно"
+              aria-label={t('form.directBack')}
             />
-            Прямой рейс обратно
+            {t('form.directBack')}
           </label>
           
           {!formData.isDirectBack && (
             <div className={styles.layoverFields}>
               <div className={styles.layoverField}>
                 <label className={styles.label}>
-                  Город пересадки (обратно)
+                  {t('form.layoverCityBack')}
                   <input
                     type="text"
                     name="layoverCityBack"
                     value={formData.layoverCityBack || ''}
                     onChange={handleChange}
-                    placeholder="Доха"
+                    placeholder={t('form.layoverCityBackPlaceholder')}
                     className={styles.layoverInput}
-                    aria-label="Город пересадки обратно"
+                    aria-label={t('form.layoverCityBackAria')}
                   />
                 </label>
               </div>
               
               <div className={styles.layoverField}>
                 <label className={styles.label}>
-                  Длительность (мин)
+                  {t('form.layoverMinutes')}
                   <input
                     type="number"
                     name="layoverDurationBack"
@@ -118,7 +119,7 @@ const LayoverSection: React.FC<LayoverSectionProps> = ({
                     min="30"
                     max="1440"
                     className={styles.layoverInput}
-                    aria-label="Длительность пересадки обратно в минутах"
+                    aria-label={t('form.layoverMinutesBackAria')}
                   />
                 </label>
               </div>

@@ -1,4 +1,5 @@
 // src/utils/flightAnalysis.ts
+import { t } from '@shared/i18n';
 import { Flight } from '../../shared/types';
 
 export interface FlightAnalysis {
@@ -23,7 +24,7 @@ export const analyzeFlightPrice = (
   if (comparableFlights.length === 0) {
     return {
       type: 'good',
-      message: 'Первое предложение по этому маршруту! Сохранено.',
+      message: t('analysis.first'),
     };
   }
 
@@ -35,19 +36,19 @@ export const analyzeFlightPrice = (
   if (diff < -PRICE_THRESHOLD) {
     return {
       type: 'good',
-      message: `Выгодно! Дешевле на ${Math.abs(diff)} ₽, чем лучший ранее.`,
+      message: t('analysis.cheaper', { amount: Math.abs(diff) }),
       diff,
     };
   } else if (Math.abs(diff) <= PRICE_THRESHOLD) {
     return {
       type: 'neutral',
-      message: `Цена почти такая же (${diff >= 0 ? '+' : ''}${diff} ₽).`,
+      message: t('analysis.similar', { signed: `${diff >= 0 ? '+' : ''}${diff}` }),
       diff,
     };
   } else {
     return {
       type: 'bad',
-      message: `Дороже на ${diff} ₽, чем лучший ранее. Не стоит.`,
+      message: t('analysis.expensive', { amount: diff }),
       diff,
     };
   }

@@ -1,5 +1,6 @@
 import React from 'react';
 import JoinSessionForm from '../JoinSessionForm/JoinSessionForm';
+import { t } from '@shared/i18n';
 import { useEscapeToClose } from '@shared/hooks';
 import styles from './JoinSessionModal.module.css';
 
@@ -24,14 +25,14 @@ const JoinSessionModal: React.FC<JoinSessionModalProps> = ({ onJoin, onClose }) 
         onClick={e => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Присоединиться к истории"
+        aria-label={t('join.dialog')}
         tabIndex={-1}
       >
         {/* Только кнопка закрытия в углу */}
         <button 
           onClick={onClose} 
           className={styles.closeButton}
-          aria-label="Закрыть окно присоединения"
+          aria-label={t('join.close')}
         >
           ✕
         </button>

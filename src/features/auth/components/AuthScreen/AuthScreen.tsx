@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { env } from '@shared/config/env';
+import { t } from '@shared/i18n';
 import {
   requestPasswordReset,
   signInAsDeveloper,
@@ -36,12 +37,12 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
     try {
       if (recoveryMode) {
         if (password !== confirmPassword) {
-          setError('Пароли не совпадают');
+          setError(t('auth.mismatch'));
           return;
         }
         const result = await updatePassword(password);
         if (!result.ok) {
-          setError(result.error ?? 'Не удалось сохранить пароль');
+          setError(result.error ?? t('auth.saveFailed'));
           return;
         }
         await onAuthenticated();
@@ -51,10 +52,10 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
       if (mode === 'forgot') {
         const result = await requestPasswordReset(email);
         if (!result.ok) {
-          setError(result.error ?? 'Не удалось отправить письмо');
+          setError(result.error ?? t('auth.sendFailed'));
           return;
         }
-        setInfo('Если аккаунт есть, отправили ссылку. Откройте её в этом же браузере.');
+        setInfo(t('auth.forgotHint'));
         return;
       }
 
@@ -63,11 +64,11 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
         : await signInWithEmail(email, password);
 
       if (!result.ok) {
-        setError(result.error ?? 'Не удалось войти');
+        setError(result.error ?? t('auth.loginFailed'));
         return;
       }
       if (result.needsConfirmation) {
-        setInfo('Проверьте почту и подтвердите регистрацию, затем войдите.');
+        setInfo(t('auth.confirmHint'));
         setMode('login');
         return;
       }
@@ -83,7 +84,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
     try {
       const owner = await signInAsDeveloper();
       if (!owner) {
-        setError('Dev-вход выключен. Включите ALLOW_DEV_AUTH или войдите по email.');
+        setError(t('auth.devDisabled'));
         return;
       }
       await onAuthenticated();
@@ -95,10 +96,10 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
   if (recoveryMode) {
     return (
       <div className={styles.screen}>
-        <h2 className={styles.title}>✈️ Flight Tracker</h2>
-        <p className={styles.lead}>Задайте новый пароль для входа по email.</p>
+        <h2 className={styles.title}>{t('app.title')}</h2>
+        <p className={styles.lead}>{t('auth.recoveryLead')}</p>
         <form className={styles.form} onSubmit={submit}>
-          <label className={styles.label} htmlFor="auth-password">Новый пароль</label>
+          <label className={styles.label} htmlFor="auth-password">{t('auth.newPassword')}</label>
           <input
             id="auth-password"
             className={styles.input}
@@ -109,7 +110,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
             minLength={6}
             required
           />
-          <label className={styles.label} htmlFor="auth-password-confirm">Повторите пароль</label>
+          <label className={styles.label} htmlFor="auth-password-confirm">{t('auth.confirmPassword')}</label>
           <input
             id="auth-password-confirm"
             className={styles.input}
@@ -122,7 +123,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
           />
           {error && <p className={styles.error} role="alert">{error}</p>}
           <button type="submit" className={styles.submit} disabled={busy}>
-            Сохранить пароль
+            {t('auth.submitRecovery')}
           </button>
         </form>
       </div>
@@ -131,10 +132,8 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
 
   return (
     <div className={styles.screen}>
-      <h2 className={styles.title}>✈️ Flight Tracker</h2>
-      <p className={styles.lead}>
-        Войдите по email, чтобы пользоваться приложением в браузере без Telegram.
-      </p>
+      <h2 className={styles.title}>{t('app.title')}</h2>
+      <p className={styles.lead}>{t('auth.lead')}</p>
 
       {mode !== 'forgot' && (
       <div className={styles.tabs} role="tablist">
@@ -145,7 +144,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
           className={`${styles.tab} ${mode === 'login' ? styles.tabActive : ''}`}
           onClick={() => { setMode('login'); setError(null); setInfo(null); }}
         >
-          Вход
+          {t('auth.tabLogin')}
         </button>
         <button
           type="button"
@@ -154,13 +153,13 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
           className={`${styles.tab} ${mode === 'register' ? styles.tabActive : ''}`}
           onClick={() => { setMode('register'); setError(null); setInfo(null); }}
         >
-          Регистрация
+          {t('auth.tabRegister')}
         </button>
       </div>
       )}
 
       <form className={styles.form} onSubmit={submit}>
-        <label className={styles.label} htmlFor="auth-email">Email</label>
+        <label className={styles.label} htmlFor="auth-email">{t('auth.email')}</label>
         <input
           id="auth-email"
           className={styles.input}
@@ -173,7 +172,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
 
         {mode !== 'forgot' && (
           <>
-            <label className={styles.label} htmlFor="auth-password">Пароль</label>
+            <label className={styles.label} htmlFor="auth-password">{t('auth.password')}</label>
             <input
               id="auth-password"
               className={styles.input}
@@ -192,10 +191,10 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
 
         <button type="submit" className={styles.submit} disabled={busy}>
           {mode === 'forgot'
-            ? 'Отправить ссылку'
+            ? t('auth.submitForgot')
             : mode === 'register'
-              ? 'Создать аккаунт'
-              : 'Войти'}
+              ? t('auth.submitRegister')
+              : t('auth.submitLogin')}
         </button>
       </form>
 
@@ -205,7 +204,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
           className={styles.linkButton}
           onClick={() => { setMode('forgot'); setError(null); setInfo(null); }}
         >
-          Забыли пароль?
+          {t('auth.forgot')}
         </button>
       ) : (
         <button
@@ -213,7 +212,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
           className={styles.linkButton}
           onClick={() => { setMode('login'); setError(null); setInfo(null); }}
         >
-          Назад ко входу
+          {t('auth.backToLogin')}
         </button>
       )}
 
@@ -224,13 +223,11 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
           onClick={() => { void continueAsDeveloper(); }}
           disabled={busy}
         >
-          Войти как разработчик
+          {t('auth.devLogin')}
         </button>
       )}
 
-      <p className={styles.hint}>
-        Mini App в Telegram работает как раньше: этот экран только для браузера.
-      </p>
+      <p className={styles.hint}>{t('auth.hint')}</p>
     </div>
   );
 };

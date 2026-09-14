@@ -16,6 +16,7 @@ import {
   flightToFormData,
 } from '@shared/utils';
 import { toast } from '@shared/ui/Toast';
+import { t } from '@shared/i18n';
 import { PriceAnalysis } from '@features/flights';
 
 import RouteSection from './components/RouteSection/RouteSection';
@@ -118,14 +119,14 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
       );
 
       if (!isValidDates) {
-        toast('Дата и время обратного вылета должны быть позже времени прилёта «туда»', 'warning');
+        toast(t('form.returnAfterOutbound'), 'warning');
         return;
       }
     }
 
     const priceNum = Number(formData.totalPrice);
     if (!formData.totalPrice || priceNum <= 0) {
-      toast('Укажите корректную стоимость (только цифры, больше 0)', 'error');
+      toast(t('form.price'), 'error');
       return;
     }
 
@@ -156,7 +157,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
         clearEditFormDraft(sessionStorage);
       }
       onUpdate?.(savedFlight);
-      toast('Изменения сохранены', 'success');
+      toast(t('form.saved'), 'success');
       markClean();
     } else {
       skipDraftPersistRef.current = true;
@@ -180,7 +181,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
     <form onSubmit={handleSubmit} className={styles.form}>
       {isEditing && (
         <div className={styles.editBanner} role="status">
-          Редактирование сохранённого билета. Дата поиска не изменится.
+          {t('form.editBanner')}
         </div>
       )}
 
@@ -239,9 +240,9 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
         <button
           type="submit"
           className={styles.submitButton}
-          aria-label={isEditing ? 'Сохранить изменения' : 'Сохранить билет'}
+          aria-label={isEditing ? t('form.submitEditAria') : t('form.submitAddAria')}
         >
-          {isEditing ? '💾 Сохранить изменения' : '💼 Сохранить билет'}
+          {isEditing ? t('form.submitEdit') : t('form.submitAdd')}
         </button>
         {isEditing && (
           <button
@@ -251,9 +252,9 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
               if (isDirty && !confirmDiscardUnsaved()) return;
               onCancelEdit?.();
             }}
-            aria-label="Отменить редактирование"
+            aria-label={t('form.cancelAria')}
           >
-            Отмена
+            {t('form.cancel')}
           </button>
         )}
       </div>

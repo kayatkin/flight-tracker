@@ -15,7 +15,8 @@ import {
   getTokenFromTelegramStartParam 
 } from '../shared/utils/telegramTokens';
 import { loadUserData } from './dataService';
-import { authenticateGuest, authenticateOwner, AuthRequiredError } from './authService';
+import { t, permWord } from '@shared/i18n';
+import { authenticateGuest, authenticateOwner, AuthRequiredError, restoreGuestSession } from './authService';
 import { generateShortId } from '../shared/utils/id';
 import { isRealTelegramUser, getTelegramUserType } from '../shared/utils/telegramUserType';
 import { clearTokenFromUrl } from '../shared/utils/url';
@@ -122,7 +123,7 @@ export const initTelegramUser = (): {
     bindSystemTheme();
     return {
       currentUserId: getDevelopmentUserId(),
-      currentUserName: 'Разработчик',
+      currentUserName: t('auth.developer'),
       telegramDetected: false
     };
   }
@@ -132,7 +133,7 @@ export const initTelegramUser = (): {
     bindSystemTheme();
     return {
       currentUserId: getDevelopmentUserId(),
-      currentUserName: 'Разработчик',
+      currentUserName: t('auth.developer'),
       telegramDetected: false
     };
   }
@@ -150,7 +151,7 @@ export const initTelegramUser = (): {
     devLog('[INIT] Using Telegram user:', { id: currentUserId, name: currentUserName });
   } else {
     currentUserId = 'telegram_anon_' + generateShortId(8);
-    currentUserName = 'Аноним';
+    currentUserName = t('guest.anonymous');
     devLog('[INIT] Using anonymous Telegram user');
   }
   
@@ -174,12 +175,12 @@ export const createAppUser = (
     
     const guestUser: GuestUser = {
       userId: guestData.userId || `guest_${Date.now()}_${generateShortId(5)}`,
-      name: guestData.name || 'Гость',
+      name: guestData.name || t('guest.name'),
       isGuest: true,
       sessionToken: guestData.sessionToken || '',
       permissions: guestData.permissions || 'view',
       ownerId: guestData.ownerId || '',
-      ownerName: guestData.ownerName || 'Владельца',
+      ownerName: guestData.ownerName || t('guest.ownerFallback'),
       telegramUser: telegramUser
     };
     
@@ -213,7 +214,7 @@ const getCurrentUserInfo = (): {
   if (userType === 'real_telegram') {
     const tgUser = webApp!.initDataUnsafe!.user!;
     const userId = 'tg_' + tgUser.id;
-    const userName = tgUser.first_name || tgUser.username || 'Telegram пользователь';
+    const userName = tgUser.first_name || tgUser.username || t('guest.telegramUser');
     
     return {
       userId,
@@ -227,7 +228,7 @@ const getCurrentUserInfo = (): {
   if (userType === 'anonymous_telegram') {
     return {
       userId: 'telegram_anon_' + generateShortId(8),
-      userName: 'Аноним',
+      userName: t('guest.anonymous'),
       telegramDetected: true,
       isAuthenticatedTelegramUser: false,
       userType,
@@ -236,7 +237,7 @@ const getCurrentUserInfo = (): {
   
   return {
     userId: getDevelopmentUserId(),
-    userName: 'Гость',
+    userName: t('guest.name'),
     telegramDetected: false,
     isAuthenticatedTelegramUser: false,
     userType: 'web_browser',
@@ -278,11 +279,11 @@ export const initializeApp = async (): Promise<AppInitResult> => {
             displayUserName = currentUserName;
             break;
           case 'anonymous_telegram':
-            displayUserName = `Анонимный гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
+            displayUserName = t('guest.anonLabel', { perm: permWord(guestUser.permissions) });
             break;
           case 'web_browser':
           default:
-            displayUserName = `Веб-гость (${guestUser.permissions === 'edit' ? 'редактирование' : 'просмотр'})`;
+            displayUserName = t('guest.webLabel', { perm: permWord(guestUser.permissions) });
             break;
         }
         
@@ -311,7 +312,58 @@ export const initializeApp = async (): Promise<AppInitResult> => {
 
       devLog('[INIT] Guest mode initialization failed');
     }
-    
+
+    const restoredGuest = await restoreGuestSession();
+    if (restoredGuest) {
+      const ownerData = await loadUserData(restoredGuest.ownerId);
+      if (!ownerData.ok) {
+        isInitializing = false;
+        throw new Error('Failed to load flights');
+      }
+      const {
+        userId: currentUserId,
+        userName: currentUserName,
+        telegramDetected,
+        isAuthenticatedTelegramUser,
+        userType,
+      } = getCurrentUserInfo();
+
+      let displayUserName: string;
+      switch (userType) {
+        case 'real_telegram':
+          displayUserName = currentUserName;
+          break;
+        case 'anonymous_telegram':
+          displayUserName = t('guest.anonLabel', { perm: permWord(restoredGuest.permissions) });
+          break;
+        case 'web_browser':
+        default:
+          displayUserName = t('guest.webLabel', { perm: permWord(restoredGuest.permissions) });
+          break;
+      }
+
+      const appUserId = isAuthenticatedTelegramUser
+        ? currentUserId
+        : restoredGuest.userId;
+
+      isInitializing = false;
+      return {
+        userName: displayUserName,
+        userId: restoredGuest.ownerId,
+        appUser: createAppUser(
+          appUserId,
+          displayUserName,
+          true,
+          telegramDetected,
+          restoredGuest
+        ),
+        flights: ownerData.flights,
+        airlines: ownerData.airlines,
+        originCities: ownerData.originCities,
+        destinationCities: ownerData.destinationCities,
+      };
+    }
+
     devLog('[INIT] Initializing as owner');
     const { telegramDetected } = initTelegramUser();
     const auth = await authenticateOwner();
@@ -349,9 +401,9 @@ export const getFallbackInitResult = (error: unknown): AppInitResult => {
   bindSystemTheme();
   
   return {
-    userName: 'Гость',
+    userName: t('guest.name'),
     userId: 'error_user',
-    appUser: createAppUser('error_user', 'Гость', false, false),
+    appUser: createAppUser('error_user', t('guest.name'), false, false),
     flights: [],
     airlines: [],
     originCities: [],

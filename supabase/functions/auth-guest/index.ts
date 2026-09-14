@@ -1,7 +1,13 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleOptions, jsonResponse } from '../_shared/cors.ts';
 import { sha256Hex } from '../_shared/hashToken.ts';
-import { signAccessToken } from '../_shared/jwt.ts';
+import {
+  ACCESS_TOKEN_TTL_SECONDS,
+  clampTtlSeconds,
+  GUEST_REFRESH_MAX_SECONDS,
+  issueAuthSession,
+  revokeActiveForShareSession,
+} from '../_shared/authSession.ts';
 import { parseTelegramUser, validateTelegramInitData } from '../_shared/telegram.ts';
 
 const isMissingColumnError = (error: { message?: string; code?: string } | null): boolean => {
@@ -113,14 +119,8 @@ Deno.serve(async (req) => {
   const guestSub = `guest_${crypto.randomUUID()}`;
   const remainingMs = new Date(String(session.expires_at)).getTime() - Date.now();
   const remainingSeconds = Number.isFinite(remainingMs) ? Math.floor(remainingMs / 1000) : 60;
-  const expiresIn = Math.max(60, Math.min(60 * 60 * 24, remainingSeconds));
-  const access_token = await signAccessToken({
-    sub: guestSub,
-    user_id: ownerId,
-    app_role: 'guest',
-    permissions,
-    share_session_id: sessionId,
-  }, expiresIn);
+  const refreshTtl = clampTtlSeconds(remainingSeconds, GUEST_REFRESH_MAX_SECONDS);
+  const accessTtl = clampTtlSeconds(remainingSeconds, ACCESS_TOKEN_TTL_SECONDS);
 
   const { data: ownerRow } = await admin
     .from('users')
@@ -134,18 +134,35 @@ Deno.serve(async (req) => {
       ? `Пользователь #${ownerId.replace('tg_', '').slice(0, 6)}`
       : 'Владелец');
 
-  return jsonResponse({
-    access_token,
-    refresh_token: access_token,
-    guestUser: {
-      userId: guestSub,
-      name: 'Гость',
-      isGuest: true,
-      sessionToken: token,
+  try {
+    await revokeActiveForShareSession(admin, sessionId);
+    const issued = await issueAuthSession(admin, {
+      sub: guestSub,
+      user_id: ownerId,
+      app_role: 'guest',
       permissions,
-      ownerId,
-      ownerName,
-    },
-    expires_in: expiresIn,
-  }, 200, req);
+      name: ownerName,
+      share_session_id: sessionId,
+    }, {
+      accessTtl,
+      refreshTtl,
+    });
+
+    return jsonResponse({
+      access_token: issued.access_token,
+      refresh_token: issued.refresh_token,
+      guestUser: {
+        userId: guestSub,
+        name: 'Гость',
+        isGuest: true,
+        sessionToken: token,
+        permissions,
+        ownerId,
+        ownerName,
+      },
+      expires_in: issued.expires_in,
+    }, 200, req);
+  } catch {
+    return jsonResponse({ error: 'Failed to persist session' }, 500, req);
+  }
 });
