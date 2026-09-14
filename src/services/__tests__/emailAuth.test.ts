@@ -8,6 +8,7 @@ import {
   mapAuthError,
   ownerFromCustomAccessToken,
   ownerFromGoTrueUser,
+  ownerFromSession,
   parseAuthCallbackParams,
   validateEmailAuthForm,
 } from '../emailAuth';
@@ -77,6 +78,22 @@ describe('emailAuth helpers', () => {
       role: 'authenticated',
       sub: 'uuid',
     }))).toBeNull();
+  });
+
+  it('prefers canonical user_id from a hooked GoTrue access token', () => {
+    expect(ownerFromSession({
+      access_token: jwtWith({
+        app_role: 'owner',
+        user_id: 'tg_1',
+        name: 'Кай',
+      }),
+      user: { id: 'uuid-from-gotrue', email: 'kai@example.com' },
+    })).toEqual({ userId: 'tg_1', userName: 'Кай' });
+
+    expect(ownerFromSession({
+      access_token: 'not-a-jwt',
+      user: { id: 'uuid-2', email: 'ann@example.com', user_metadata: {} },
+    })).toEqual({ userId: 'uuid-2', userName: 'ann' });
   });
 
   it('maps GoTrue error strings to Russian copy', () => {

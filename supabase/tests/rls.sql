@@ -194,6 +194,79 @@ SELECT tests.expect(
 );
 RESET ROLE;
 
+-- Identities: owner can read own rows, guest cannot, clients cannot insert.
+INSERT INTO users (user_id, name) VALUES
+  ('tg_ident', 'Ident');
+INSERT INTO user_identities (user_id, provider, provider_user_id, email) VALUES
+  ('tg_ident', 'telegram', 'tg_ident', NULL),
+  ('tg_ident', 'email', 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'kai@example.com');
+
+SELECT tests.expect(
+  public.canonical_email_user_id('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb') = 'tg_ident',
+  'canonical helper should map GoTrue uuid to linked telegram user'
+);
+SELECT tests.expect(
+  public.canonical_email_user_id('missing-user') = 'missing-user',
+  'canonical helper should fall back to the auth uid'
+);
+
+SELECT tests.as_jwt('{"role":"authenticated","user_id":"tg_ident","app_role":"owner"}'::jsonb);
+SET ROLE authenticated;
+SELECT tests.expect(
+  (SELECT count(*) FROM user_identities) = 2,
+  'owner should read own identities'
+);
+DO $$
+BEGIN
+  INSERT INTO user_identities (user_id, provider, provider_user_id)
+  VALUES ('tg_ident', 'telegram', 'tg_forged');
+  RAISE EXCEPTION 'RLS test failed: authenticated inserted user_identities';
+EXCEPTION
+  WHEN insufficient_privilege THEN NULL;
+  WHEN check_violation THEN
+    RAISE EXCEPTION 'RLS test failed: identity insert reached CHECK instead of grant/RLS';
+END $$;
+RESET ROLE;
+
+SELECT tests.as_jwt('{"role":"authenticated","user_id":"tg_ident","app_role":"guest","permissions":"view","share_session_id":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"}'::jsonb);
+SET ROLE authenticated;
+SELECT tests.expect(
+  (SELECT count(*) FROM user_identities) = 0,
+  'guest must not read identities'
+);
+RESET ROLE;
+
+SELECT tests.as_jwt('{"role":"authenticated","user_id":"owner_a","app_role":"owner"}'::jsonb);
+SET ROLE authenticated;
+SELECT tests.expect(
+  NOT EXISTS (SELECT 1 FROM user_identities WHERE user_id = 'tg_ident'),
+  'owner A must not read another owner identities'
+);
+RESET ROLE;
+
+INSERT INTO users (user_id, name) VALUES
+  ('from_merge', 'From'),
+  ('to_merge', 'To');
+INSERT INTO user_flights (
+  flight_id, user_id, origin, destination, flight_type,
+  departure_date, airline, passengers, total_price, date_found
+) VALUES (
+  '77777777-7777-4777-8777-777777777777',
+  'from_merge', 'Пермь', 'Сочи', 'oneWay',
+  '2026-10-01', 'SU', 1, 6000, '2026-09-01'
+);
+INSERT INTO user_identities (user_id, provider, provider_user_id) VALUES
+  ('from_merge', 'telegram', 'tg_from_merge');
+SELECT public.reassign_owner('from_merge', 'to_merge');
+SELECT tests.expect(
+  (SELECT user_id FROM user_flights WHERE flight_id = '77777777-7777-4777-8777-777777777777') = 'to_merge',
+  'reassign_owner should move flights to the canonical user'
+);
+SELECT tests.expect(
+  (SELECT user_id FROM user_identities WHERE provider_user_id = 'tg_from_merge') = 'to_merge',
+  'reassign_owner should move identities to the canonical user'
+);
+
 -- Anon can look up an active invite and cannot read flights.
 SET ROLE anon;
 SELECT tests.expect(

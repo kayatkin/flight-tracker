@@ -117,6 +117,22 @@ export const ownerFromCustomAccessToken = (accessToken: string): {
   return { userId, userName: name || 'Владелец' };
 };
 
+export const ownerFromSession = (session: {
+  access_token?: string | null;
+  user?: {
+    id: string;
+    email?: string | null;
+    user_metadata?: Record<string, unknown> | null;
+  } | null;
+}): { userId: string; userName: string } | null => {
+  if (session.access_token) {
+    const fromToken = ownerFromCustomAccessToken(session.access_token);
+    if (fromToken) return fromToken;
+  }
+  if (!session.user) return null;
+  return ownerFromGoTrueUser(session.user);
+};
+
 export const mapAuthError = (message: string | undefined): string => {
   const text = (message ?? '').toLowerCase();
   if (!text) return 'Не удалось войти. Попробуйте ещё раз.';

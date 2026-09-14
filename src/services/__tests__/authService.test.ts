@@ -95,6 +95,25 @@ describe('authService email sessions', () => {
     expect(startAutoRefresh).toHaveBeenCalled();
   });
 
+  it('restores the canonical user_id from a hooked GoTrue JWT', async () => {
+    getSession.mockResolvedValue({
+      data: {
+        session: {
+          access_token: jwtWith({ app_role: 'owner', user_id: 'tg_1', name: 'Кай' }),
+          refresh_token: 'refresh',
+          user: { id: 'uuid-linked', email: 'kai@example.com' },
+        },
+      },
+      error: null,
+    });
+
+    await expect(restoreGoTrueOwner()).resolves.toEqual({
+      userId: 'tg_1',
+      userName: 'Кай',
+    });
+    expect(startAutoRefresh).toHaveBeenCalled();
+  });
+
   it('restores a custom owner JWT used by auth-dev / Telegram', async () => {
     const access = jwtWith({ app_role: 'owner', user_id: 'dev_local', name: 'Разработчик' });
     getSession.mockResolvedValue({
