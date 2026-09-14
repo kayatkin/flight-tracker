@@ -63,3 +63,64 @@ export async function signAccessToken(
 
   return `${signingInput}.${signature}`;
 }
+
+function base64UrlDecode(input: string): Uint8Array {
+  const padded = input.replace(/-/g, '+').replace(/_/g, '/')
+    + '='.repeat((4 - (input.length % 4)) % 4);
+  const binary = atob(padded);
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  const aBytes = encoder.encode(a);
+  const bBytes = encoder.encode(b);
+  let result = 0;
+  for (let i = 0; i < aBytes.length; i += 1) {
+    result |= aBytes[i] ^ bBytes[i];
+  }
+  return result === 0;
+}
+
+export interface VerifiedOwner {
+  userId: string;
+  name?: string;
+}
+
+/** Verifies HS256 access tokens issued by auth-* or GoTrue. Guests are rejected. */
+export async function verifyOwnerToken(token: string): Promise<VerifiedOwner | null> {
+  const jwtSecret = Deno.env.get('JWT_SECRET');
+  if (!jwtSecret) return null;
+
+  const parts = token.split('.');
+  if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) return null;
+
+  const signingInput = `${parts[0]}.${parts[1]}`;
+  const expected = await signHs256(signingInput, jwtSecret);
+  if (!timingSafeEqual(expected, parts[2])) return null;
+
+  let payload: Record<string, unknown>;
+  try {
+    payload = JSON.parse(new TextDecoder().decode(base64UrlDecode(parts[1]))) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+
+  const exp = typeof payload.exp === 'number' ? payload.exp : 0;
+  if (exp && exp < Math.floor(Date.now() / 1000)) return null;
+
+  if (payload.app_role === 'guest') return null;
+  if (payload.app_role !== 'owner' && payload.role !== 'authenticated') return null;
+
+  const userId = String(payload.user_id ?? payload.sub ?? '');
+  if (!userId) return null;
+
+  const name = typeof payload.name === 'string' ? payload.name : undefined;
+  return { userId, name };
+}
+
+export const bearerToken = (req: Request): string | null => {
+  const header = req.headers.get('Authorization') ?? '';
+  const match = header.match(/^Bearer\s+(.+)$/i);
+  return match?.[1]?.trim() || null;
+};

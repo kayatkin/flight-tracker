@@ -3,6 +3,7 @@ import { AddFlightForm } from '@features/flights';
 import { HistoryView } from '@features/flights';
 import { GuestModeIndicator } from '@features/guest-mode';
 import { AuthScreen } from '@features/auth';
+import { AccountModal } from '@features/account';
 import { Flight } from '@shared/types';
 import { KNOWN_AIRLINES, KNOWN_CITIES } from '@shared/data';
 import {
@@ -55,8 +56,10 @@ const App: React.FC = () => {
     signOut,
   } = useFlightTracker();
   const [passwordRecovery, setPasswordRecovery] = useState(isPasswordRecoveryPending);
+  const [accountOpen, setAccountOpen] = useState(false);
 
   const isViewGuest = Boolean(appUser?.isGuest && appUser.permissions === 'view');
+  const isOwner = Boolean(appUser && !appUser.isGuest);
   const canSignOut = Boolean(appUser && !appUser.isGuest && !appUser.isTelegram);
   const statusLabel = saveStatusText(saveStatus);
   const originSuggestions = useMemo(
@@ -194,14 +197,25 @@ const App: React.FC = () => {
         <p className={styles.greeting}>
           Привет, <strong>{userName}</strong>!
         </p>
-        {canSignOut && (
-          <button
-            type="button"
-            className={styles.signOut}
-            onClick={() => { void signOut(); }}
-          >
-            Выйти
-          </button>
+        {isOwner && (
+          <div className={styles.headerActions}>
+            <button
+              type="button"
+              className={styles.headerAction}
+              onClick={() => setAccountOpen(true)}
+            >
+              Аккаунт
+            </button>
+            {canSignOut && (
+              <button
+                type="button"
+                className={styles.headerAction}
+                onClick={() => { void signOut(); }}
+              >
+                Выйти
+              </button>
+            )}
+          </div>
         )}
         {statusLabel && (
           <p
@@ -278,6 +292,17 @@ const App: React.FC = () => {
           userId={appUser?.userId || userId}
           isGuest={appUser?.isGuest || false}
           guestPermissions={appUser?.isGuest ? appUser.permissions : undefined}
+        />
+      )}
+
+      {accountOpen && isOwner && (
+        <AccountModal
+          isTelegram={Boolean(appUser && !appUser.isGuest && appUser.isTelegram)}
+          onClose={() => setAccountOpen(false)}
+          onLinked={async () => {
+            setAccountOpen(false);
+            await completeAuth();
+          }}
         />
       )}
     </div>

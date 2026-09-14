@@ -50,7 +50,7 @@
 ### 🔑 Вход по email (браузер)
 - На GitHub Pages и localhost без Telegram — регистрация и вход по email/паролю
 - Mini App в Telegram по-прежнему входит через `initData`, без экрана логина
-- История email и Telegram пока не связываются
+- Кнопка **Аккаунт** связывает Telegram и email в одну историю (пароль обязателен)
 
 ### 🤖 Telegram бот
 - Команда `/start` — открытие WebApp

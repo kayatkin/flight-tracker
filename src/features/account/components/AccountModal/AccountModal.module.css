@@ -1,0 +1,142 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modalContent {
+  background: var(--tg-card-bg, #ffffff);
+  border-radius: 16px;
+  padding: 28px;
+  max-width: 440px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--tg-border-color, #e0e0e0);
+  outline: none;
+}
+
+.modalContent h3 {
+  margin: 0 0 16px;
+  color: var(--tg-text-color, #000);
+  text-align: center;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.statusList {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--tg-theme-secondary-bg-color, rgba(0, 0, 0, 0.04));
+}
+
+.statusList li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  font-size: 14px;
+  color: var(--tg-text-color, #000);
+}
+
+.statusLabel {
+  color: var(--tg-hint-color, #888);
+  font-weight: 600;
+}
+
+.lead {
+  margin: 0 0 16px;
+  text-align: center;
+  color: var(--tg-hint-color, #888);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid var(--tg-border-color, #ddd);
+  border-radius: 8px;
+  font-size: 16px;
+  background: var(--tg-card-bg, #fff);
+  color: var(--tg-text-color, #000);
+}
+
+.submit {
+  margin-top: 8px;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  background: var(--tg-theme-button-color, #2481cc);
+  color: var(--tg-theme-button-text-color, #fff);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error {
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f8d7da;
+  color: #721c24;
+  font-size: 14px;
+}
+
+.hint {
+  margin: 12px 0 0;
+  text-align: center;
+  color: var(--tg-hint-color, #888);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.buttonGroup {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.closeButton {
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  color: var(--tg-link-color, #2481cc);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.closeButton:focus-visible,
+.submit:focus-visible,
+.input:focus-visible {
+  outline: 2px solid var(--tg-link-color, #2481cc);
+  outline-offset: 2px;
+}

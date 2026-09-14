@@ -9,6 +9,7 @@ import {
   mapAuthError,
   ownerFromCustomAccessToken,
   ownerFromGoTrueUser,
+  ownerFromSession,
   validateEmailAuthForm,
 } from './emailAuth';
 
@@ -18,6 +19,7 @@ export {
   mapAuthError,
   ownerFromCustomAccessToken,
   ownerFromGoTrueUser,
+  ownerFromSession,
   validateEmailAuthForm,
 } from './emailAuth';
 
@@ -153,8 +155,8 @@ export const restoreGoTrueOwner = async (): Promise<OwnerAuthResult | null> => {
     return owner;
   }
 
-  if (!data.session.user) return null;
-  const owner = ownerFromGoTrueUser(data.session.user);
+  const owner = ownerFromSession(data.session);
+  if (!owner) return null;
   startGoTrueRefresh();
   await ensurePublicUser(owner.userId, owner.userName);
   return owner;
@@ -174,7 +176,10 @@ export const signInWithEmail = async (
   if (error || !data.user) {
     return { ok: false, error: mapAuthError(error?.message) };
   }
-  const owner = ownerFromGoTrueUser(data.user);
+  const owner = ownerFromSession({
+    access_token: data.session?.access_token,
+    user: data.user,
+  }) ?? ownerFromGoTrueUser(data.user);
   startGoTrueRefresh();
   await ensurePublicUser(owner.userId, owner.userName);
   return { ok: true };
@@ -201,7 +206,10 @@ export const signUpWithEmail = async (
   if (!data.session || !data.user) {
     return { ok: true, needsConfirmation: true };
   }
-  const owner = ownerFromGoTrueUser(data.user);
+  const owner = ownerFromSession({
+    access_token: data.session.access_token,
+    user: data.user,
+  }) ?? ownerFromGoTrueUser(data.user);
   startGoTrueRefresh();
   await ensurePublicUser(owner.userId, owner.userName);
   return { ok: true };

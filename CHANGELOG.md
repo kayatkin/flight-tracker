@@ -1,9 +1,14 @@
-# Changelog
+## [1.7.0] — 2026-09-14
 
-Все значимые изменения проекта документированы в этом файле.
+### Добавлено
 
-Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
-версионирование — [SemVer](https://semver.org/lang/ru/).
+- Связка Telegram и email в один аккаунт: таблица `user_identities`, кнопка **Аккаунт**, Edge Function `link-email`
+- Привязка email из Mini App требует пароль; если ящик уже есть — проверяем его. Истории сливаются в сторону той, где больше билетов (при равенстве остаётся текущая сессия)
+- Миграция `008_user_identities.sql`: канонический `user_id` в Custom Access Token hook и в `auth-telegram`
+
+### Изменено
+
+- Email-вход после связки читает `user_id` из JWT хука, а не GoTrue UUID, чтобы открывалась общая история
 
 ## [1.6.1] — 2026-09-14
 

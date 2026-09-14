@@ -16,8 +16,8 @@
 
 ## Production-минимум
 
-1. Миграции `001_schema.sql`, `002_rls.sql`, `003_guest_session_rls.sql`, `004_lookup_share_invite.sql`, `005_flight_notes.sql`, `006_share_token_hash.sql`, `007_email_owner_auth.sql`.
-2. Edge Functions `auth-telegram` и `auth-guest`. Функцию `auth-dev` в production не деплоить.
+1. Миграции `001_schema.sql`, `002_rls.sql`, `003_guest_session_rls.sql`, `004_lookup_share_invite.sql`, `005_flight_notes.sql`, `006_share_token_hash.sql`, `007_email_owner_auth.sql`, `008_user_identities.sql`.
+2. Edge Functions `auth-telegram`, `auth-guest` и `link-email`. Функцию `auth-dev` в production не деплоить.
 3. `ALLOW_DEV_AUTH=false`.
 4. После любой утечки в git или логах — **сразу ротация**: BotFather → Revoke, Supabase → новый anon/service/JWT, бот и фронт обновить, старые share-ссылки считать скомпрометированными.
 
@@ -33,5 +33,6 @@
 - Edit-приглашение привязывается к первому Telegram user id, который его открыл; чужой Telegram получает просмотр.
 - CORS Edge Functions — allowlist GitHub Pages и localhost, не `*`.
 - Telegram-бот ходит в БД только через RPC `lookup_share_invite` с anon-ключом (или сразу открывает Mini App, если RPC ещё не применён).
+- Связка Telegram ↔ email идёт только через `link-email` (service role): клиент не пишет в `user_identities`. Новый email создаётся неподтверждённым; существующий — только после `signInWithPassword`. Два разных Telegram к одному ящику не сливаются.
 
 Подробный чеклист деплоя: [SUPABASE_SETUP.md](./SUPABASE_SETUP.md). Разбор прошлых дыр: [CODE_AUDIT.md](./CODE_AUDIT.md).

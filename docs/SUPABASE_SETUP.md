@@ -54,6 +54,7 @@ supabase secrets set CORS_ALLOWED_ORIGINS="https://kayatkin.github.io,http://loc
     - `supabase/migrations/005_flight_notes.sql`
     - `supabase/migrations/006_share_token_hash.sql` (lookup uses `search_path = public, extensions`, because on Supabase `digest` is in `extensions`)
     - `supabase/migrations/007_email_owner_auth.sql` (`is_owner()` для GoTrue JWT; `custom_access_token_hook`)
+    - `supabase/migrations/008_user_identities.sql` (связка Telegram ↔ email, канонический `user_id` в хуке)
 
 **Вариант B — CLI:**
 
@@ -78,9 +79,10 @@ DEPLOY_AUTH_DEV=true npm run supabase:deploy
 ```bash
 supabase functions deploy auth-telegram --no-verify-jwt
 supabase functions deploy auth-guest --no-verify-jwt
+supabase functions deploy link-email
 ```
 
-`--no-verify-jwt` нужен, потому что клиент ещё не авторизован при вызове auth-*.
+`--no-verify-jwt` нужен для `auth-*`, потому что клиент ещё не авторизован. `link-email` деплоится **с** проверкой JWT (владелец уже вошёл).
 
 ## 6. Переменные фронтенда
 
@@ -121,21 +123,23 @@ GitHub Actions secrets (уже есть `SUPABASE_URL`, `SUPABASE_ANON_KEY`).
 2. Authentication → URL Configuration:
    - Site URL: `https://kayatkin.github.io/flight-tracker/`
    - Redirect URLs: `https://kayatkin.github.io/flight-tracker/`, `https://kayatkin.github.io/flight-tracker/**`, `http://localhost:5173/flight-tracker/`, `http://localhost:5173/flight-tracker/**`
-3. Authentication → Hooks → **Custom Access Token** → `custom_access_token_hook` (после `007`). Пока хук выключен, RLS всё равно пускает GoTrue JWT: `role=authenticated` и нет `app_role`.
-4. Применить миграцию `007_email_owner_auth.sql`.
+3. Authentication → Hooks → **Custom Access Token** → `custom_access_token_hook` (после `007`; `008` только обновляет функцию).
+4. Применить миграции `007_email_owner_auth.sql` и `008_user_identities.sql`.
+5. Задеплоить `link-email` **без** `--no-verify-jwt` (`npm run supabase:deploy`).
 
-Email-владелец получает `user_id` = UUID из Auth. Telegram остаётся `tg_<id>`. Это разные аккаунты, пока нет таблицы identities.
+После `008` email-JWT получает канонический `user_id` из `user_identities`. Telegram `auth-telegram` тоже выдаёт этот id. Связка: Mini App → **Аккаунт** → email + пароль. Два Telegram к одному email не сливаются.
 
 ## 8. Production checklist
 
 | Шаг | Действие |
 |-----|----------|
-| RLS | Миграции `002`, `003`, `004_lookup_share_invite.sql`, `005_flight_notes.sql`, `006_share_token_hash.sql`, `007_email_owner_auth.sql` применены |
+| RLS | Миграции `002`, `003`, `004_lookup_share_invite.sql`, `005_flight_notes.sql`, `006_share_token_hash.sql`, `007_email_owner_auth.sql`, `008_user_identities.sql` применены |
 | Anon key | Нет прямого доступа к таблицам без JWT |
 | `ALLOW_DEV_AUTH` | `false` |
 | `auth-dev` | Не задеплоен в production |
 | `JWT_SECRET` | Установлен в secrets |
 | `BOT_TOKEN` | Совпадает с ботом Mini App |
+| `link-email` | Задеплоен **с** проверкой JWT |
 | Отзыв шаринга | После revoke гостевой JWT с `share_session_id` теряет доступ |
 
 ## Устранение проблем
@@ -155,6 +159,7 @@ Email-владелец получает `user_id` = UUID из Auth. Telegram о�
   ├─ initData ──► auth-telegram ─┤── JWT (owner) ───────────►│ owner policies
   ├─ share token ► auth-guest ───┤── JWT (guest) ───────────►│ guest policies
   ├─ email/password ► GoTrue ────┤── JWT (owner) ───────────►│ owner policies
+  ├─ Аккаунт ► link-email ───────┤── identities + merge ────►│ канонический user_id
   └─ dev userId ► auth-dev ──────┘── JWT (owner) ───────────►│ (только staging)
 ```
 

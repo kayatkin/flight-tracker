@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'No Telegram user in initData' }, 400, req);
   }
 
-  const userId = `tg_${tgUser.id}`;
+  const telegramKey = `tg_${tgUser.id}`;
   const name = tgUser.first_name ?? tgUser.username ?? 'User';
 
   const admin = createClient(
@@ -42,13 +42,47 @@ Deno.serve(async (req) => {
   );
 
   const { error: upsertError } = await admin.from('users').upsert({
-    user_id: userId,
+    user_id: telegramKey,
     name,
     updated_at: new Date().toISOString(),
   });
 
   if (upsertError) {
     return jsonResponse({ error: 'Failed to persist user profile' }, 500, req);
+  }
+
+  const { data: identity } = await admin
+    .from('user_identities')
+    .select('user_id')
+    .eq('provider', 'telegram')
+    .eq('provider_user_id', telegramKey)
+    .maybeSingle();
+
+  let userId = identity?.user_id ?? telegramKey;
+
+  if (!identity) {
+    const { error: identityError } = await admin.from('user_identities').insert({
+      user_id: telegramKey,
+      provider: 'telegram',
+      provider_user_id: telegramKey,
+    });
+    if (identityError) {
+      const { data: raced } = await admin
+        .from('user_identities')
+        .select('user_id')
+        .eq('provider', 'telegram')
+        .eq('provider_user_id', telegramKey)
+        .maybeSingle();
+      userId = raced?.user_id ?? telegramKey;
+    }
+  }
+
+  if (userId !== telegramKey) {
+    await admin.from('users').upsert({
+      user_id: userId,
+      name,
+      updated_at: new Date().toISOString(),
+    });
   }
 
   const access_token = await signAccessToken({

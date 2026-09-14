@@ -18,3 +18,6 @@ verify_jwt = false
 
 [functions.auth-dev]
 verify_jwt = false
+
+[functions.link-email]
+verify_jwt = true

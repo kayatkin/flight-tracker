@@ -9,7 +9,7 @@ Flight Tracker — это Telegram Mini App (React SPA), которое рабо
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    UI (React-компоненты)                  │
-│  features/flights, features/sharing, features/guest-mode  │
+│  features/flights, features/sharing, features/guest-mode, features/auth, features/account │
 ├─────────────────────────────────────────────────────────┤
 │                 Services (бизнес-логика)                   │
 │          dataService.ts, appInitService.ts               │
@@ -78,6 +78,14 @@ Flight Tracker — это Telegram Mini App (React SPA), которое рабо
 #### `features/guest-mode/` — гостевой режим
 
 - `GuestModeIndicator` — индикатор чужой истории (права view/edit)
+
+#### `features/account/` — связка Telegram и email
+
+- `AccountModal` — статус провайдеров и форма привязки email (пароль обязателен)
+
+#### `features/auth/` — вход в браузере
+
+- `AuthScreen` — email/пароль, регистрация, сброс пароля
 
 ### `shared/` — переиспользуемый код
 
