@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleOptions, jsonResponse } from '../_shared/cors.ts';
+import { RATE_LIMITS, rateLimitResponse } from '../_shared/rateLimit.ts';
 import {
   ACCESS_TOKEN_TTL_SECONDS,
   OWNER_REFRESH_TTL_SECONDS,
@@ -10,6 +11,8 @@ import {
 Deno.serve(async (req) => {
   const options = handleOptions(req);
   if (options) return options;
+  const limited = rateLimitResponse(req, 'auth-dev', RATE_LIMITS['auth-dev']);
+  if (limited) return limited;
 
   if (Deno.env.get('ALLOW_DEV_AUTH') !== 'true') {
     return jsonResponse({ error: 'Dev auth is disabled in this environment' }, 403, req);

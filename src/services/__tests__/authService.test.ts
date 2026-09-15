@@ -55,6 +55,7 @@ import {
   restoreGoTrueOwner,
   restoreGuestSession,
   signInWithEmail,
+  signOutOwner,
   signUpWithEmail,
   updatePassword,
 } from '../authService';
@@ -182,7 +183,7 @@ describe('authService email sessions', () => {
 
   it('asks the user to confirm email when sign-up has no session', async () => {
     signUp.mockResolvedValue({ data: { session: null, user: { id: 'u' } }, error: null });
-    await expect(signUpWithEmail('new@example.com', 'secret1')).resolves.toEqual({
+    await expect(signUpWithEmail('new@example.com', 'secret12')).resolves.toEqual({
       ok: true,
       needsConfirmation: true,
     });
@@ -203,10 +204,10 @@ describe('authService email sessions', () => {
     resetPasswordForEmail.mockResolvedValue({ error: null });
     updateUser.mockResolvedValue({ error: null });
     await expect(requestPasswordReset('kai@example.com')).resolves.toEqual({ ok: true });
-    await expect(updatePassword('secret1')).resolves.toEqual({ ok: true });
+    await expect(updatePassword('secret12')).resolves.toEqual({ ok: true });
     await expect(updatePassword('123')).resolves.toEqual({
       ok: false,
-      error: 'Пароль не короче 6 символов',
+      error: 'Пароль не короче 8 символов',
     });
   });
 
@@ -272,5 +273,55 @@ describe('authService email sessions', () => {
       ownerId: 'owner_a',
       ownerName: 'Alice',
     });
+  });
+
+  it('revokes a custom refresh family on sign-out', async () => {
+    const access = jwtWith({
+      ft: 'custom',
+      app_role: 'guest',
+      user_id: 'owner_a',
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    });
+    getSession.mockResolvedValue({
+      data: { session: { access_token: access, refresh_token: 'opaque-refresh' } },
+      error: null,
+    });
+    invoke.mockResolvedValue({ data: { ok: true, revoked: true }, error: null });
+    signOut.mockResolvedValue({ error: null });
+
+    await signOutOwner();
+    expect(invoke).toHaveBeenCalledWith('auth-refresh', {
+      body: { refresh_token: 'opaque-refresh', revoke: true },
+    });
+    expect(signOut).toHaveBeenCalled();
+  });
+
+  it('single-flights concurrent custom refreshes', async () => {
+    const access = jwtWith({
+      ft: 'custom',
+      app_role: 'owner',
+      user_id: 'tg_1',
+      exp: Math.floor(Date.now() / 1000) + 120,
+    });
+    getSession.mockResolvedValue({
+      data: { session: { access_token: access, refresh_token: 'opaque-refresh' } },
+      error: null,
+    });
+    let resolveInvoke: (value: {
+      data: { ok: boolean; access_token: string; refresh_token: string };
+      error: null;
+    }) => void = () => {};
+    invoke.mockReturnValue(new Promise((resolve) => {
+      resolveInvoke = resolve;
+    }));
+
+    const first = refreshCustomSession();
+    const second = refreshCustomSession();
+    resolveInvoke({
+      data: { ok: true, access_token: 'new-access', refresh_token: 'new-refresh' },
+      error: null,
+    });
+    await expect(Promise.all([first, second])).resolves.toEqual([true, true]);
+    expect(invoke).toHaveBeenCalledTimes(1);
   });
 });

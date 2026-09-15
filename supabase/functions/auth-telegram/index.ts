@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleOptions, jsonResponse } from '../_shared/cors.ts';
+import { RATE_LIMITS, rateLimitResponse } from '../_shared/rateLimit.ts';
 import { parseTelegramUser, validateTelegramInitData } from '../_shared/telegram.ts';
 import {
   ACCESS_TOKEN_TTL_SECONDS,
@@ -11,6 +12,8 @@ import {
 Deno.serve(async (req) => {
   const options = handleOptions(req);
   if (options) return options;
+  const limited = rateLimitResponse(req, 'auth-telegram', RATE_LIMITS['auth-telegram']);
+  if (limited) return limited;
 
   if (req.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405, req);

@@ -16,18 +16,23 @@ describe('accountLink helpers', () => {
     expect(validateLinkEmailForm({
       email: 'a@b.c',
       password: '12',
-    })).toBe('Пароль не короче 6 символов');
+    })).toBe('Пароль не короче 8 символов');
 
     expect(validateLinkEmailForm({
       email: 'a@b.c',
       password: 'secret1',
-      confirmPassword: 'secret2',
+    })).toBe('Пароль не короче 8 символов');
+
+    expect(validateLinkEmailForm({
+      email: 'a@b.c',
+      password: 'secret12',
+      confirmPassword: 'secret13',
     })).toBe('Пароли не совпадают');
 
     expect(validateLinkEmailForm({
       email: '  kai@example.com ',
-      password: 'secret1',
-      confirmPassword: 'secret1',
+      password: 'secret12',
+      confirmPassword: 'secret12',
     })).toBeNull();
   });
 

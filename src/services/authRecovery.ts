@@ -68,7 +68,7 @@ export const consumeAuthCallback = async (href?: string): Promise<void> => {
   }
 
   if (isRecoveryCallback(params)) {
-    markPasswordRecovery();
+    stripAuthCallbackFromUrl();
   }
 };
 
@@ -78,10 +78,7 @@ export const startPasswordRecoveryWatch = (): void => {
   if (watching) return;
   watching = true;
 
-  const params = parseAuthCallbackParams();
   if (readStoredFlag()) {
-    markPasswordRecovery();
-  } else if (isRecoveryCallback(params) && !params.token_hash && !params.access_token) {
     markPasswordRecovery();
   }
 

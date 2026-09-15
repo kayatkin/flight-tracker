@@ -8,6 +8,8 @@ import {
   revokeFamily,
 } from '../_shared/authSession.ts';
 import { handleOptions, jsonResponse } from '../_shared/cors.ts';
+import { effectiveGuestPermissions } from '../_shared/guestAccess.ts';
+import { RATE_LIMITS, rateLimitResponse } from '../_shared/rateLimit.ts';
 
 const fail = (req: Request, error: string, status = 401) =>
   jsonResponse({ ok: false, error }, status, req);
@@ -15,6 +17,8 @@ const fail = (req: Request, error: string, status = 401) =>
 Deno.serve(async (req) => {
   const options = handleOptions(req);
   if (options) return options;
+  const limited = rateLimitResponse(req, 'auth-refresh', RATE_LIMITS['auth-refresh']);
+  if (limited) return limited;
 
   if (req.method !== 'POST') {
     return jsonResponse({ ok: false, error: 'Method not allowed' }, 405, req);
@@ -82,7 +86,7 @@ Deno.serve(async (req) => {
       return fail(req, 'Share session expired');
     }
     accessTtl = clampTtlSeconds(shareRemaining, ACCESS_TOKEN_TTL_SECONDS);
-    row.permissions = session.permissions === 'edit' ? 'edit' : 'view';
+    row.permissions = effectiveGuestPermissions(session.permissions, row.permissions);
   } else {
     accessTtl = clampTtlSeconds(refreshRemaining, ACCESS_TOKEN_TTL_SECONDS);
   }

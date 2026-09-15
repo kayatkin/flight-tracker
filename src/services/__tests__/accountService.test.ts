@@ -68,20 +68,20 @@ describe('accountService', () => {
       error: null,
     });
 
-    await expect(linkEmailAccount('kai@example.com', 'secret1', 'secret1')).resolves.toEqual({
+    await expect(linkEmailAccount('kai@example.com', 'secret12', 'secret12')).resolves.toEqual({
       ok: true,
       canonicalUserId: 'tg_1',
       merged: false,
       needsConfirmation: true,
     });
     expect(invoke).toHaveBeenCalledWith('link-email', {
-      body: { email: 'kai@example.com', password: 'secret1' },
+      body: { email: 'kai@example.com', password: 'secret12' },
     });
   });
 
   it('maps invoke failures and business errors', async () => {
     invoke.mockResolvedValueOnce({ data: null, error: { message: 'boom' } });
-    await expect(linkEmailAccount('kai@example.com', 'secret1')).resolves.toEqual({
+    await expect(linkEmailAccount('kai@example.com', 'secret12')).resolves.toEqual({
       ok: false,
       error: 'Не удалось связать аккаунт. Попробуйте ещё раз.',
     });
@@ -90,7 +90,7 @@ describe('accountService', () => {
       data: { ok: false, error: 'Неверный пароль для этого email' },
       error: null,
     });
-    await expect(linkEmailAccount('kai@example.com', 'secret1')).resolves.toEqual({
+    await expect(linkEmailAccount('kai@example.com', 'secret12')).resolves.toEqual({
       ok: false,
       error: 'Неверный пароль для этого email',
     });

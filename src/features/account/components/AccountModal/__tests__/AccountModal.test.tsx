@@ -58,11 +58,11 @@ describe('AccountModal', () => {
     );
 
     await user.type(await screen.findByLabelText('Email'), 'kai@example.com');
-    await user.type(screen.getByLabelText('Пароль'), 'secret1');
-    await user.type(screen.getByLabelText('Повторите пароль'), 'secret2');
+    await user.type(screen.getByLabelText('Пароль'), 'secret12');
+    await user.type(screen.getByLabelText('Повторите пароль'), 'secret13');
     await user.click(screen.getByRole('button', { name: 'Привязать email' }));
 
-    expect(linkEmailAccount).toHaveBeenCalledWith('kai@example.com', 'secret1', 'secret2');
+    expect(linkEmailAccount).toHaveBeenCalledWith('kai@example.com', 'secret12', 'secret13');
     expect(await screen.findByRole('alert')).toHaveTextContent('Пароли не совпадают');
     expect(refreshOwnerAfterLink).not.toHaveBeenCalled();
   });
@@ -88,11 +88,11 @@ describe('AccountModal', () => {
     );
 
     await user.type(await screen.findByLabelText('Email'), 'kai@example.com');
-    await user.type(screen.getByLabelText('Пароль'), 'secret1');
-    await user.type(screen.getByLabelText('Повторите пароль'), 'secret1');
+    await user.type(screen.getByLabelText('Пароль'), 'secret12');
+    await user.type(screen.getByLabelText('Повторите пароль'), 'secret12');
     await user.click(screen.getByRole('button', { name: 'Привязать email' }));
 
-    expect(linkEmailAccount).toHaveBeenCalledWith('kai@example.com', 'secret1', 'secret1');
+    expect(linkEmailAccount).toHaveBeenCalledWith('kai@example.com', 'secret12', 'secret12');
     expect(refreshOwnerAfterLink).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
     expect(onLinked).toHaveBeenCalled();

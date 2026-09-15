@@ -120,7 +120,7 @@ describe('emailAuth helpers', () => {
       'Этот email уже зарегистрирован. Войдите или сбросьте пароль.'
     );
     expect(mapAuthError('Password should be at least 6 characters')).toBe(
-      'Пароль слишком короткий. Минимум 6 символов.'
+      'Пароль слишком короткий. Минимум 8 символов.'
     );
     expect(mapAuthError('Too many requests')).toBe('Слишком много попыток. Подождите минуту.');
     expect(mapAuthError('User not found')).toBe('Аккаунт с таким email не найден');
@@ -162,7 +162,19 @@ describe('emailAuth helpers', () => {
       email: 'a@b.c',
       password: '12',
       mode: 'register',
-    })).toBe('Пароль не короче 6 символов');
+    })).toBe('Пароль не короче 8 символов');
+
+    expect(validateEmailAuthForm({
+      email: 'a@b.c',
+      password: 'secret1',
+      mode: 'register',
+    })).toBe('Пароль не короче 8 символов');
+
+    expect(validateEmailAuthForm({
+      email: 'a@b.c',
+      password: 'secret12',
+      mode: 'register',
+    })).toBeNull();
 
     expect(validateEmailAuthForm({
       email: 'a@b.c',

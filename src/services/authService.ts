@@ -11,6 +11,7 @@ import {
   isCustomEdgeSession,
   isJwtExpired,
   mapAuthError,
+  MIN_NEW_PASSWORD_LENGTH,
   msUntilCustomRefresh,
   ownerFromCustomAccessToken,
   ownerFromGoTrueUser,
@@ -58,6 +59,7 @@ const startGoTrueRefresh = (): void => {
 
 let customRefreshTimer: number | undefined;
 let customRefreshBound = false;
+let refreshInFlight: Promise<boolean> | null = null;
 
 const stopCustomRefreshTimer = (): void => {
   if (typeof window === 'undefined') return;
@@ -68,6 +70,14 @@ const stopCustomRefreshTimer = (): void => {
 };
 
 export const refreshCustomSession = async (): Promise<boolean> => {
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = rotateCustomSession().finally(() => {
+    refreshInFlight = null;
+  });
+  return refreshInFlight;
+};
+
+const rotateCustomSession = async (): Promise<boolean> => {
   const { data } = await supabase.auth.getSession();
   const access = data.session?.access_token;
   const refresh = data.session?.refresh_token;
@@ -244,7 +254,9 @@ export const authenticateGuest = async (shareToken: string): Promise<GuestUser |
   }
 
   await applyCustomSession(data.access_token, data.refresh_token ?? data.access_token);
-  return data.guestUser;
+  const fromJwt = guestFromCustomAccessToken(data.access_token);
+  if (fromJwt) return fromJwt;
+  return { ...data.guestUser, sessionToken: '' };
 };
 
 const ensureFreshCustomAccess = async (access: string, refresh: string): Promise<string | null> => {
@@ -364,7 +376,7 @@ export const requestPasswordReset = async (email: string): Promise<EmailAuthResu
 };
 
 export const updatePassword = async (password: string): Promise<EmailAuthResult> => {
-  if (password.length < 6) {
+  if (password.length < MIN_NEW_PASSWORD_LENGTH) {
     return { ok: false, error: t('auth.shortPassword') };
   }
   const { error } = await supabase.auth.updateUser({ password });

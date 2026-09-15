@@ -188,6 +188,8 @@ export const mapAuthError = (message: string | undefined): string => {
   return t('errors.generic');
 };
 
+export const MIN_NEW_PASSWORD_LENGTH = 8;
+
 export const validateEmailAuthForm = (params: {
   email: string;
   password: string;
@@ -198,7 +200,11 @@ export const validateEmailAuthForm = (params: {
     return t('auth.invalidEmail');
   }
   if (params.mode === 'forgot') return null;
-  if (params.password.length < 6) {
+  if (params.mode === 'login') {
+    if (!params.password) return t('auth.shortPassword');
+    return null;
+  }
+  if (params.password.length < MIN_NEW_PASSWORD_LENGTH) {
     return t('auth.shortPassword');
   }
   return null;

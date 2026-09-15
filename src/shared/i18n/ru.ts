@@ -39,7 +39,7 @@ export const ru = {
     developer: 'Разработчик',
     ownerFallback: 'Владелец',
     invalidEmail: 'Укажите действующий email',
-    shortPassword: 'Пароль не короче 6 символов',
+    shortPassword: 'Пароль не короче 8 символов',
   },
   account: {
     title: 'Аккаунт',
@@ -95,7 +95,7 @@ export const ru = {
     invalidCredentials: 'Неверный email или пароль',
     emailNotConfirmed: 'Подтвердите email по ссылке из письма',
     alreadyRegistered: 'Этот email уже зарегистрирован. Войдите или сбросьте пароль.',
-    passwordTooShort: 'Пароль слишком короткий. Минимум 6 символов.',
+    passwordTooShort: 'Пароль слишком короткий. Минимум 8 символов.',
     rateLimit: 'Слишком много попыток. Подождите минуту.',
     userNotFound: 'Аккаунт с таким email не найден',
     pkce: 'Откройте ссылку из письма в том же браузере, где нажали «Забыли пароль».',
