@@ -1,5 +1,5 @@
 import React from 'react';
-import { t, type MessageKey } from '@shared/i18n';
+import { t, ticketWord, type MessageKey } from '@shared/i18n';
 import { Flight } from '@shared/types';
 import { downloadFlightsCsv } from '@shared/utils';
 import { toast } from '@shared/ui/Toast';
@@ -79,42 +79,49 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             </option>
           ))}
         </select>
-        <span
-          className={styles.flightCount}
-          title={
-            isFiltering
-              ? t('history.foundOf', { visible: visibleCount, total: totalFlights })
-              : t('history.totalTickets', { total: totalFlights })
-          }
-        >
-          {isFiltering ? (
-            <>
-              <strong>{visibleCount}</strong>/{totalFlights}
-            </>
-          ) : (
-            <strong>{totalFlights}</strong>
-          )}
-        </span>
-        {totalFlights > 0 && (
-          <button
-            type="button"
-            className={styles.exportButton}
-            onClick={handleExport}
-            disabled={visibleCount === 0}
+        <div className={styles.toolbarMeta}>
+          <span
+            className={styles.flightCount}
             title={
               isFiltering
-                ? t('history.exportFound')
-                : t('history.exportAll')
-            }
-            aria-label={
-              isFiltering
-                ? t('history.exportFound')
-                : t('history.exportAll')
+                ? t('history.foundOf', { visible: visibleCount, total: totalFlights })
+                : t('history.totalTickets', { total: totalFlights })
             }
           >
-            CSV
-          </button>
-        )}
+            {isFiltering ? (
+              <>
+                <strong>{visibleCount}</strong>{' '}
+                {t('history.foundOutOf', { total: totalFlights })}
+              </>
+            ) : (
+              <>
+                <strong>{totalFlights}</strong>{' '}
+                <span className={styles.ticketWord}>{ticketWord(totalFlights)}</span>
+              </>
+            )}
+          </span>
+          {totalFlights > 0 && (
+            <button
+              type="button"
+              className={styles.exportButton}
+              onClick={handleExport}
+              disabled={visibleCount === 0}
+              title={
+                isFiltering
+                  ? t('history.exportFound')
+                  : t('history.exportAll')
+              }
+              aria-label={
+                isFiltering
+                  ? t('history.exportFound')
+                  : t('history.exportAll')
+              }
+            >
+              <span aria-hidden="true">⬇️</span>
+              CSV
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

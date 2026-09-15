@@ -60,7 +60,7 @@ Flight Tracker — это Telegram Mini App (React SPA), которое рабо
 
 **HistoryView** подкомпоненты:
 
-- `SearchBar` — поиск, сортировка и экспорт CSV видимых билетов
+- `SearchBar` — поиск, короткая сортировка, подпись к числу билетов и `⬇️ CSV`
 - `DestinationGroup` — группа маршрута, раскрытие по заголовку
 - `FlightCard` — карточка рейса: правка, копия, удаление
 - `AccessManagement` — управление доступом (для владельца)
