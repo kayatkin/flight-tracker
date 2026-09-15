@@ -24,3 +24,6 @@ verify_jwt = false
 
 [functions.auth-refresh]
 verify_jwt = false
+
+[functions.fx-usd]
+verify_jwt = false

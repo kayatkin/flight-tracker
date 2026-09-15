@@ -221,6 +221,7 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
       <PriceSection
         formData={formData}
         updateFormData={updateFormData}
+        fxDate={editingFlight?.dateFound ?? today}
       />
 
       <NotesSection

@@ -11,6 +11,7 @@ export * from './date';
 export * from './shareToken';
 export * from './suggestions';
 export * from './flightCsv';
+export * from './fx';
 export * from './flightFormMapping';
 export * from './formDraft';
 export * from './hashShareToken';

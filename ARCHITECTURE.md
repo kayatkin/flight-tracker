@@ -96,6 +96,7 @@ Flight Tracker — это Telegram Mini App (React SPA), которое рабо
 | `useFlightTracker` | Главный хук: список рейсов, add/update/duplicate/delete, autosave |
 | `useFlightForm` | Состояние формы добавления рейса, черновик новой записи, валидация |
 | `useAutocomplete` | Автозаполнение городов/авиакомпаний |
+| `useUsdRubRates` | Курс ЦБ USD на даты внесения билетов |
 
 #### `shared/utils/` — утилиты
 
@@ -107,7 +108,8 @@ Flight Tracker — это Telegram Mini App (React SPA), которое рабо
 | `telegramUtils.ts` | Проверка окружения Telegram, извлечение токенов |
 | `telegramTokens.ts` | Управление токенами для совместного доступа |
 | `telegram.ts` | Инициализация Telegram SDK |
-| `flightCsv.ts` | Сборка и скачивание CSV истории |
+| `flightCsv.ts` | Сборка и скачивание CSV истории (`;` для Excel, колонки USD) |
+| `fx.ts` | Пересчёт ₽ → $ по курсу ЦБ |
 | `formDraft.ts` | Черновик новой формы в sessionStorage |
 | `flightFormMapping.ts` | Билет → поля формы, дублирование с новым UUID |
 | `suggestions.ts` | Слияние сохранённых значений с каталогом |
@@ -145,6 +147,7 @@ Flight Tracker — это Telegram Mini App (React SPA), которое рабо
 |--------|-----------|
 | `dataService.ts` | CRUD-операции с рейсами через Supabase. Сохранение/загрузка/удаление. Метаданные: города, авиакомпании |
 | `appInitService.ts` | Инициализация приложения: определение окружения (Telegram/веб), загрузка данных пользователя, обработка гостевого режима и токенов доступа |
+| `cbrUsd.ts` | Клиент Edge Function `fx-usd`: курс ЦБ с кэшем в memory/localStorage |
 
 ## Потоки данных
 
