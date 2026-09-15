@@ -1,10 +1,10 @@
 import React from 'react';
 import { t } from '@shared/i18n';
 import { Flight } from '@shared/types';
-import { downloadFlightsCsv } from '@shared/utils';
+import { downloadFlightsCsv, formatRubAndUsd } from '@shared/utils';
 import { toast } from '@shared/ui/Toast';
 import { FlightCard } from './FlightCard';
-import { formatPrice, formatDateToDMY, splitBestAndOthers, type HistorySort } from '../utils/historyViewHelpers';
+import { formatDateToDMY, splitBestAndOthers, type HistorySort } from '../utils/historyViewHelpers';
 import styles from '../HistoryView.module.css';
 
 interface DestinationGroupProps {
@@ -14,6 +14,7 @@ interface DestinationGroupProps {
   isActive: boolean;
   isGuest: boolean;
   guestPermissions: 'view' | 'edit';
+  usdRates: Map<string, number>;
   onToggle: () => void;
   onShowChart: () => void;
   onDelete: (id: string, e: React.MouseEvent) => void;
@@ -28,6 +29,7 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
   isActive,
   isGuest,
   guestPermissions,
+  usdRates,
   onToggle,
   onShowChart,
   onDelete,
@@ -89,8 +91,13 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
               className={styles.routeExportButton}
               onClick={(e) => {
                 e.stopPropagation();
-                downloadFlightsCsv(flights, destination);
-                toast(t('history.downloadedRoute', { destination, count: flights.length }), 'success');
+                void downloadFlightsCsv(flights, destination)
+                  .then(() => {
+                    toast(t('history.downloadedRoute', { destination, count: flights.length }), 'success');
+                  })
+                  .catch(() => {
+                    toast(t('history.exportFailed'), 'error');
+                  });
               }}
               title={t('history.downloadRouteTitle', { destination })}
               aria-label={t('history.downloadRouteAria', { destination })}
@@ -101,7 +108,10 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
         </div>
 
         <div className={styles.cardPrice}>
-          💰 {formatPrice(bestFlight.totalPrice / bestFlight.passengers)} {t('history.perPerson')}
+          💰 {formatRubAndUsd(
+            bestFlight.totalPrice / bestFlight.passengers,
+            usdRates.get(bestFlight.dateFound),
+          )} {t('history.perPerson')}
         </div>
         <div className={styles.cardDate}>
           📅 {formatDateToDMY(bestFlight.departureDate)}
@@ -130,6 +140,7 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
             canMutate={canMutate}
             isGuest={isGuest}
             guestPermissions={guestPermissions}
+            usdRub={usdRates.get(bestFlight.dateFound)}
           />
           {otherFlights.length > 0 && (
             <>
@@ -147,6 +158,7 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
                   canMutate={canMutate}
                   isGuest={isGuest}
                   guestPermissions={guestPermissions}
+                  usdRub={usdRates.get(flight.dateFound)}
                 />
               ))}
             </>

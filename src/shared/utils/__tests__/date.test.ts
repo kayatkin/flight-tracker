@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { monthIndexFromISODate, parseISODateParts, toLocalISODate } from '../date';
+import { monthIndexFromISODate, parseISODateParts, toDottedDate, toLocalISODate } from '../date';
 
 describe('date helpers', () => {
   it('parses ISO calendar dates without UTC shift', () => {
@@ -15,5 +15,10 @@ describe('date helpers', () => {
 
   it('formats local today as YYYY-MM-DD', () => {
     expect(toLocalISODate(new Date(2026, 8, 6))).toBe('2026-09-06');
+  });
+
+  it('formats ISO dates as DD.MM.YYYY for Excel', () => {
+    expect(toDottedDate('2026-09-15')).toBe('15.09.2026');
+    expect(toDottedDate('not-a-date')).toBe('not-a-date');
   });
 });

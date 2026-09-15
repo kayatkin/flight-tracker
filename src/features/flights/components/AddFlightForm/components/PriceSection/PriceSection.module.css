@@ -74,6 +74,13 @@
   color: var(--tg-theme-text-color, #495057);
 }
 
+.usdHint {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--tg-theme-hint-color, #6c757d);
+  line-height: 1.4;
+}
+
 /* Стоимость на человека */
 .perPersonBlock {
   display: flex;
@@ -195,6 +202,10 @@
   
   .perPersonValue {
     color: #e2e8f0;
+  }
+
+  .usdHint {
+    color: #a0aec0;
   }
   
   .singlePassengerNote {

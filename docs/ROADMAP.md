@@ -28,6 +28,7 @@
 - Настоящий refresh для Telegram/гостя (opaque-токен, не копия access) и каталог русских строк вместо JSX
 - Dual-key JWT: ES256 с `kid` при своём JWK, проверка HS256 и JWKS, `link-email` без gateway verify
 - Сессии гостя: demotion на refresh, отзыв при выходе, атомарный bind, лимит частоты, CSP, пароль 8
+- Курс ЦБ РФ → USD на дату внесения билета; CSV с `;` для Excel
 
 ## Можно делать дальше без ломки продукта
 

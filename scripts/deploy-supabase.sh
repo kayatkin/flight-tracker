@@ -11,6 +11,8 @@ supabase functions deploy auth-guest --no-verify-jwt
 supabase functions deploy auth-refresh --no-verify-jwt
 # Gateway JWT verify breaks after Auth signing-key rotation; link-email checks the owner JWT in-function.
 supabase functions deploy link-email --no-verify-jwt
+# CBR daily USD has no user secrets; gateway JWT would block custom Telegram/guest tokens.
+supabase functions deploy fx-usd --no-verify-jwt
 
 if [ "${DEPLOY_AUTH_DEV:-}" = "true" ]; then
   echo "DEPLOY_AUTH_DEV=true — deploying auth-dev (staging only)"
@@ -26,3 +28,4 @@ echo "  supabase secrets set JWT_SIGNING_PRIVATE_JWK='...'  # optional; ES256 af
 echo "  supabase secrets set ALLOW_DEV_AUTH=false  # production"
 echo "Apply pending migrations with: supabase db push"
 echo "link-email is deployed with --no-verify-jwt; verifyOwnerToken still runs inside the function."
+echo "fx-usd is deployed with --no-verify-jwt (CBR daily USD, rate-limited)."

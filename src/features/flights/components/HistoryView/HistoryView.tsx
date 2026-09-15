@@ -18,6 +18,7 @@ import {
   type HistorySort,
 } from './utils/historyViewHelpers';
 import { t } from '@shared/i18n';
+import { useUsdRubRates } from '@shared/hooks';
 import { toast } from '@shared/ui/Toast';
 
 interface HistoryViewProps {
@@ -73,6 +74,8 @@ const HistoryView: React.FC<HistoryViewProps> = ({
     () => filteredDestinations.flatMap((destination) => grouped[destination] ?? []),
     [filteredDestinations, grouped]
   );
+
+  const usdRates = useUsdRubRates(flights.map((flight) => flight.dateFound));
 
   const closeChart = useCallback(() => setChartDestination(null), []);
 
@@ -196,6 +199,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({
                 )}
                 sort={sort}
                 onShowChart={() => setChartDestination(destination)}
+                usdRates={usdRates}
                 onDelete={handleDelete}
                 onEdit={handleEdit}
                 onDuplicate={handleDuplicate}

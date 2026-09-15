@@ -38,13 +38,18 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       toast(t('history.noExport'), 'warning');
       return;
     }
-    downloadFlightsCsv(visibleFlights);
-    toast(
-      isFiltering
-        ? t('history.downloadedFound', { count: visibleCount })
-        : t('history.downloadedAll', { count: visibleCount }),
-      'success'
-    );
+    void downloadFlightsCsv(visibleFlights)
+      .then(() => {
+        toast(
+          isFiltering
+            ? t('history.downloadedFound', { count: visibleCount })
+            : t('history.downloadedAll', { count: visibleCount }),
+          'success'
+        );
+      })
+      .catch(() => {
+        toast(t('history.exportFailed'), 'error');
+      });
   };
 
   return (

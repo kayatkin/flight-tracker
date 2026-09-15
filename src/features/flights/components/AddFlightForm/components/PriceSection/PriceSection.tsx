@@ -1,18 +1,22 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { t } from '@shared/i18n';
-import { FlightFormData } from '@shared/hooks';
+import { FlightFormData, useUsdRubRate } from '@shared/hooks';
+import { formatRubAndUsd, formatUsd, rubToUsd, toDottedDate } from '@shared/utils';
 import styles from './PriceSection.module.css';
 
 interface PriceSectionProps {
   formData: FlightFormData;
   updateFormData: (data: Partial<FlightFormData>) => void;
+  fxDate: string;
 }
 
 const PriceSection: React.FC<PriceSectionProps> = ({
   formData,
-  updateFormData
+  updateFormData,
+  fxDate,
 }) => {
   const [displayValue, setDisplayValue] = useState('');
+  const usdRub = useUsdRubRate(fxDate);
 
   // Форматируем значение для отображения
   const formatPrice = (value: string) => {
@@ -63,8 +67,15 @@ const PriceSection: React.FC<PriceSectionProps> = ({
 
   const formattedPricePerPerson = useMemo(() => {
     if (pricePerPerson === 0) return '';
-    return pricePerPerson.toLocaleString('ru-RU') + ' ₽';
-  }, [pricePerPerson]);
+    return formatRubAndUsd(pricePerPerson, usdRub);
+  }, [pricePerPerson, usdRub]);
+
+  const usdHint = useMemo(() => {
+    const rub = Number(formData.totalPrice);
+    const usd = usdRub == null ? null : rubToUsd(rub, usdRub);
+    if (usd == null || !fxDate) return '';
+    return t('form.usdHint', { usd: formatUsd(usd), date: toDottedDate(fxDate) });
+  }, [formData.totalPrice, usdRub, fxDate]);
 
   return (
     <div className={styles.section}>
@@ -87,6 +98,7 @@ const PriceSection: React.FC<PriceSectionProps> = ({
             />
             <span className={styles.currency}>₽</span>
           </div>
+          {usdHint ? <div className={styles.usdHint}>{usdHint}</div> : null}
         </div>
 
         {/* Стоимость на человека (только если пассажиров > 1 и есть общая стоимость) */}

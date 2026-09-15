@@ -84,9 +84,10 @@ supabase functions deploy auth-telegram --no-verify-jwt
 supabase functions deploy auth-guest --no-verify-jwt
 supabase functions deploy auth-refresh --no-verify-jwt
 supabase functions deploy link-email --no-verify-jwt
+supabase functions deploy fx-usd --no-verify-jwt
 ```
 
-`--no-verify-jwt` нужен для `auth-*`, потому что клиент ещё не авторизован. Для `link-email` шлюз тоже выключен: после ротации signing keys gateway-verify ломается, а владелец проверяется внутри функции (`verifyOwnerToken`).
+`--no-verify-jwt` нужен для `auth-*`, потому что клиент ещё не авторизован. Для `link-email` шлюз тоже выключен: после ротации signing keys gateway-verify ломается, а владелец проверяется внутри функции (`verifyOwnerToken`). `fx-usd` публичная (курс ЦБ не секрет), иначе custom JWT Telegram/гостя не пройдёт шлюз Auth; лимит частоты 30 запросов/мин.
 
 ## 6. Переменные фронтенда
 
@@ -144,6 +145,7 @@ GitHub Actions secrets (уже есть `SUPABASE_URL`, `SUPABASE_ANON_KEY`).
 | `JWT_SECRET` | Установлен в secrets (пока не отзываем, даже после ES256) |
 | `BOT_TOKEN` | Совпадает с ботом Mini App |
 | `link-email` | Задеплоен с `--no-verify-jwt`; проверка JWT внутри функции |
+| `fx-usd` | Задеплоен с `--no-verify-jwt`; курс ЦБ для карточек и CSV |
 | Отзыв шаринга | После revoke гостевой JWT с `share_session_id` теряет доступ |
 
 ## Устранение проблем

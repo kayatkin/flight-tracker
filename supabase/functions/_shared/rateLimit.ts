@@ -65,4 +65,5 @@ export const RATE_LIMITS = {
   'auth-refresh': 60,
   'link-email': 10,
   'auth-dev': 10,
+  'fx-usd': 30,
 } as const;

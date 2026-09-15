@@ -1,7 +1,8 @@
 import React from 'react';
 import { t } from '@shared/i18n';
 import { Flight } from '@shared/types';
-import { formatDateToDMY, formatPrice, formatLayover, formatPassengerCount } from '../utils/historyViewHelpers';
+import { formatRubAndUsd } from '@shared/utils';
+import { formatDateToDMY, formatLayover, formatPassengerCount } from '../utils/historyViewHelpers';
 import styles from '../HistoryView.module.css';
 
 interface FlightCardProps {
@@ -13,6 +14,7 @@ interface FlightCardProps {
   canMutate: boolean;
   isGuest: boolean;
   guestPermissions: 'view' | 'edit';
+  usdRub?: number;
 }
 
 export const FlightCard: React.FC<FlightCardProps> = ({
@@ -24,6 +26,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({
   canMutate,
   isGuest,
   guestPermissions,
+  usdRub,
 }) => {
   const layover = formatLayover(flight);
 
@@ -63,8 +66,8 @@ export const FlightCard: React.FC<FlightCardProps> = ({
       {flight.notes ? <div className={styles.notes}>📝 {flight.notes}</div> : null}
 
       <div className={styles.price}>
-        💰 {t('history.totalPrice')} {formatPrice(flight.totalPrice)} |{' '}
-        <strong>{formatPrice(flight.totalPrice / flight.passengers)} {t('history.perPerson')}</strong>
+        💰 {t('history.totalPrice')} {formatRubAndUsd(flight.totalPrice, usdRub)} |{' '}
+        <strong>{formatRubAndUsd(flight.totalPrice / flight.passengers, usdRub)} {t('history.perPerson')}</strong>
       </div>
 
       <div className={styles.meta}>

@@ -30,6 +30,15 @@ export const toLocalISODate = (date = new Date()): string => {
   return `${year}-${month}-${day}`;
 };
 
+/** `YYYY-MM-DD` → `DD.MM.YYYY` for Excel and UI export. */
+export const toDottedDate = (iso: string): string => {
+  const parts = parseISODateParts(iso);
+  if (!parts) return iso;
+  const day = String(parts.day).padStart(2, '0');
+  const month = String(parts.month).padStart(2, '0');
+  return `${day}.${month}.${parts.year}`;
+};
+
 /** 0–11 month index from a stored `YYYY-MM-DD` value. */
 export const monthIndexFromISODate = (iso: string): number | null => {
   const parts = parseISODateParts(iso);
