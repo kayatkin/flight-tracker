@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { passengerWord, permWord, t } from '../t';
+import { passengerWord, permWord, t, ticketWord } from '../t';
 
 describe('t', () => {
   it('returns catalog copy and interpolates variables', () => {
@@ -10,5 +10,9 @@ describe('t', () => {
     expect(passengerWord(1)).toBe('пассажир');
     expect(passengerWord(3)).toBe('пассажира');
     expect(passengerWord(5)).toBe('пассажиров');
+    expect(ticketWord(1)).toBe('билет');
+    expect(ticketWord(2)).toBe('билета');
+    expect(ticketWord(5)).toBe('билетов');
+    expect(ticketWord(21)).toBe('билет');
   });
 });

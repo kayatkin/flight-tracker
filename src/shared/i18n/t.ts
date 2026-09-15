@@ -1,3 +1,4 @@
+import { getPluralForm } from '@shared/lib/i18n/pluralize';
 import { ru, type RuCatalog } from './ru';
 
 type Join<K, P> = K extends string
@@ -41,6 +42,13 @@ export const passengerWord = (count: number): string => {
   if (count === 1) return t('form.passengerOne');
   if (count > 1 && count < 5) return t('form.passengerFew');
   return t('form.passengerMany');
+};
+
+export const ticketWord = (count: number): string => {
+  const form = getPluralForm(count);
+  if (form === 'one') return t('history.ticketOne');
+  if (form === 'few') return t('history.ticketFew');
+  return t('history.ticketMany');
 };
 
 export { ru };
