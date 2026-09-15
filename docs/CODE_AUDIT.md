@@ -28,6 +28,8 @@
 Это мировой стандарт для Mini App + BaaS, но каждое изменение либо операционное, либо требует отдельного окна миграции.
 
 1. **Отозвать legacy JWT Secret** и перейти на publishable/`sb_` API keys. Код уже умеет ES256 + dual verify; отзыв секрета и смена anon-ключа ломают GitHub Pages, пока фронт не уйдёт с JWT-based `anon`. Только с явным «да».
+2. Обнулить plaintext `shared_sessions.token` у старых приглашений (после хеша). Старые «скопировать снова» перестанут работать.
+3. Убрать в RLS лазейку гостя без `share_session_id` (для совсем старых access).
 
 ## Файл за файлом
 
@@ -39,7 +41,7 @@
 | `vite.config.ts` | Сборка, aliases, `envPrefix` | `REACT_APP_*` может утечь в бандл | Не трогали префикс, чтобы не сломать legacy env |
 | `tsconfig.json` | Strict TS только для `src` | Конфиги не проверяются | Ок для текущего контура |
 | `eslint.config.mjs` | Lint фронта и бота | Functions по-прежнему вне ESLint (Deno) | `bot/**/*.js` в корневом `npm run lint`; functions — `deno check` + `deno lint` |
-| `index.html` | Telegram script | Нет CSP | CSP-lite + `favicon.svg` относительно `base` |
+| `index.html` | Telegram script | Нет CSP | CSP-lite + `object-src`/`frame-ancestors`; localhost connect только в Vite |
 | `public/manifest.json` | PWA | CRA sample, битые иконки | Имя приложения, без фейковых иконок |
 | `.github/workflows/deploy.yml` | Pages | Деплой без обязательного CI | `needs`: quality, functions, bot, rls |
 | `.github/workflows/ci.yml` | lint/test/build | Нет аудита бэкенда | `deno check` + `deno lint` + `deno test` JWT, coverage фронта, тесты бота, RLS на Postgres 15, `npm audit` |
@@ -100,9 +102,9 @@
 | `008_user_identities.sql` | Email и Telegram — разные `user_id` | `user_identities`, канонический id в хуке и `auth-telegram` |
 | `_shared/telegram.ts` | Нет TTL, `===` для HMAC | `auth_date` + timing-safe |
 | `_shared/jwt.ts` | Claims могли перекрыть `role`; guest TTL 7д; только HS256 | Reserved claims последними; access 1 час; `ft=custom`; ES256 + JWKS dual-key |
-| `auth-refresh` | — | Ротация hashed refresh, reuse отзывает family |
+| `auth-refresh` | Гость на refresh снова получал edit из приглашения | Права = invite ∩ issued; reuse отзывает family; лимит частоты |
 | `009_refresh_tokens.sql` | — | Opaque refresh, клиент не читает таблицу |
-| `auth-guest` | 7д JWT, `expires_in: 1д` | Lookup по hash, bind edit Telegram id, CORS allowlist |
+| `auth-guest` | 7д JWT; гонка bind; echo токена | Lookup по hash, атомарный bind, без plaintext в ответе, CORS, лимит |
 | `auth-telegram` | JWT даже если upsert users упал | Ошибка 500; JWT с каноническим `user_id` из identities |
 | `link-email` | — | Пароль обязателен, merge по числу билетов, гости отклоняются; `--no-verify-jwt`, проверка в `verifyOwnerToken` |
 | `auth-dev` | Account takeover если секрет true | Не деплоить в prod; upsert error → 500 |

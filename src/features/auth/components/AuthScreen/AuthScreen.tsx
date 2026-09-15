@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { env } from '@shared/config/env';
 import { t } from '@shared/i18n';
+import { MIN_NEW_PASSWORD_LENGTH } from '@services/emailAuth';
 import {
   requestPasswordReset,
   signInAsDeveloper,
@@ -107,7 +108,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
             autoComplete="new-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            minLength={6}
+            minLength={MIN_NEW_PASSWORD_LENGTH}
             required
           />
           <label className={styles.label} htmlFor="auth-password-confirm">{t('auth.confirmPassword')}</label>
@@ -118,7 +119,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
             autoComplete="new-password"
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
-            minLength={6}
+            minLength={MIN_NEW_PASSWORD_LENGTH}
             required
           />
           {error && <p className={styles.error} role="alert">{error}</p>}
@@ -180,7 +181,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({
               autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              minLength={6}
+              minLength={mode === 'register' ? MIN_NEW_PASSWORD_LENGTH : 1}
               required
             />
           </>

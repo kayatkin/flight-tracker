@@ -53,7 +53,7 @@ describe('AuthScreen', () => {
     render(<AuthScreen onAuthenticated={vi.fn()} />);
     await user.click(screen.getByRole('tab', { name: 'Регистрация' }));
     await user.type(screen.getByLabelText('Email'), 'new@example.com');
-    await user.type(screen.getByLabelText('Пароль'), 'secret1');
+    await user.type(screen.getByLabelText('Пароль'), 'secret12');
     await user.click(screen.getByRole('button', { name: 'Создать аккаунт' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('Проверьте почту');
@@ -66,11 +66,11 @@ describe('AuthScreen', () => {
 
     render(<AuthScreen onAuthenticated={onAuthenticated} recoveryMode />);
 
-    await user.type(screen.getByLabelText('Новый пароль'), 'secret1');
-    await user.type(screen.getByLabelText('Повторите пароль'), 'secret1');
+    await user.type(screen.getByLabelText('Новый пароль'), 'secret12');
+    await user.type(screen.getByLabelText('Повторите пароль'), 'secret12');
     await user.click(screen.getByRole('button', { name: 'Сохранить пароль' }));
 
-    expect(updatePassword).toHaveBeenCalledWith('secret1');
+    expect(updatePassword).toHaveBeenCalledWith('secret12');
     expect(onAuthenticated).toHaveBeenCalled();
   });
 
@@ -80,8 +80,8 @@ describe('AuthScreen', () => {
 
     render(<AuthScreen onAuthenticated={onAuthenticated} recoveryMode />);
 
-    await user.type(screen.getByLabelText('Новый пароль'), 'secret1');
-    await user.type(screen.getByLabelText('Повторите пароль'), 'secret2');
+    await user.type(screen.getByLabelText('Новый пароль'), 'secret12');
+    await user.type(screen.getByLabelText('Повторите пароль'), 'secret13');
     await user.click(screen.getByRole('button', { name: 'Сохранить пароль' }));
 
     expect(updatePassword).not.toHaveBeenCalled();

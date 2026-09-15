@@ -6,6 +6,7 @@ import {
   summarizeIdentities,
   type AccountIdentity,
 } from '@services/accountService';
+import { MIN_NEW_PASSWORD_LENGTH } from '@services/emailAuth';
 import { t } from '@shared/i18n';
 import { useEscapeToClose } from '@shared/hooks';
 import { toast } from '@shared/ui/Toast';
@@ -118,7 +119,7 @@ const AccountModal: React.FC<AccountModalProps> = ({ isTelegram, onClose, onLink
                     autoComplete="new-password"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
-                    minLength={6}
+                    minLength={MIN_NEW_PASSWORD_LENGTH}
                     required
                   />
                   <label className={styles.label} htmlFor="account-password-confirm">{t('auth.confirmPassword')}</label>
@@ -129,7 +130,7 @@ const AccountModal: React.FC<AccountModalProps> = ({ isTelegram, onClose, onLink
                     autoComplete="new-password"
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
-                    minLength={6}
+                    minLength={MIN_NEW_PASSWORD_LENGTH}
                     required
                   />
                   {error && <p className={styles.error} role="alert">{error}</p>}

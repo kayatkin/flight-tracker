@@ -7,6 +7,7 @@ import {
   validateLinkEmailInput,
 } from '../_shared/accountLink.ts';
 import { handleOptions, jsonResponse } from '../_shared/cors.ts';
+import { RATE_LIMITS, rateLimitResponse } from '../_shared/rateLimit.ts';
 import { bearerToken, verifyOwnerToken } from '../_shared/jwt.ts';
 
 type IdentityRow = {
@@ -62,6 +63,8 @@ const listedIdentities = async (admin: SupabaseClient, userId: string) => {
 Deno.serve(async (req) => {
   const options = handleOptions(req);
   if (options) return options;
+  const limited = rateLimitResponse(req, 'link-email', RATE_LIMITS['link-email']);
+  if (limited) return limited;
 
   if (req.method !== 'POST') {
     return jsonResponse({ ok: false, error: 'Method not allowed' }, 405, req);

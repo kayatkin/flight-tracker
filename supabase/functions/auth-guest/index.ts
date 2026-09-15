@@ -1,5 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleOptions, jsonResponse } from '../_shared/cors.ts';
+import { decideEditBind } from '../_shared/guestAccess.ts';
+import { RATE_LIMITS, rateLimitResponse } from '../_shared/rateLimit.ts';
 import { sha256Hex } from '../_shared/hashToken.ts';
 import {
   ACCESS_TOKEN_TTL_SECONDS,
@@ -19,6 +21,8 @@ const isMissingColumnError = (error: { message?: string; code?: string } | null)
 Deno.serve(async (req) => {
   const options = handleOptions(req);
   if (options) return options;
+  const limited = rateLimitResponse(req, 'auth-guest', RATE_LIMITS['auth-guest']);
+  if (limited) return limited;
 
   if (req.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405, req);
@@ -106,12 +110,36 @@ Deno.serve(async (req) => {
         const bind = await admin
           .from('shared_sessions')
           .update({ bound_telegram_user_id: telegramId })
-          .eq('id', sessionId);
-        if (bind.error && !isMissingColumnError(bind.error)) {
+          .eq('id', sessionId)
+          .is('bound_telegram_user_id', null)
+          .select('id')
+          .maybeSingle();
+        if (bind.error && isMissingColumnError(bind.error)) {
+          // Column missing on old schema: cannot bind, keep invite permission.
+        } else if (bind.error) {
           console.error('[auth-guest] failed to bind telegram user', bind.error);
+          permissions = 'view';
+        } else if (!bind.data) {
+          const again = await admin
+            .from('shared_sessions')
+            .select('bound_telegram_user_id')
+            .eq('id', sessionId)
+            .maybeSingle();
+          permissions = decideEditBind({
+            telegramId,
+            existingBoundId: '',
+            claimedBind: false,
+            winnerBoundId: again.data?.bound_telegram_user_id
+              ? String(again.data.bound_telegram_user_id)
+              : '',
+          });
         }
-      } else if (boundId !== telegramId) {
-        permissions = 'view';
+      } else {
+        permissions = decideEditBind({
+          telegramId,
+          existingBoundId: boundId,
+          claimedBind: false,
+        });
       }
     }
   }
@@ -155,7 +183,7 @@ Deno.serve(async (req) => {
         userId: guestSub,
         name: 'Гость',
         isGuest: true,
-        sessionToken: token,
+        sessionToken: '',
         permissions,
         ownerId,
         ownerName,

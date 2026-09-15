@@ -1,4 +1,4 @@
-export const MIN_LINK_PASSWORD_LENGTH = 6;
+export const MIN_LINK_PASSWORD_LENGTH = 8;
 
 export const normalizeLinkEmail = (email: string): string => email.trim().toLowerCase();
 
@@ -8,7 +8,7 @@ export const validateLinkEmailInput = (email: string, password: string): string 
     return 'Укажите действующий email';
   }
   if (password.length < MIN_LINK_PASSWORD_LENGTH) {
-    return 'Пароль не короче 6 символов';
+    return 'Пароль не короче 8 символов';
   }
   return null;
 };

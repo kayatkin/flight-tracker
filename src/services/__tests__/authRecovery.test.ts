@@ -67,4 +67,13 @@ describe('authRecovery', () => {
     );
     expect(isPasswordRecoveryPending()).toBe(false);
   });
+
+  it('does not mark recovery when type=recovery has no tokens', async () => {
+    await consumeAuthCallback(
+      'https://kayatkin.github.io/flight-tracker/?type=recovery'
+    );
+    expect(verifyOtp).not.toHaveBeenCalled();
+    expect(setSession).not.toHaveBeenCalled();
+    expect(isPasswordRecoveryPending()).toBe(false);
+  });
 });

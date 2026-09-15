@@ -1,6 +1,7 @@
 import { t } from '@shared/i18n';
+import { MIN_NEW_PASSWORD_LENGTH } from './emailAuth';
 
-export const MIN_LINK_PASSWORD_LENGTH = 6;
+export const MIN_LINK_PASSWORD_LENGTH = MIN_NEW_PASSWORD_LENGTH;
 
 export type AccountIdentity = {
   provider: 'telegram' | 'email';

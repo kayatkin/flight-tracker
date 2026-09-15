@@ -36,5 +36,6 @@
 - Telegram-бот ходит в БД только через RPC `lookup_share_invite` с anon-ключом (или сразу открывает Mini App, если RPC ещё не применён).
 - Связка Telegram ↔ email идёт только через `link-email` (service role): клиент не пишет в `user_identities`. Новый email создаётся неподтверждённым; существующий — только после `signInWithPassword`. Два разных Telegram к одному ящику не сливаются.
 - Custom access JWT: HS256, пока нет `JWT_SIGNING_PRIVATE_JWK`; иначе ES256 с `kid`. `link-email` проверяет токен в функции (шлюз Auth после ротации ключей не подходит). Legacy JWT Secret пока не отзываем.
+- Публичные `auth-*` режут частые запросы best-effort (429). Выход гостя отзывает refresh. Второй Telegram на edit-ссылке остаётся `view` после часа.
 
 Подробный чеклист деплоя: [SUPABASE_SETUP.md](./SUPABASE_SETUP.md). Разбор прошлых дыр: [CODE_AUDIT.md](./CODE_AUDIT.md).

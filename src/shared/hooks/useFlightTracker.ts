@@ -442,45 +442,44 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
   }, [resetLocalSession]);
 
   const handleLeaveGuestMode = useCallback(() => {
-    try {
+    void (async () => {
       const userType = getTelegramUserType();
       clearTokenFromUrl();
-      
-      switch (userType) {
-        case 'real_telegram':
-          setTimeout(() => {
+      try {
+        await signOutOwner();
+      } catch (error) {
+        logError('[EXIT] Failed to revoke guest session:', error);
+      }
+      resetInitialization();
+      resetLocalSession();
+
+      try {
+        switch (userType) {
+          case 'real_telegram':
             window.location.reload();
-          }, 100);
-          break;
-          
-        case 'anonymous_telegram':
-          setTimeout(() => {
+            break;
+          case 'anonymous_telegram':
             try {
               window.Telegram!.WebApp!.close();
             } catch (closeError) {
               logError('[EXIT] Failed to close WebApp:', closeError);
               window.location.reload();
             }
-          }, 100);
-          break;
-          
-        case 'web_browser':
-          setTimeout(() => {
+            break;
+          case 'web_browser':
+            setNeedsAuth(true);
             window.location.href = window.location.origin + window.location.pathname;
-          }, 100);
-          break;
-          
-        default:
-          window.location.reload();
-          break;
+            break;
+          default:
+            window.location.reload();
+            break;
+        }
+      } catch (error) {
+        logError('[EXIT] Error leaving guest mode:', error);
+        window.location.reload();
       }
-      
-    } catch (error) {
-      logError('[EXIT] Error leaving guest mode:', error);
-      clearTokenFromUrl();
-      window.location.reload();
-    }
-  }, []);
+    })();
+  }, [resetLocalSession]);
 
   return {
     userName,

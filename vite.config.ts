@@ -1,9 +1,21 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import type { Plugin } from 'vite';
+
+const LOCALHOST_CONNECT =
+  ' http://localhost:5173 ws://localhost:5173 http://127.0.0.1:5173 ws://127.0.0.1:5173';
+
+const stripLocalhostCsp = (): Plugin => ({
+  name: 'strip-localhost-csp',
+  transformIndexHtml(html, ctx) {
+    if (ctx.server) return html;
+    return html.replaceAll(LOCALHOST_CONNECT, '');
+  },
+});
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), stripLocalhostCsp()],
   // Поддержка старых REACT_APP_* в .env.local при миграции с CRA
   envPrefix: ['VITE_', 'REACT_APP_'],
   base: '/flight-tracker/',
