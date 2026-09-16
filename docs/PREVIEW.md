@@ -15,6 +15,10 @@ npm run dev
 
 Откройте `http://localhost:5173/flight-tracker/` и войдите как обычно. Сверху жёлтая плашка «Превью дизайна».
 
+Без входа, только сетка с примерами:
+
+    http://localhost:5173/flight-tracker/#design-preview
+
 Вернуться на рабочую версию:
 
 ```bash

@@ -5,6 +5,7 @@ export const ru = {
     greetingPrefix: 'Привет, ',
     greetingSuffix: '!',
     previewBanner: 'Превью дизайна — отдельная ветка, в production не попадает',
+    previewSample: 'Примеры карточек без входа. Свои билеты — обычный вход на этой же ветке.',
     account: 'Аккаунт',
     signOut: 'Выйти',
     retry: 'Повторить',
