@@ -65,13 +65,15 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
         aria-label={t('history.groupAria', { destination, count: flights.length })}
       >
         <div className={styles.cardTitleWithMeta}>
-          <span>📍 {destination}</span>
-          <span className={styles.ticketCount}>({flights.length})</span>
-          {isGuest && (
-            <span className={styles.guestBadge}>
-              {guestPermissions === 'edit' ? '✏️' : '👁️'}
-            </span>
-          )}
+          <div className={styles.cardRouteBlock}>
+            <span className={styles.cardRoute}>{destination}</span>
+            <span className={styles.ticketCount}>{flights.length}</span>
+            {isGuest && (
+              <span className={styles.guestBadge}>
+                {guestPermissions === 'edit' ? '✏️' : '👁️'}
+              </span>
+            )}
+          </div>
           <div className={styles.headerActions}>
             <button
               type="button"
@@ -107,17 +109,20 @@ export const DestinationGroup: React.FC<DestinationGroupProps> = ({
           </div>
         </div>
 
-        <div className={styles.cardPrice}>
-          💰 {formatRubAndUsd(
-            bestFlight.totalPrice / bestFlight.passengers,
-            usdRates.get(bestFlight.dateFound),
-          )} {t('history.perPerson')}
-        </div>
-        <div className={styles.cardDate}>
-          📅 {formatDateToDMY(bestFlight.departureDate)}
-          {bestFlight.type === 'roundTrip' &&
-            bestFlight.returnDate &&
-            ` — ${formatDateToDMY(bestFlight.returnDate)}`}
+        <div className={styles.cardHeaderMeta}>
+          <div className={styles.cardPrice}>
+            {formatRubAndUsd(
+              bestFlight.totalPrice / bestFlight.passengers,
+              usdRates.get(bestFlight.dateFound),
+            )}
+            <span className={styles.cardPriceHint}> {t('history.perPerson')}</span>
+          </div>
+          <div className={styles.cardDate}>
+            {formatDateToDMY(bestFlight.departureDate)}
+            {bestFlight.type === 'roundTrip' &&
+              bestFlight.returnDate &&
+              ` — ${formatDateToDMY(bestFlight.returnDate)}`}
+          </div>
         </div>
       </div>
 

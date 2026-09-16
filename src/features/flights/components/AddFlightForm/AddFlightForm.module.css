@@ -10,8 +10,8 @@
   background-color: var(--tg-theme-button-color, #0088cc);
   color: var(--tg-theme-button-text-color, #fff);
   border: none;
-  border-radius: 10px;
-  font-size: 18px;
+  border-radius: 14px;
+  font-size: 17px;
   font-weight: bold;
   cursor: pointer;
   margin-top: 0;
