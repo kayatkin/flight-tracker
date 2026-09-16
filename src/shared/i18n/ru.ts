@@ -213,6 +213,7 @@ export const ru = {
     otherOffers: 'Другие предложения ({{count}}):',
     bestTag: '✅ Самый выгодный',
     roundTripSuffix: ' (туда-обратно)',
+    roundTripChip: 'туда-обратно',
     totalPrice: 'Всего:',
     foundOn: 'Найдено:',
     from: 'Откуда',

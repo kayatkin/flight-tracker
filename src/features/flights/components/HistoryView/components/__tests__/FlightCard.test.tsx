@@ -40,7 +40,7 @@ describe('FlightCard', () => {
     expect(screen.getByText('Куда')).toBeInTheDocument();
     expect(screen.getByText('Москва')).toBeInTheDocument();
     expect(screen.getByText('Сочи')).toBeInTheDocument();
-    expect(screen.getByText('(туда-обратно)')).toBeInTheDocument();
+    expect(screen.getByText('туда-обратно')).toBeInTheDocument();
     expect(screen.getByText(/на человека/)).toBeInTheDocument();
     expect(screen.getByText(/Всего:/)).toBeInTheDocument();
     expect(screen.getByText('Багаж включён')).toBeInTheDocument();

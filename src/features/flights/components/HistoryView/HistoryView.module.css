@@ -355,8 +355,8 @@
 
 .cardRouteBlock {
   display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
+  align-items: flex-start;
+  flex-wrap: nowrap;
   gap: 8px;
   min-width: 0;
   flex: 1;
@@ -368,6 +368,9 @@
   letter-spacing: -0.02em;
   color: var(--tg-text);
   line-height: 1.3;
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
 }
 
 .ticketCount {
@@ -382,6 +385,8 @@
   color: var(--tg-link);
   background: var(--tg-active-bg);
   font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .headerActions {
@@ -533,8 +538,13 @@
 .roundTripChip {
   grid-column: 1 / -1;
   justify-self: start;
-  font-size: 12px;
-  color: var(--tg-hint);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--tg-link);
+  background: var(--tg-active-bg);
+  padding: 2px 8px;
+  border-radius: 999px;
 }
 
 .ticketFacts {

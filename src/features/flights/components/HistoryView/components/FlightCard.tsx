@@ -48,7 +48,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({
           <span className={styles.cityName}>{flight.destination}</span>
         </div>
         {flight.type === 'roundTrip' && (
-          <span className={styles.roundTripChip}>{t('history.roundTripSuffix').trim()}</span>
+          <span className={styles.roundTripChip}>{t('history.roundTripChip')}</span>
         )}
       </div>
 
