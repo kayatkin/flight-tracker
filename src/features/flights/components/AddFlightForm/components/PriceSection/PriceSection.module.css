@@ -4,9 +4,9 @@
   gap: 16px;
   background-color: var(--tg-theme-secondary-bg-color, #f8f9fa);
   padding: 16px;
-  border-radius: 12px;
+  border-radius: 16px;
   border: 1px solid var(--tg-theme-hint-color, #e9ecef);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .sectionTitle {

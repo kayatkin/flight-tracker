@@ -166,6 +166,7 @@ const App: React.FC = () => {
   if (loading || isCheckingToken) {
     return (
       <div className={`${styles.app} ${styles.loadingScreen}`}>
+        <div className={styles.previewBanner} role="status">{t('app.previewBanner')}</div>
         <div className={styles.loadingLabel}>
           {t('app.loading')}
         </div>
@@ -175,16 +176,20 @@ const App: React.FC = () => {
 
   if (needsAuth) {
     return (
-      <AuthScreen
-        onAuthenticated={async () => {
-          await completeAuth();
-        }}
-      />
+      <>
+        <div className={`${styles.previewBanner} ${styles.previewBannerAuth}`} role="status">{t('app.previewBanner')}</div>
+        <AuthScreen
+          onAuthenticated={async () => {
+            await completeAuth();
+          }}
+        />
+      </>
     );
   }
 
   return (
     <div className={styles.app}>
+      <div className={styles.previewBanner} role="status">{t('app.previewBanner')}</div>
       {appUser?.isGuest && (
         <GuestModeIndicator
           ownerName={appUser.ownerName || t('guest.ownerFallback')}

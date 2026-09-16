@@ -1,7 +1,7 @@
 /* src\features\flights\components\HistoryView\HistoryView.module.css */
 
 .container {
-  padding: 0 var(--space-3);
+  padding: 0;
   padding-bottom: var(--space-5);
 }
 
@@ -188,13 +188,13 @@
 .searchInput {
   width: 100%;
   padding: var(--space-3) var(--space-4) var(--space-3) 46px;
-  border: 1px solid var(--tg-hint);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--tg-border);
+  border-radius: 16px;
   font-size: var(--font-size-md);
   background-color: var(--tg-card-bg);
   color: var(--tg-text);
   box-sizing: border-box;
-  transition: border-color var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   background-repeat: no-repeat;
   background-position: var(--space-4) center;
   background-size: 18px 18px;
@@ -293,42 +293,51 @@
 }
 
 .cardList {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 720px) {
+  .cardList {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
 }
 
 .card {
   background-color: var(--tg-card-bg);
-  border-radius: var(--radius-2xl);
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--tg-hint);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--tg-border);
   cursor: default;
-  transition: all var(--transition-fast);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .cardGuestEdit {
-  border-left: 4px solid #4CAF50;
+  box-shadow: inset 4px 0 0 #4CAF50, 0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
 .cardGuestView {
-  border-left: 4px solid #FF9800;
+  box-shadow: inset 4px 0 0 #FF9800, 0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
 .card:hover {
-  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
 }
 
 .card.active {
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--tg-link);
+  box-shadow: 0 14px 32px rgba(36, 129, 204, 0.16);
+  border-color: var(--tg-link);
 }
 
 .cardHeader {
-  padding: var(--space-3) var(--space-4);
-  background-color: var(--tg-bg);
-  border-bottom: 1px solid var(--tg-hint);
+  padding: 16px 18px 14px;
+  background:
+    linear-gradient(180deg, rgba(36, 129, 204, 0.08), transparent 70%),
+    var(--tg-bg);
   cursor: pointer;
 }
 
@@ -339,18 +348,40 @@
 
 .cardTitleWithMeta {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-2);
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-lg);
-  color: var(--tg-link);
   width: 100%;
 }
 
+.cardRouteBlock {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.cardRoute {
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+  color: var(--tg-text);
+  line-height: 1.3;
+}
+
 .ticketCount {
-  font-size: var(--font-size-sm);
-  color: var(--tg-hint);
-  font-weight: var(--font-weight-normal);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--tg-link);
+  background: var(--tg-active-bg);
+  font-weight: 700;
 }
 
 .headerActions {
@@ -373,98 +404,168 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: 10px;
 }
 
 .chartButton:hover,
 .routeExportButton:hover {
-  opacity: 0.8;
+  background: var(--tg-active-bg);
+  opacity: 1;
+}
+
+.cardHeaderMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .cardPrice {
-  font-size: var(--font-size-sm);
+  font-size: 15px;
+  font-weight: 700;
   color: var(--tg-text);
-  margin-top: var(--space-1);
+  margin-top: 0;
+}
+
+.cardPriceHint {
+  font-weight: 500;
+  color: var(--tg-hint);
+  font-size: 13px;
 }
 
 .cardDate {
-  font-size: var(--font-size-sm);
+  font-size: 13px;
   color: var(--tg-hint);
-  margin-top: var(--space-1);
+  margin-top: 0;
 }
 
 .cardContent {
-  padding: var(--space-4);
-  padding-top: var(--space-3);
+  padding: 8px 12px 14px;
   background-color: var(--tg-card-bg);
   cursor: default;
 }
 
 .otherFlightsTitle {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  color: var(--tg-text);
-  margin: var(--space-3) 0 var(--space-2);
+  font-weight: 600;
+  color: var(--tg-hint);
+  margin: var(--space-3) 4px var(--space-2);
 }
 
 .fullCard {
-  padding: var(--space-3);
-  margin-bottom: var(--space-3);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  padding: 14px 14px 12px;
+  margin-bottom: 10px;
+  border-radius: 16px;
+  box-shadow: none;
   position: relative;
-  background-color: var(--tg-card-bg);
+  background-color: var(--tg-bg);
   color: var(--tg-text);
-  border: 1px solid var(--tg-hint);
+  border: 1px solid var(--tg-border);
 }
 
 .fullCard.best {
-  border: 2px solid var(--color-success);
-  background-color: var(--color-success-10);
+  border: 1px solid rgba(76, 175, 80, 0.55);
+  background:
+    linear-gradient(180deg, var(--color-success-10), transparent 40%),
+    var(--tg-bg);
 }
 
 .fullCard.normal {
-  border: 1px solid var(--tg-hint);
-  background-color: var(--tg-card-bg);
+  border: 1px solid var(--tg-border);
+  background-color: var(--tg-bg);
 }
 
 .bestTag {
-  font-size: var(--font-size-xs);
-  color: #2e7d32; /* Можно вынести как --color-success-dark */
-  font-weight: var(--font-weight-bold);
-  margin-bottom: var(--space-1);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #2e7d32;
+  font-weight: 700;
+  margin-bottom: 8px;
 }
 
-.route {
-  font-weight: var(--font-weight-bold);
-  margin-bottom: var(--space-1);
-  color: var(--tg-text);
-  font-size: var(--font-size-md);
+.ticketCities {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ticketCity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ticketCity:last-of-type {
+  text-align: right;
+  align-items: flex-end;
+}
+
+.cityLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--tg-hint);
+  font-weight: 600;
+}
+
+.cityName {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.ticketArrow {
+  color: var(--tg-link);
+  font-size: 18px;
+  font-weight: 700;
+  padding-bottom: 2px;
+}
+
+.roundTripChip {
+  grid-column: 1 / -1;
+  justify-self: start;
+  font-size: 12px;
+  color: var(--tg-hint);
+}
+
+.ticketFacts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .dateTime {
-  font-size: var(--font-size-sm);
+  font-size: 13px;
   color: var(--tg-hint);
-  margin: var(--space-1) 0;
+  margin: 0;
 }
 
 .layover {
-  font-size: var(--font-size-sm);
+  font-size: 13px;
   color: var(--tg-hint);
-  margin: var(--space-1) 0;
+  margin: 0;
 }
 
 .airline {
-  margin: var(--space-1) 0;
+  margin: 0;
   color: var(--tg-text);
-  font-size: var(--font-size-sm);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .notes {
-  margin: var(--space-1) 0;
+  margin: 8px 0 0;
   color: var(--tg-text);
-  font-size: var(--font-size-sm);
+  font-size: 13px;
   line-height: 1.4;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -472,21 +573,34 @@
 
 .nextDayHint {
   font-size: 12px;
-  color: #888;
+  color: var(--tg-hint);
   margin-left: 4px;
 }
 
 .guestMeta {
   margin-left: 8px;
   font-size: 12px;
-  color: #666;
+  color: var(--tg-hint);
 }
 
 .price {
-  margin-top: var(--space-2);
+  margin-top: 12px;
   color: var(--tg-text);
   font-size: var(--font-size-md);
-  line-height: 1.45;
+  line-height: 1.35;
+}
+
+.pricePerPerson {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--tg-link);
+}
+
+.priceTotal {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--tg-hint);
+  font-weight: 500;
 }
 
 .price strong {
@@ -564,14 +678,14 @@
 
 /* Улучшенные стили для карточек */
 .bestFlightNote {
-  background: var(--color-success-15);
-  color: #2e7d32; /* Можно вынести как --color-success-dark */
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-lg);
-  font-size: var(--font-size-sm);
-  margin-bottom: var(--space-4);
-  border-left: 4px solid var(--color-success);
-  font-weight: var(--font-weight-medium);
+  background: var(--color-success-10);
+  color: #2e7d32;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  margin: 4px 2px 10px;
+  border: none;
+  font-weight: 600;
 }
 
 /* Стили для неактивных кнопок */

@@ -37,42 +37,58 @@ export const FlightCard: React.FC<FlightCardProps> = ({
     >
       {isBest && <div className={styles.bestTag}>{t('history.bestTag')}</div>}
 
-      <div className={styles.route}>
-        <strong>{flight.origin} → {flight.destination}</strong>
-        {flight.type === 'roundTrip' && t('history.roundTripSuffix')}
-      </div>
-
-      <div className={styles.dateTime}>
-        📅 {formatDateToDMY(flight.departureDate)}
-        {flight.type === 'roundTrip' && flight.returnDate && ` — ${formatDateToDMY(flight.returnDate)}`}
-      </div>
-
-      {(flight.departureTime || flight.arrivalTime) && (
-        <div className={styles.dateTime}>
-          ➡️ {flight.departureTime || '—'} → {flight.arrivalTime || '—'}
-          {flight.arrivalNextDay && <span className={styles.nextDayHint}> (+1)</span>}
-          {flight.type === 'roundTrip' && (
-            <>
-              <br />
-              ↩️ {flight.returnDepartureTime || '—'} → {flight.returnArrivalTime || '—'}
-              {flight.returnArrivalNextDay && <span className={styles.nextDayHint}> (+1)</span>}
-            </>
-          )}
+      <div className={styles.ticketCities}>
+        <div className={styles.ticketCity}>
+          <span className={styles.cityLabel}>{t('history.from')}</span>
+          <span className={styles.cityName}>{flight.origin}</span>
         </div>
-      )}
+        <span className={styles.ticketArrow} aria-hidden="true">→</span>
+        <div className={styles.ticketCity}>
+          <span className={styles.cityLabel}>{t('history.to')}</span>
+          <span className={styles.cityName}>{flight.destination}</span>
+        </div>
+        {flight.type === 'roundTrip' && (
+          <span className={styles.roundTripChip}>{t('history.roundTripSuffix').trim()}</span>
+        )}
+      </div>
 
-      {layover ? <div className={styles.layover}>{layover}</div> : null}
-      <div className={styles.airline}>✈️ {flight.airline || '—'}</div>
-      {flight.notes ? <div className={styles.notes}>📝 {flight.notes}</div> : null}
+      <div className={styles.ticketFacts}>
+        <div className={styles.dateTime}>
+          {formatDateToDMY(flight.departureDate)}
+          {flight.type === 'roundTrip' && flight.returnDate && ` — ${formatDateToDMY(flight.returnDate)}`}
+        </div>
+        {(flight.departureTime || flight.arrivalTime) && (
+          <div className={styles.dateTime}>
+            {flight.departureTime || '—'} → {flight.arrivalTime || '—'}
+            {flight.arrivalNextDay && <span className={styles.nextDayHint}> (+1)</span>}
+            {flight.type === 'roundTrip' && (
+              <>
+                {' · '}
+                {flight.returnDepartureTime || '—'} → {flight.returnArrivalTime || '—'}
+                {flight.returnArrivalNextDay && <span className={styles.nextDayHint}> (+1)</span>}
+              </>
+            )}
+          </div>
+        )}
+        {layover ? <div className={styles.layover}>{layover}</div> : null}
+        <div className={styles.airline}>{flight.airline || '—'}</div>
+      </div>
+
+      {flight.notes ? <div className={styles.notes}>{flight.notes}</div> : null}
 
       <div className={styles.price}>
-        💰 {t('history.totalPrice')} {formatRubAndUsd(flight.totalPrice, usdRub)} |{' '}
-        <strong>{formatRubAndUsd(flight.totalPrice / flight.passengers, usdRub)} {t('history.perPerson')}</strong>
+        <div className={styles.pricePerPerson}>
+          {formatRubAndUsd(flight.totalPrice / flight.passengers, usdRub)}
+          <span className={styles.cardPriceHint}> {t('history.perPerson')}</span>
+        </div>
+        <div className={styles.priceTotal}>
+          {t('history.totalPrice')} {formatRubAndUsd(flight.totalPrice, usdRub)}
+        </div>
       </div>
 
       <div className={styles.meta}>
         <span className={styles.metaText}>
-          👥 {formatPassengerCount(flight.passengers)} • {t('history.foundOn')} {formatDateToDMY(flight.dateFound)}
+          {formatPassengerCount(flight.passengers)} · {t('history.foundOn')} {formatDateToDMY(flight.dateFound)}
           {isGuest && <span className={styles.guestMeta}>
             {guestPermissions === 'edit' ? t('history.guestEdit') : t('history.guestView')}
           </span>}
