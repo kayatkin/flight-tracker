@@ -6,11 +6,13 @@ import styles from './PassengersSection.module.css';
 interface PassengersSectionProps {
   formData: FlightFormData;
   updateFormData: (data: Partial<FlightFormData>) => void;
+  embedded?: boolean;
 }
 
 const PassengersSection: React.FC<PassengersSectionProps> = ({
   formData,
-  updateFormData
+  updateFormData,
+  embedded = false,
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = Number(e.target.value) as 1 | 2 | 3 | 4;
@@ -20,7 +22,7 @@ const PassengersSection: React.FC<PassengersSectionProps> = ({
   const passengersOptions: Array<1 | 2 | 3 | 4> = [1, 2, 3, 4];
 
   return (
-    <div className={styles.section}>
+    <div className={`${styles.section} ${embedded ? styles.embedded : ''}`}>
       <h4 className={styles.sectionTitle}>{t('form.passengers')}</h4>
       
       <div className={styles.selectContainer}>

@@ -11,12 +11,14 @@ interface AirlineSectionProps {
   formData: FlightFormData;
   updateFormData: (data: Partial<FlightFormData>) => void;
   airlines: string[];
+  embedded?: boolean;
 }
 
 const AirlineSection: React.FC<AirlineSectionProps> = ({
   formData,
   updateFormData,
-  airlines
+  airlines,
+  embedded = false,
 }) => {
   const airlineAutocomplete = useAutocomplete(formData.airline, airlines, {
     delay: AUTOCOMPLETE_DELAY,
@@ -29,7 +31,7 @@ const AirlineSection: React.FC<AirlineSectionProps> = ({
   }, [updateFormData, airlineAutocomplete]);
 
   return (
-    <div className={styles.section}>
+    <div className={`${styles.section} ${embedded ? styles.embedded : ''}`}>
       <h4 className={styles.sectionTitle}>{t('form.airlineTitle')}</h4>
       
       <div className={styles.inputContainer}>

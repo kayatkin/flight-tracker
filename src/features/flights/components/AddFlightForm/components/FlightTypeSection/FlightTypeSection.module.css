@@ -19,8 +19,9 @@
 
 .radioGroup {
   display: flex;
-  gap: 16px;
-  align-items: center;
+  gap: 8px;
+  align-items: stretch;
+  margin-bottom: 4px;
 }
 
 .radioLabel {
@@ -36,9 +37,15 @@
   cursor: pointer;
   transition: all 0.2s;
   flex: 1;
+  justify-content: center;
 }
 
 .radioLabel:hover {
+  border-color: var(--tg-theme-button-color, #0088cc);
+  background-color: var(--tg-theme-bg-color, #f0f8ff);
+}
+
+.radioLabel:has(.radioInput:checked) {
   border-color: var(--tg-theme-button-color, #0088cc);
   background-color: var(--tg-theme-bg-color, #f0f8ff);
 }

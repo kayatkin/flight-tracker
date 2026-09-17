@@ -6,16 +6,16 @@ import styles from './FlightTypeSection.module.css';
 interface FlightTypeSectionProps {
   formData: FlightFormData;
   updateFormData: (data: Partial<FlightFormData>) => void;
+  embedded?: boolean;
 }
 
 const FlightTypeSection: React.FC<FlightTypeSectionProps> = ({
   formData,
-  updateFormData
+  updateFormData,
+  embedded = false,
 }) => {
-  return (
-    <div className={styles.section}>
-      <h4 className={styles.sectionTitle}>{t('form.type')}</h4>
-      <div className={styles.radioGroup}>
+  const radios = (
+      <div className={styles.radioGroup} role="radiogroup" aria-label={t('form.type')}>
         <label className={styles.radioLabel}>
           <input
             type="radio"
@@ -39,6 +39,14 @@ const FlightTypeSection: React.FC<FlightTypeSectionProps> = ({
           <span className={styles.radioText}>{t('form.roundTrip')}</span>
         </label>
       </div>
+  );
+
+  if (embedded) return radios;
+
+  return (
+    <div className={styles.section}>
+      <h4 className={styles.sectionTitle}>{t('form.type')}</h4>
+      {radios}
     </div>
   );
 };

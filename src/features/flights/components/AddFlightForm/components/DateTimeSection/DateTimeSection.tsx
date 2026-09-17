@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { t } from '@shared/i18n';
 import { FlightFormData } from '@shared/hooks';
 import { toLocalISODate } from '@shared/utils/date';
+import FlightTypeSection from '../FlightTypeSection/FlightTypeSection';
 import styles from './DateTimeSection.module.css';
 
 interface DateTimeSectionProps {
@@ -32,6 +33,11 @@ const DateTimeSection: React.FC<DateTimeSectionProps> = ({
   return (
     <div className={styles.section}>
       <h4 className={styles.sectionTitle}>{t('form.dateTime')}</h4>
+      <FlightTypeSection
+        formData={formData}
+        updateFormData={updateFormData}
+        embedded
+      />
       
       <div className={styles.dateTimeGroup}>
         {/* Дата вылета */}

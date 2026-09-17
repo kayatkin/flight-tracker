@@ -4,26 +4,26 @@
   gap: 16px;
   padding: 12px;
   width: 100%;
-  max-width: 640px;
+  max-width: 680px;
   margin: 0 auto;
   box-sizing: border-box;
 }
 
-.pairRow {
+.ticketMeta {
   display: grid;
   grid-template-columns: 1fr;
   gap: 16px;
-}
-
-.pairRow > * {
-  margin-bottom: 0;
-  min-width: 0;
+  padding: 16px;
+  background-color: var(--tg-theme-secondary-bg-color, #f8f9fa);
+  border-radius: 12px;
+  border: 1px solid var(--tg-theme-hint-color, #e9ecef);
 }
 
 @media (min-width: 720px) {
-  .pairRow {
-    grid-template-columns: 1fr 1fr;
+  .ticketMeta {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.85fr) minmax(0, 1.15fr);
     align-items: start;
+    gap: 16px;
   }
 }
 

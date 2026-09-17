@@ -20,7 +20,6 @@ import { t } from '@shared/i18n';
 import { PriceAnalysis } from '@features/flights';
 
 import RouteSection from './components/RouteSection/RouteSection';
-import FlightTypeSection from './components/FlightTypeSection/FlightTypeSection';
 import DateTimeSection from './components/DateTimeSection/DateTimeSection';
 import LayoverSection from './components/LayoverSection/LayoverSection';
 import AirlineSection from './components/AirlineSection/AirlineSection';
@@ -192,11 +191,6 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
         destinationCities={destinationCities}
       />
 
-      <FlightTypeSection
-        formData={formData}
-        updateFormData={updateFormData}
-      />
-
       <DateTimeSection
         formData={formData}
         updateFormData={updateFormData}
@@ -207,22 +201,23 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
         updateFormData={updateFormData}
       />
 
-      <AirlineSection
-        formData={formData}
-        updateFormData={updateFormData}
-        airlines={airlines}
-      />
-
-      <div className={styles.pairRow}>
+      <div className={styles.ticketMeta}>
+        <AirlineSection
+          formData={formData}
+          updateFormData={updateFormData}
+          airlines={airlines}
+          embedded
+        />
         <PassengersSection
           formData={formData}
           updateFormData={updateFormData}
+          embedded
         />
-
         <PriceSection
           formData={formData}
           updateFormData={updateFormData}
           fxDate={editingFlight?.dateFound ?? today}
+          embedded
         />
       </div>
 
