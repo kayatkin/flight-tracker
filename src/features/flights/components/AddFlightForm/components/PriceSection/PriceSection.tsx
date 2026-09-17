@@ -1,19 +1,21 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { t } from '@shared/i18n';
 import { FlightFormData, useUsdRubRate } from '@shared/hooks';
-import { formatRubAndUsd, formatUsd, rubToUsd, toDottedDate } from '@shared/utils';
+import { formatUsd, rubToUsd, toDottedDate } from '@shared/utils';
 import styles from './PriceSection.module.css';
 
 interface PriceSectionProps {
   formData: FlightFormData;
   updateFormData: (data: Partial<FlightFormData>) => void;
   fxDate: string;
+  embedded?: boolean;
 }
 
 const PriceSection: React.FC<PriceSectionProps> = ({
   formData,
   updateFormData,
   fxDate,
+  embedded = false,
 }) => {
   const [displayValue, setDisplayValue] = useState('');
   const usdRub = useUsdRubRate(fxDate);
@@ -60,29 +62,22 @@ const PriceSection: React.FC<PriceSectionProps> = ({
     }
   };
 
-  const pricePerPerson = useMemo(() => {
-    if (!formData.totalPrice || formData.passengers <= 0) return 0;
-    return Math.round(Number(formData.totalPrice) / formData.passengers);
-  }, [formData.totalPrice, formData.passengers]);
-
-  const formattedPricePerPerson = useMemo(() => {
-    if (pricePerPerson === 0) return '';
-    return formatRubAndUsd(pricePerPerson, usdRub);
-  }, [pricePerPerson, usdRub]);
+  const usdAmount = useMemo(() => {
+    if (!formData.totalPrice) return null;
+    const rub = Number(formData.totalPrice);
+    return usdRub == null ? null : rubToUsd(rub, usdRub);
+  }, [formData.totalPrice, usdRub]);
 
   const usdHint = useMemo(() => {
-    const rub = Number(formData.totalPrice);
-    const usd = usdRub == null ? null : rubToUsd(rub, usdRub);
-    if (usd == null || !fxDate) return '';
-    return t('form.usdHint', { usd: formatUsd(usd), date: toDottedDate(fxDate) });
-  }, [formData.totalPrice, usdRub, fxDate]);
+    if (usdAmount == null || !fxDate) return '';
+    return t('form.usdHint', { usd: formatUsd(usdAmount), date: toDottedDate(fxDate) });
+  }, [usdAmount, fxDate]);
 
   return (
-    <div className={styles.section}>
+    <div className={`${styles.section} ${embedded ? styles.embedded : ''}`}>
       <h4 className={styles.sectionTitle}>{t('form.priceTitle')}</h4>
       
       <div className={styles.priceContainer}>
-        {/* Основное поле ввода с форматированием */}
         <div className={styles.mainInputContainer}>
           <div className={styles.inputWrapper}>
             <input
@@ -95,29 +90,16 @@ const PriceSection: React.FC<PriceSectionProps> = ({
               inputMode="numeric"
               className={styles.input}
               aria-label={t('form.priceAria')}
+              title={usdHint || undefined}
             />
             <span className={styles.currency}>₽</span>
           </div>
-          {usdHint ? <div className={styles.usdHint}>{usdHint}</div> : null}
-        </div>
-
-        {/* Стоимость на человека (только если пассажиров > 1 и есть общая стоимость) */}
-        {formData.totalPrice && formData.passengers > 1 && (
-          <div className={styles.perPersonBlock}>
-            <div className={styles.perPersonLabel}>{t('form.perPerson')}</div>
-            <div className={styles.perPersonValue}>
-              {formattedPricePerPerson}
+          {usdAmount != null ? (
+            <div className={styles.usdHint} title={usdHint}>
+              ≈ {formatUsd(usdAmount)}
             </div>
-          </div>
-        )}
-
-        {/* Для одного пассажира показываем подсказку */}
-        {formData.totalPrice && formData.passengers === 1 && (
-          <div className={styles.singlePassengerNote}>
-            <span className={styles.noteIcon}>💡</span>
-            {t('form.soloPrice')}
-          </div>
-        )}
+          ) : null}
+        </div>
       </div>
     </div>
   );

@@ -19,10 +19,16 @@
   gap: 8px;
 }
 
-.inputContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.embedded {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+}
+
+.embedded .inputContainer {
+  gap: 0;
 }
 
 .autocompleteInput {
