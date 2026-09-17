@@ -46,6 +46,7 @@ const AirlineSection: React.FC<AirlineSectionProps> = ({
             placeholder={t('form.airlinePlaceholder')}
             label={t('form.airlineTitle')}
             hideLabel={true}
+            compact={embedded}
             aria-label={t('form.airlineAria')}
           />
         </div>

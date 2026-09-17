@@ -32,11 +32,11 @@ const PassengersSection: React.FC<PassengersSectionProps> = ({
             value={formData.passengers}
             onChange={handleChange}
             className={styles.select}
-            aria-label={t('form.passengersAria')}
+            aria-label={`${formData.passengers} ${passengerWord(formData.passengers)}`}
           >
             {passengersOptions.map(num => (
               <option key={num} value={num}>
-                {num} {passengerWord(num)}
+                {num}
               </option>
             ))}
           </select>

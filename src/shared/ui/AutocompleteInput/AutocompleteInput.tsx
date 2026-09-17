@@ -15,6 +15,7 @@ interface AutocompleteInputProps {
   disabled?: boolean;
   'aria-label'?: string;
   'aria-describedby'?: string;
+  compact?: boolean;
 }
 
 const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
@@ -31,6 +32,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
   disabled = false,
   'aria-label': ariaLabel,
   'aria-describedby': ariaDescribedBy,
+  compact = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -85,7 +87,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
   };
 
   return (
-    <div className={styles.container} ref={containerRef}>
+    <div className={`${styles.container} ${compact ? styles.compact : ''}`} ref={containerRef}>
       {/* Показываем label только если hideLabel = false */}
       {label && !hideLabel && (
         <label className={styles.label}>

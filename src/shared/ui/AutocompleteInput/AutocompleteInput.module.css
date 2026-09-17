@@ -3,6 +3,10 @@
     width: 100%;
     margin-bottom: 12px;
   }
+
+.compact {
+  margin-bottom: 0;
+}
   
   .label {
     display: block;
