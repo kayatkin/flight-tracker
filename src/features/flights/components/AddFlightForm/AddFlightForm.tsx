@@ -213,16 +213,18 @@ const AddFlightForm: React.FC<AddFlightFormProps> = ({
         airlines={airlines}
       />
 
-      <PassengersSection
-        formData={formData}
-        updateFormData={updateFormData}
-      />
+      <div className={styles.pairRow}>
+        <PassengersSection
+          formData={formData}
+          updateFormData={updateFormData}
+        />
 
-      <PriceSection
-        formData={formData}
-        updateFormData={updateFormData}
-        fxDate={editingFlight?.dateFound ?? today}
-      />
+        <PriceSection
+          formData={formData}
+          updateFormData={updateFormData}
+          fxDate={editingFlight?.dateFound ?? today}
+        />
+      </div>
 
       <NotesSection
         formData={formData}

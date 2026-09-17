@@ -3,6 +3,28 @@
   flex-direction: column;
   gap: 16px;
   padding: 12px;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.pairRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.pairRow > * {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+@media (min-width: 720px) {
+  .pairRow {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
 }
 
 .submitButton {

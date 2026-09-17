@@ -23,6 +23,14 @@
   gap: 12px;
 }
 
+@media (min-width: 720px) {
+  .inputsContainer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
 /* Стили для AutocompleteInput внутри секции */
 .autocompleteInput input {
   width: 100%;
