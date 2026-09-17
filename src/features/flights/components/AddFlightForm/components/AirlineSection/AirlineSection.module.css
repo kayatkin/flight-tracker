@@ -17,6 +17,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
 }
 
 .embedded {
@@ -31,8 +32,14 @@
   gap: 0;
 }
 
-.autocompleteInput {
-  width: 100%;
+.embedded .autocompleteInput input {
+  height: 48px;
+  min-height: 48px;
+  padding: 0 14px;
+  border-width: 2px;
+  border-radius: 10px;
+  font-size: 16px;
+  box-sizing: border-box;
 }
 
 /* УБИРАЕМ СТИЛИ ДЛЯ .hint ТАК КАК ЭЛЕМЕНТА БОЛЬШЕ НЕТ */
