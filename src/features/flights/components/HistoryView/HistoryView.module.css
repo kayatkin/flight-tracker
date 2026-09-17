@@ -293,9 +293,16 @@
 }
 
 .cardList {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: var(--space-3);
+}
+
+@media (min-width: 720px) {
+  .cardList {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
 }
 
 .card {
