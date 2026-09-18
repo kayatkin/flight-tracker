@@ -56,3 +56,11 @@ export const extractShareToken = (input: string): string | null => {
 
   return null;
 };
+
+/** Telegram Mini App invite (`t.me/bot?startapp=` or legacy `/start share_`). */
+export const looksLikeTelegramShareUrl = (input: string): boolean => {
+  const trimmed = input.trim();
+  if (!trimmed) return false;
+  return /(?:^https?:\/\/)?(?:t\.me|telegram\.me)\//i.test(trimmed)
+    && /(?:[?&#]startapp=|[?&]start=share_)/i.test(trimmed);
+};

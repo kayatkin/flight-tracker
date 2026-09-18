@@ -47,18 +47,6 @@
   box-sizing: border-box;
 }
 
-.extractButton {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  background: var(--tg-active-bg, #f0f8ff);
-  color: var(--tg-link-color, #0088cc);
-  border: 1px solid var(--tg-link-color, #0088cc);
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
 .buttonGroup {
   display: flex;
   gap: 12px;
@@ -92,6 +80,23 @@
   border-radius: 6px;
   margin: 10px 0;
   font-size: 14px;
+}
+
+.note {
+  background: var(--tg-active-bg, #eef6ff);
+  color: var(--tg-text-color, #333);
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.leaveHint {
+  margin: 8px 0 0;
+  color: var(--tg-hint-color, #666);
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .hint {

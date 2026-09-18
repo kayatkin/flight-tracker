@@ -437,7 +437,9 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
 
             <div className={styles.footer}>
               <div className={styles.hint}>
-                {t('invites.footerHint')}
+                {filteredSessions.some((session) => Boolean(session.token))
+                  ? t('invites.footerHintLegacy')
+                  : t('invites.footerHint')}
               </div>
               <button 
                 onClick={onClose} 

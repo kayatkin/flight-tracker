@@ -20,6 +20,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
   const [expiryDays, setExpiryDays] = useState<number>(7);
   const [generatedToken, setGeneratedToken] = useState<string>('');
   const [shareUrl, setShareUrl] = useState<string>('');
+  const [expiresAtLabel, setExpiresAtLabel] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
@@ -28,7 +29,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
       setLoading(true);
       setError('');
       
-      const { token, url } = await createShareSession({
+      const { token, url, expiresAt } = await createShareSession({
         ownerId: userId,
         permissions,
         expiryDays,
@@ -36,6 +37,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
 
       setShareUrl(url);
       setGeneratedToken(token);
+      setExpiresAtLabel(formatShareDate(expiresAt));
       onShareCreated(token);
         
     } catch (err: unknown) {
@@ -75,6 +77,18 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
       const message = err instanceof Error ? err.message : t('share.revokeError');
       setError(message);
     }
+  };
+
+  const formatShareDate = (iso: string) => {
+    const expiryDate = new Date(iso);
+    if (Number.isNaN(expiryDate.getTime())) {
+      return iso;
+    }
+    return expiryDate.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   };
 
   const formatExpiryDate = () => {
@@ -195,7 +209,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
               <div className={styles.infoRow}>
                 <span className={styles.infoIcon}>📅</span>
                 <div>
-                  <strong>{t('share.until')}</strong> {t('share.untilDate', { date: formatExpiryDate() })}
+                  <strong>{t('share.until')}</strong> {t('share.untilDate', { date: expiresAtLabel || formatExpiryDate() })}
                 </div>
               </div>
             </div>

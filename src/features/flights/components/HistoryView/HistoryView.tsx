@@ -20,6 +20,7 @@ import {
 import { t } from '@shared/i18n';
 import { useUsdRubRates } from '@shared/hooks';
 import { toast } from '@shared/ui/Toast';
+import type { JoinSessionHandler } from '@features/sharing';
 
 interface HistoryViewProps {
   flights: Flight[];
@@ -27,7 +28,7 @@ interface HistoryViewProps {
   onRestore?: (flight: Flight) => void;
   onEdit?: (flight: Flight) => void;
   onDuplicate?: (flight: Flight) => void;
-  onJoin?: (token: string) => void;
+  onJoin?: JoinSessionHandler;
   userId?: string;
   isGuest?: boolean;
   guestPermissions?: 'view' | 'edit';

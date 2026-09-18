@@ -4,6 +4,10 @@ import { passengerWord, permWord, t, ticketWord } from '../t';
 describe('t', () => {
   it('returns catalog copy and interpolates variables', () => {
     expect(t('auth.submitLogin')).toBe('Войти');
+    expect(t('share.inviteEdit')).toContain('откроется Telegram Mini App');
+    expect(t('share.inviteEdit')).not.toContain('RunApp');
+    expect(t('invites.emptyHint')).toContain('Поделиться');
+    expect(t('invites.listActive')).toBe('Список активных приглашений');
     expect(t('form.notesTooLong', { max: 500 })).toBe('Заметка не длиннее 500 символов');
     expect(t('history.noResults', { query: 'Сочи' })).toBe('Ничего не найдено по запросу «Сочи»');
     expect(permWord('edit')).toBe('редактирование');

@@ -4,6 +4,7 @@ import { Flight } from '@shared/types';
 import { ShareFlightModal } from '@features/sharing';
 import { SharedSessionsList } from '@features/sharing';
 import { JoinSessionModal } from '@features/sharing';
+import type { JoinSessionHandler } from '@features/sharing';
 import { t } from '@shared/i18n';
 import { toast } from '@shared/ui/Toast';
 import styles from '../HistoryView.module.css';
@@ -11,7 +12,7 @@ import styles from '../HistoryView.module.css';
 interface AccessManagementProps {
   flights: Flight[];
   userId?: string;
-  onJoin?: (token: string) => void;
+  onJoin?: JoinSessionHandler;
   isEmptyState: boolean;
 }
 
@@ -26,10 +27,9 @@ export const AccessManagement: React.FC<AccessManagementProps> = ({
   const [showJoinModal, setShowJoinModal] = useState<boolean>(false);
   const [showSessionsModal, setShowSessionsModal] = useState<boolean>(false);
 
-  const handleJoin = (token: string) => {
-    if (onJoin) {
-      onJoin(token);
-    }
+  const handleJoin: JoinSessionHandler = async (token) => {
+    if (!onJoin) return false;
+    return onJoin(token);
   };
 
   const handleShareCreated = () => {
