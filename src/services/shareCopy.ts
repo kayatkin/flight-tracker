@@ -3,23 +3,24 @@ import type { SharePermissions } from './shareUrls';
 
 export const buildInviteMessage = (params: {
   permissions: SharePermissions;
-  shareUrl: string;
   webUrl: string;
+  telegramUrl?: string | null;
 }): string => {
-  if (params.permissions === 'edit') {
-    return t('share.inviteEdit', { telegram: params.shareUrl, web: params.webUrl });
+  const base = params.permissions === 'edit'
+    ? t('share.inviteEdit', { web: params.webUrl })
+    : t('share.inviteView', { web: params.webUrl });
+  if (params.telegramUrl && params.telegramUrl !== params.webUrl) {
+    return `${base}\n\n${t('share.inviteTelegram', { telegram: params.telegramUrl })}`;
   }
-  return t('share.inviteView', { web: params.shareUrl });
+  return base;
 };
 
-/** Links only: edit invites include Telegram (edit) and web (view without Telegram). */
 export const buildInviteLinks = (params: {
-  permissions: SharePermissions;
-  shareUrl: string;
   webUrl: string;
+  telegramUrl?: string | null;
 }): string => {
-  if (params.permissions === 'edit' && params.webUrl && params.webUrl !== params.shareUrl) {
-    return `${params.shareUrl}\n${params.webUrl}`;
+  if (params.telegramUrl && params.telegramUrl !== params.webUrl) {
+    return `${params.webUrl}\n${params.telegramUrl}`;
   }
-  return params.shareUrl;
+  return params.webUrl;
 };

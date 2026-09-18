@@ -6,26 +6,26 @@ import styles from './ShareLinkOptions.module.css';
 
 interface ShareLinkOptionsProps {
   shareUrl: string;
-  webUrl: string;
+  telegramUrl?: string | null;
   permissions: 'view' | 'edit';
   onCopy: (text: string) => void;
 }
 
 const ShareLinkOptions: React.FC<ShareLinkOptionsProps> = ({
   shareUrl,
-  webUrl,
+  telegramUrl,
   permissions,
   onCopy
 }) => {
   const [shareWithInstructions, setShareWithInstructions] = useState<boolean>(true);
 
   const instructionsText = useMemo(
-    () => buildInviteMessage({ permissions, shareUrl, webUrl }),
-    [permissions, shareUrl, webUrl]
+    () => buildInviteMessage({ permissions, webUrl: shareUrl, telegramUrl }),
+    [permissions, shareUrl, telegramUrl]
   );
   const linksOnly = useMemo(
-    () => buildInviteLinks({ permissions, shareUrl, webUrl }),
-    [permissions, shareUrl, webUrl]
+    () => buildInviteLinks({ webUrl: shareUrl, telegramUrl }),
+    [shareUrl, telegramUrl]
   );
 
   const handleCopyPrimary = () => {

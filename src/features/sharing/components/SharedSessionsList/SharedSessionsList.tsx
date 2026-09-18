@@ -141,13 +141,11 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
   );
 
   // 🔥 ИСПРАВЛЕНО: Правильная генерация ссылок в зависимости от прав
-  const copyToken = useCallback(async (token: string, permissions: 'view' | 'edit') => {
-    const url = buildShareUrl(token, permissions);
-    const linkType = permissions === 'edit' ? t('invites.telegramType') : t('invites.webType');
-
+  const copyToken = useCallback(async (token: string) => {
+    const url = buildShareUrl(token);
     const copied = await copyToClipboard(url);
     if (!copied) {
-      logError(`Не удалось скопировать ${linkType}`);
+      logError('Не удалось скопировать ссылку приглашения');
       setError(t('share.copyFailed'));
       return;
     }
@@ -373,27 +371,22 @@ const SharedSessionsList: React.FC<SharedSessionsListProps> = ({
                         <div className={styles.actionButtonsCompact}>
                           {canCopyLink ? (
                           <button
-                            onClick={() => copyToken(session.token as string, session.permissions)}
+                            onClick={() => copyToken(session.token as string)}
                             className={`${styles.copyButtonCompact} ${
                               isTokenCopied ? styles.copyButtonCompactActive : ''
                             }`}
                             aria-label={
                               isTokenCopied
                                 ? t('invites.copied')
-                                : session.permissions === 'edit'
-                                  ? t('invites.copyTelegram')
-                                  : t('invites.copyWeb')
+                                : t('invites.copyWeb')
                             }
                             disabled={!session.is_active}
                             aria-disabled={!session.is_active}
                             title={isTokenCopied
                               ? t('invites.copiedShort')
-                              : session.permissions === 'edit'
-                                ? t('invites.copyTelegramTitle')
-                                : t('invites.copyWebTitle')}
+                              : t('invites.copyWebTitle')}
                           >
-                            {isTokenCopied ? t('invites.copiedBtn') :
-                              session.permissions === 'edit' ? '📱 Telegram' : '🌐 Web'}
+                            {isTokenCopied ? t('invites.copiedBtn') : '🌐 Ссылка'}
                           </button>
                           ) : (
                             <span className={styles.tokenPreview} title={t('invites.shownOnceTitle')}>

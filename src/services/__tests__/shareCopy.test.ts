@@ -8,15 +8,17 @@ describe('shareCopy', () => {
     });
   });
 
-  it('puts both Telegram and web URLs into an edit invite', () => {
+  it('uses the web URL for edit and optionally adds Mini App', () => {
+    const web = 'http://localhost:5173/flight-tracker/?token=tok';
     const text = buildInviteMessage({
       permissions: 'edit',
-      shareUrl: 'https://t.me/bot?startapp=tok',
-      webUrl: 'http://localhost:5173/flight-tracker/?token=tok',
+      webUrl: web,
+      telegramUrl: 'https://t.me/bot?startapp=tok',
     });
+    expect(text).toContain(web);
+    expect(text).toContain('можно смотреть и менять');
+    expect(text).toContain('Telegram и регистрация не нужны');
     expect(text).toContain('https://t.me/bot?startapp=tok');
-    expect(text).toContain('http://localhost:5173/flight-tracker/?token=tok');
-    expect(text).toContain('Без Telegram');
     expect(text).not.toContain('RunApp');
   });
 
@@ -24,24 +26,20 @@ describe('shareCopy', () => {
     const web = 'http://localhost:5173/flight-tracker/?token=tok';
     const text = buildInviteMessage({
       permissions: 'view',
-      shareUrl: web,
       webUrl: web,
     });
     expect(text).toContain(web);
-    expect(text).toContain('Telegram не нужен');
+    expect(text).toContain('Telegram и регистрация не нужны');
     expect(text).not.toContain('t.me');
   });
 
-  it('copies both links for edit and one for view', () => {
+  it('copies web plus Mini App when both exist', () => {
     expect(buildInviteLinks({
-      permissions: 'edit',
-      shareUrl: 'https://t.me/bot?startapp=tok',
       webUrl: 'http://localhost:5173/?token=tok',
-    })).toBe('https://t.me/bot?startapp=tok\nhttp://localhost:5173/?token=tok');
+      telegramUrl: 'https://t.me/bot?startapp=tok',
+    })).toBe('http://localhost:5173/?token=tok\nhttps://t.me/bot?startapp=tok');
 
     expect(buildInviteLinks({
-      permissions: 'view',
-      shareUrl: 'http://localhost:5173/?token=tok',
       webUrl: 'http://localhost:5173/?token=tok',
     })).toBe('http://localhost:5173/?token=tok');
   });

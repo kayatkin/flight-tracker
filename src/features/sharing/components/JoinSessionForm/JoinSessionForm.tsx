@@ -1,8 +1,7 @@
 // src/features/sharing/components/JoinSessionForm/JoinSessionForm.tsx
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { t } from '@shared/i18n';
-import { extractShareToken, looksLikeTelegramShareUrl } from '@shared/utils/shareToken';
-import { getTelegramUserType } from '@shared/utils/telegramUserType';
+import { extractShareToken } from '@shared/utils/shareToken';
 import styles from './JoinSessionForm.module.css';
 
 export type JoinSessionHandler = (token: string) => Promise<boolean>;
@@ -16,11 +15,6 @@ const JoinSessionForm: React.FC<JoinSessionFormProps> = ({ onJoin, onCancel }) =
   const [token, setToken] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
-  const showTelegramEditNote = useMemo(
-    () => looksLikeTelegramShareUrl(token) && getTelegramUserType() === 'web_browser',
-    [token]
-  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,12 +64,6 @@ const JoinSessionForm: React.FC<JoinSessionFormProps> = ({ onJoin, onCancel }) =
             disabled={submitting}
           />
         </div>
-
-        {showTelegramEditNote && (
-          <div className={styles.note} role="note">
-            {t('join.editInTelegram')}
-          </div>
-        )}
 
         {error && <div className={styles.error} role="alert">{error}</div>}
 

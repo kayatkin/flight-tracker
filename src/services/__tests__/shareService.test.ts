@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { buildShareUrl, buildWebShareUrl } from '../shareUrls';
+import { buildShareUrl, buildTelegramShareUrl, buildWebShareUrl } from '../shareUrls';
 
 describe('shareService', () => {
   beforeEach(() => {
@@ -8,20 +8,23 @@ describe('shareService', () => {
     });
   });
 
-  it('buildShareUrl returns Telegram deep link for edit permission', () => {
-    const url = buildShareUrl('abc123token', 'edit');
+  it('buildShareUrl is a browser link for both view and edit', () => {
+    const view = buildShareUrl('abc123token', 'view');
+    const edit = buildShareUrl('abc123token', 'edit');
+    expect(view).toContain('token=abc123token');
+    expect(view).not.toContain('t.me');
+    expect(edit).toBe(view);
+  });
+
+  it('buildTelegramShareUrl is an optional Mini App deep link', () => {
+    const url = buildTelegramShareUrl('abc123token');
     expect(url).toMatch(/^https:\/\/t\.me\/test_flight_bot/);
     expect(url).toContain('startapp=abc123token');
   });
 
-  it('buildShareUrl returns web URL for view permission', () => {
-    const url = buildShareUrl('abc123token', 'view');
-    expect(url).toContain('token=abc123token');
-  });
-
-  it('buildWebShareUrl is a browser link without Telegram', () => {
+  it('buildWebShareUrl matches the canonical invite', () => {
     const url = buildWebShareUrl('abc123token');
-    expect(url).toContain('token=abc123token');
+    expect(url).toBe(buildShareUrl('abc123token'));
     expect(url).not.toContain('t.me');
   });
 });

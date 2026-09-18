@@ -33,7 +33,7 @@ describe('JoinSessionForm', () => {
       screen.getByLabelText('Ссылка или токен:'),
       'https://t.me/flight_tracker_bot?startapp=editToken99'
     );
-    expect(screen.getByRole('note')).toHaveTextContent('Редактирование откроется только в Mini App');
+    expect(screen.queryByRole('note')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Присоединиться' }));
 
     expect(onJoin).toHaveBeenCalledWith('editToken99');
