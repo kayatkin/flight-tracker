@@ -1,10 +1,10 @@
 import { supabase } from '@shared/lib';
 import { generateShareToken } from '@shared/utils/id';
 import { hashShareToken } from '@shared/utils/hashShareToken';
-import { buildShareUrl } from './shareUrls';
+import { buildShareUrl, buildTelegramShareUrl, type SharePermissions } from './shareUrls';
 
-export type SharePermissions = 'view' | 'edit';
-export { buildShareUrl } from './shareUrls';
+export type { SharePermissions } from './shareUrls';
+export { buildShareUrl, buildTelegramShareUrl, buildWebShareUrl } from './shareUrls';
 
 export interface CreateShareSessionParams {
   ownerId: string;
@@ -15,6 +15,7 @@ export interface CreateShareSessionParams {
 export interface ShareSessionResult {
   token: string;
   url: string;
+  telegramUrl: string | null;
   expiresAt: string;
 }
 
@@ -67,7 +68,8 @@ export const createShareSession = async ({
 
   return {
     token,
-    url: buildShareUrl(token, permissions),
+    url: buildShareUrl(token),
+    telegramUrl: buildTelegramShareUrl(token),
     expiresAt: expiresAtIso,
   };
 };

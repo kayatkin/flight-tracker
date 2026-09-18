@@ -20,6 +20,8 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
   const [expiryDays, setExpiryDays] = useState<number>(7);
   const [generatedToken, setGeneratedToken] = useState<string>('');
   const [shareUrl, setShareUrl] = useState<string>('');
+  const [telegramUrl, setTelegramUrl] = useState<string>('');
+  const [expiresAtLabel, setExpiresAtLabel] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
@@ -28,14 +30,16 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
       setLoading(true);
       setError('');
       
-      const { token, url } = await createShareSession({
+      const { token, url, telegramUrl: miniAppUrl, expiresAt } = await createShareSession({
         ownerId: userId,
         permissions,
         expiryDays,
       });
 
       setShareUrl(url);
+      setTelegramUrl(miniAppUrl ?? '');
       setGeneratedToken(token);
+      setExpiresAtLabel(formatShareDate(expiresAt));
       onShareCreated(token);
         
     } catch (err: unknown) {
@@ -54,7 +58,10 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
         toast(t('share.copyFailed'), 'error');
         return;
       }
-      const hasInstructions = text.includes('КАК ОТКРЫТЬ') || text.includes('Привет!');
+      const hasInstructions = text.includes('КАК ОТКРЫТЬ')
+        || text.includes('Привет!')
+        || text.includes('Без Telegram')
+        || text.includes('Telegram не нужен');
       toast(
         hasInstructions ? t('share.copiedWithHelp') : t('share.copied'),
         'success'
@@ -75,6 +82,18 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
       const message = err instanceof Error ? err.message : t('share.revokeError');
       setError(message);
     }
+  };
+
+  const formatShareDate = (iso: string) => {
+    const expiryDate = new Date(iso);
+    if (Number.isNaN(expiryDate.getTime())) {
+      return iso;
+    }
+    return expiryDate.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   };
 
   const formatExpiryDate = () => {
@@ -185,27 +204,21 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                 <span className={styles.infoIcon}>🔒</span>
                 <div>
                   <strong>{t('share.rights')}</strong> {permissions === 'view' ? t('share.viewShort') : t('share.editShort')}
-                  {permissions === 'edit' && (
-                    <div className={styles.telegramNote}>
-                      {t('share.telegramNote')}
-                    </div>
-                  )}
+                  <div className={styles.telegramNote}>
+                    {t('share.whereItWorks')}
+                  </div>
                 </div>
               </div>
               <div className={styles.infoRow}>
                 <span className={styles.infoIcon}>📅</span>
                 <div>
-                  <strong>{t('share.until')}</strong> {t('share.untilDate', { date: formatExpiryDate() })}
+                  <strong>{t('share.until')}</strong> {t('share.untilDate', { date: expiresAtLabel || formatExpiryDate() })}
                 </div>
               </div>
             </div>
 
             <div className={styles.urlContainer}>
-              <div className={styles.urlLabel}>
-                {permissions === 'edit'
-                  ? t('share.telegramLink')
-                  : t('share.webLink')}
-              </div>
+              <div className={styles.urlLabel}>{t('share.webLink')}</div>
               <input
                 type="text"
                 value={shareUrl}
@@ -213,10 +226,23 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
                 className={styles.urlInput}
                 onClick={(e) => (e.target as HTMLInputElement).select()}
               />
+              {telegramUrl ? (
+                <>
+                  <div className={styles.urlLabel}>{t('share.telegramLink')}</div>
+                  <input
+                    type="text"
+                    value={telegramUrl}
+                    readOnly
+                    className={styles.urlInput}
+                    onClick={(e) => (e.target as HTMLInputElement).select()}
+                  />
+                </>
+              ) : null}
             </div>
 
             <ShareLinkOptions
               shareUrl={shareUrl}
+              telegramUrl={telegramUrl || null}
               permissions={permissions}
               onCopy={handleCopyText}
             />

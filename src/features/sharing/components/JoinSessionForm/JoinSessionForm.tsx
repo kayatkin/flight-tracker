@@ -4,48 +4,38 @@ import { t } from '@shared/i18n';
 import { extractShareToken } from '@shared/utils/shareToken';
 import styles from './JoinSessionForm.module.css';
 
+export type JoinSessionHandler = (token: string) => Promise<boolean>;
+
 interface JoinSessionFormProps {
-  onJoin: (token: string) => void;
+  onJoin: JoinSessionHandler;
   onCancel: () => void;
 }
 
 const JoinSessionForm: React.FC<JoinSessionFormProps> = ({ onJoin, onCancel }) => {
   const [token, setToken] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const resolvedToken = extractShareToken(token) ?? token.trim();
 
+    const resolvedToken = extractShareToken(token);
     if (!resolvedToken) {
-      setError(t('join.empty'));
+      setError(token.trim() ? t('join.short') : t('join.empty'));
       return;
     }
 
-    if (resolvedToken.length < 10) {
-      setError(t('join.short'));
-      return;
-    }
-
-    onJoin(resolvedToken);
-  };
-
-  const extractTokenFromUrl = () => {
-    const inputValue = token.trim();
-    
-    if (!inputValue) {
-      setError(t('join.needUrl'));
-      return;
-    }
-
-    const extractedToken = extractShareToken(inputValue);
-    
-    if (extractedToken) {
-      setToken(extractedToken);
-      setError('');
-    } else {
-      setError(t('join.notFound'));
+    setSubmitting(true);
+    setError('');
+    try {
+      const joined = await onJoin(resolvedToken);
+      if (!joined) {
+        setError(t('errors.joinFailed'));
+      }
+    } catch {
+      setError(t('errors.joinFailed'));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -70,24 +60,21 @@ const JoinSessionForm: React.FC<JoinSessionFormProps> = ({ onJoin, onCancel }) =
             }}
             placeholder={t('join.placeholder')}
             className={styles.input}
+            autoComplete="off"
+            disabled={submitting}
           />
-          <button 
-            type="button" 
-            onClick={extractTokenFromUrl}
-            className={styles.extractButton}
-          >
-            {t('join.extract')}
-          </button>
         </div>
 
-        {error && <div className={styles.error}>{error}</div>}
+        {error && <div className={styles.error} role="alert">{error}</div>}
+
+        <p className={styles.leaveHint}>{t('join.leaveHint')}</p>
 
         <div className={styles.buttonGroup}>
-          <button type="button" onClick={onCancel} className={styles.cancelButton}>
+          <button type="button" onClick={onCancel} className={styles.cancelButton} disabled={submitting}>
             {t('join.cancel')}
           </button>
-          <button type="submit" className={styles.joinButton}>
-            {t('join.submit')}
+          <button type="submit" className={styles.joinButton} disabled={submitting}>
+            {submitting ? t('join.submitting') : t('join.submit')}
           </button>
         </div>
       </form>

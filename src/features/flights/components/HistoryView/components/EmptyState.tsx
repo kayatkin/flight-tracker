@@ -2,13 +2,14 @@ import React from 'react';
 import { t } from '@shared/i18n';
 import { Flight } from '@shared/types';
 import { AccessManagement } from './AccessManagement';
+import type { JoinSessionHandler } from '@features/sharing';
 import styles from '../HistoryView.module.css';
 
 interface EmptyStateProps {
   isGuest: boolean;
   flights?: Flight[];
   userId?: string;
-  onJoin?: (token: string) => void;
+  onJoin?: JoinSessionHandler;
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({ 

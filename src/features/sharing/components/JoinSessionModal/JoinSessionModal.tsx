@@ -1,20 +1,21 @@
 import React from 'react';
-import JoinSessionForm from '../JoinSessionForm/JoinSessionForm';
+import JoinSessionForm, { type JoinSessionHandler } from '../JoinSessionForm/JoinSessionForm';
 import { t } from '@shared/i18n';
 import { useEscapeToClose } from '@shared/hooks';
 import styles from './JoinSessionModal.module.css';
 
 interface JoinSessionModalProps {
-  onJoin: (token: string) => void | Promise<void>;
+  onJoin: JoinSessionHandler;
   onClose: () => void;
 }
 
 const JoinSessionModal: React.FC<JoinSessionModalProps> = ({ onJoin, onClose }) => {
   const dialogRef = useEscapeToClose<HTMLDivElement>(onClose);
 
-  const handleJoin = async (token: string) => {
-    await onJoin(token);
-    onClose();
+  const handleJoin: JoinSessionHandler = async (token) => {
+    const joined = await onJoin(token);
+    if (joined) onClose();
+    return joined;
   };
 
   return (

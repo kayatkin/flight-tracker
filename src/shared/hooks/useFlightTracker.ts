@@ -39,7 +39,7 @@ interface UseFlightTrackerResult {
   handleDuplicateFlight: (flight: Flight) => void;
   handleDeleteFlight: (id: string) => void;
   handleRestoreFlight: (flight: Flight) => void;
-  handleJoinSession: (token: string) => Promise<void>;
+  handleJoinSession: (token: string) => Promise<boolean>;
   handleLeaveGuestMode: () => void;
   retrySave: () => void;
   needsAuth: boolean;
@@ -335,18 +335,17 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
     rememberFlightLookups(flight);
   }, [canMutate, rememberFlightLookups, markFlightChanged]);
 
-  const handleJoinSession = useCallback(async (token: string) => {
+  const handleJoinSession = useCallback(async (token: string): Promise<boolean> => {
     try {
       devLog('[HOOK] Joining session');
-      setLoading(true);
-      
+
       const guestResult = await initGuestMode(token);
       
       if (guestResult) {
         const { guestUser, ownerData } = guestResult;
         if (!ownerData.ok) {
           toast(t('errors.loadOwner'), 'error');
-          return;
+          return false;
         }
         
         const userType = getTelegramUserType();
@@ -385,15 +384,16 @@ export const useFlightTracker = (): UseFlightTrackerResult => {
           t('guest.joined', { perm: permWord(guestUser.permissions) }),
           'success'
         );
-      } else {
-        devLog('[HOOK] Invalid or expired token');
-        toast(t('errors.badToken'), 'error');
+        return true;
       }
+
+      devLog('[HOOK] Invalid or expired token');
+      toast(t('errors.badToken'), 'error');
+      return false;
     } catch (err) {
       logError('[HOOK] Join error:', err);
       toast(t('errors.joinFailed'), 'error');
-    } finally {
-      setLoading(false);
+      return false;
     }
   }, [applyInitResult]);
 

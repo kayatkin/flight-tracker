@@ -177,16 +177,15 @@ App.tsx → appInitService.ts
 
 ```
 Владелец:
-  ShareFlightModal → dataService.ts → Supabase (shared_sessions)
-    → Генерация токена
-    → Telegram deep-link: https://t.me/bot?start=share_<token>
+  ShareFlightModal → shareService.ts → Supabase (shared_sessions, token_hash)
+    → Просмотр и правка: одна web-ссылка ?token= (права на приглашении)
+    → Дополнительно t.me/bot?startapp= для Mini App
 
 Гость:
-  Telegram bot /start share_<token>
-    → Проверка токена в Supabase
-      → Кнопка WebApp с URL ?token=<token>
-        → appInitService.ts
-          → Загрузка чужих данных (view/edit)
+  Браузер ?token= или Mini App startapp / История → «Присоединиться»
+    → auth-guest выдаёт гостевой JWT с правами приглашения (браузер и Telegram одинаково)
+      → appInitService.ts
+        → История владельца (view / edit)
 ```
 
 ## Система тем

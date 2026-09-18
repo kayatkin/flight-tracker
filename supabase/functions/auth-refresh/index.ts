@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
       return fail(req, 'Share session expired');
     }
     accessTtl = clampTtlSeconds(shareRemaining, ACCESS_TOKEN_TTL_SECONDS);
-    row.permissions = effectiveGuestPermissions(session.permissions, row.permissions);
+    row.permissions = effectiveGuestPermissions(session.permissions);
   } else {
     accessTtl = clampTtlSeconds(refreshRemaining, ACCESS_TOKEN_TTL_SECONDS);
   }

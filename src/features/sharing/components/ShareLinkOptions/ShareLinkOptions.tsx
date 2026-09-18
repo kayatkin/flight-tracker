@@ -1,45 +1,41 @@
 // src/features/sharing/components/ShareLinkOptions/ShareLinkOptions.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { t } from '@shared/i18n';
+import { buildInviteLinks, buildInviteMessage } from '@services/shareCopy';
 import styles from './ShareLinkOptions.module.css';
 
 interface ShareLinkOptionsProps {
   shareUrl: string;
+  telegramUrl?: string | null;
   permissions: 'view' | 'edit';
   onCopy: (text: string) => void;
 }
 
 const ShareLinkOptions: React.FC<ShareLinkOptionsProps> = ({
   shareUrl,
+  telegramUrl,
   permissions,
   onCopy
 }) => {
   const [shareWithInstructions, setShareWithInstructions] = useState<boolean>(true);
-  const [instructionsText, setInstructionsText] = useState<string>('');
 
-  // Генерируем текст инструкции
-  useEffect(() => {
-    setInstructionsText(
-      permissions === 'edit' ? t('share.inviteEdit') : t('share.inviteView')
-    );
-  }, [permissions]);
+  const instructionsText = useMemo(
+    () => buildInviteMessage({ permissions, webUrl: shareUrl, telegramUrl }),
+    [permissions, shareUrl, telegramUrl]
+  );
+  const linksOnly = useMemo(
+    () => buildInviteLinks({ webUrl: shareUrl, telegramUrl }),
+    [shareUrl, telegramUrl]
+  );
 
-  // Основная функция копирования (зависит от чекбокса)
   const handleCopyPrimary = () => {
-    if (shareWithInstructions) {
-      const textToCopy = instructionsText + shareUrl;
-      onCopy(textToCopy);
-    } else {
-      onCopy(shareUrl);
-    }
+    onCopy(shareWithInstructions ? instructionsText : linksOnly);
   };
 
-  // Копирование только ссылки (всегда, только при включенном чекбоксе)
   const handleCopyLinkOnly = () => {
-    onCopy(shareUrl);
+    onCopy(linksOnly);
   };
 
-  // Нативный шеринг
   const handleShareViaNative = async () => {
     if (navigator.share) {
       try {
@@ -47,26 +43,23 @@ const ShareLinkOptions: React.FC<ShareLinkOptionsProps> = ({
           title: permissions === 'edit'
             ? t('share.nativeEdit')
             : t('share.nativeView'),
-          text: shareWithInstructions ? instructionsText + shareUrl : shareUrl,
+          text: shareWithInstructions ? instructionsText : linksOnly,
           url: shareWithInstructions ? undefined : shareUrl,
         };
         
         await navigator.share(shareData);
       } catch (err) {
         if ((err as Error).name !== 'AbortError') {
-          // Fallback to copy
           handleCopyPrimary();
         }
       }
     } else {
-      // Fallback for desktop
       handleCopyPrimary();
     }
   };
 
   return (
     <div className={styles.container}>
-      {/* Настройки отправки */}
       <div className={styles.optionsSection}>
         <label className={styles.checkboxLabel}>
           <input
@@ -85,7 +78,6 @@ const ShareLinkOptions: React.FC<ShareLinkOptionsProps> = ({
         </p>
       </div>
 
-      {/* Предпросмотр инструкции */}
       {shareWithInstructions && (
         <div className={styles.previewSection}>
           <div className={styles.previewHeader}>
@@ -94,16 +86,13 @@ const ShareLinkOptions: React.FC<ShareLinkOptionsProps> = ({
           <div className={styles.previewContent}>
             <div className={styles.previewText}>
               {instructionsText}
-              <span className={styles.previewUrl}>{shareUrl}</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Кнопки действий */}
       <div className={styles.actionsSection}>
         <div className={styles.buttonGroup}>
-          {/* Показываем "Только ссылку" ТОЛЬКО когда чекбокс включен */}
           {shareWithInstructions && (
             <button
               onClick={handleCopyLinkOnly}
@@ -114,7 +103,6 @@ const ShareLinkOptions: React.FC<ShareLinkOptionsProps> = ({
             </button>
           )}
           
-          {/* Основная кнопка - занимает всю ширину если нет вторичной */}
           <button
             onClick={handleCopyPrimary}
             className={shareWithInstructions ? styles.copyButtonPrimary : styles.copyButtonFull}
