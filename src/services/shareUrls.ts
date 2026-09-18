@@ -1,5 +1,6 @@
 import { env } from '@shared/config/env';
-import type { SharePermissions } from './shareService';
+
+export type SharePermissions = 'view' | 'edit';
 
 const webShareUrl = (token: string): string => {
   const basePath = import.meta.env.BASE_URL || '/';
@@ -12,6 +13,8 @@ const webShareUrl = (token: string): string => {
   const path = `${origin}${basePath}`.replace(/\/?$/, '/');
   return `${path}?token=${encodeURIComponent(token)}`;
 };
+
+export const buildWebShareUrl = (token: string): string => webShareUrl(token);
 
 export const buildShareUrl = (token: string, permissions: SharePermissions): string => {
   if (permissions === 'edit') {

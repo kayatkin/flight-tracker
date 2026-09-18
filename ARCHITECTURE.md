@@ -179,7 +179,7 @@ App.tsx → appInitService.ts
 Владелец:
   ShareFlightModal → shareService.ts → Supabase (shared_sessions, token_hash)
     → Просмотр: https://…/flight-tracker/?token=<token>
-    → Редактирование: https://t.me/bot?startapp=<token>
+    → Редактирование: t.me/bot?startapp=<token> (правка) + та же web-ссылка (просмотр без Telegram)
 
 Гость:
   Браузер ?token= или Mini App startapp / История → «Присоединиться»

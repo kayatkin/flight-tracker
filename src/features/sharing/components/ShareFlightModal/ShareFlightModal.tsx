@@ -20,6 +20,7 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
   const [expiryDays, setExpiryDays] = useState<number>(7);
   const [generatedToken, setGeneratedToken] = useState<string>('');
   const [shareUrl, setShareUrl] = useState<string>('');
+  const [webUrl, setWebUrl] = useState<string>('');
   const [expiresAtLabel, setExpiresAtLabel] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
@@ -29,13 +30,14 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
       setLoading(true);
       setError('');
       
-      const { token, url, expiresAt } = await createShareSession({
+      const { token, url, webUrl: guestWebUrl, expiresAt } = await createShareSession({
         ownerId: userId,
         permissions,
         expiryDays,
       });
 
       setShareUrl(url);
+      setWebUrl(guestWebUrl);
       setGeneratedToken(token);
       setExpiresAtLabel(formatShareDate(expiresAt));
       onShareCreated(token);
@@ -56,7 +58,10 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
         toast(t('share.copyFailed'), 'error');
         return;
       }
-      const hasInstructions = text.includes('КАК ОТКРЫТЬ') || text.includes('Привет!');
+      const hasInstructions = text.includes('КАК ОТКРЫТЬ')
+        || text.includes('Привет!')
+        || text.includes('Без Telegram')
+        || text.includes('Telegram не нужен');
       toast(
         hasInstructions ? t('share.copiedWithHelp') : t('share.copied'),
         'success'
@@ -215,22 +220,42 @@ const ShareFlightModal: React.FC<ShareFlightModalProps> = ({ userId, onClose, on
             </div>
 
             <div className={styles.urlContainer}>
-              <div className={styles.urlLabel}>
-                {permissions === 'edit'
-                  ? t('share.telegramLink')
-                  : t('share.webLink')}
-              </div>
-              <input
-                type="text"
-                value={shareUrl}
-                readOnly
-                className={styles.urlInput}
-                onClick={(e) => (e.target as HTMLInputElement).select()}
-              />
+              {permissions === 'edit' && webUrl && webUrl !== shareUrl ? (
+                <>
+                  <div className={styles.urlLabel}>{t('share.telegramLink')}</div>
+                  <input
+                    type="text"
+                    value={shareUrl}
+                    readOnly
+                    className={styles.urlInput}
+                    onClick={(e) => (e.target as HTMLInputElement).select()}
+                  />
+                  <div className={styles.urlLabel}>{t('share.webLinkView')}</div>
+                  <input
+                    type="text"
+                    value={webUrl}
+                    readOnly
+                    className={styles.urlInput}
+                    onClick={(e) => (e.target as HTMLInputElement).select()}
+                  />
+                </>
+              ) : (
+                <>
+                  <div className={styles.urlLabel}>{t('share.webLink')}</div>
+                  <input
+                    type="text"
+                    value={shareUrl}
+                    readOnly
+                    className={styles.urlInput}
+                    onClick={(e) => (e.target as HTMLInputElement).select()}
+                  />
+                </>
+              )}
             </div>
 
             <ShareLinkOptions
               shareUrl={shareUrl}
+              webUrl={webUrl || shareUrl}
               permissions={permissions}
               onCopy={handleCopyText}
             />

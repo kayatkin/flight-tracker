@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { buildShareUrl } from '../shareUrls';
+import { buildShareUrl, buildWebShareUrl } from '../shareUrls';
 
 describe('shareService', () => {
   beforeEach(() => {
@@ -17,5 +17,11 @@ describe('shareService', () => {
   it('buildShareUrl returns web URL for view permission', () => {
     const url = buildShareUrl('abc123token', 'view');
     expect(url).toContain('token=abc123token');
+  });
+
+  it('buildWebShareUrl is a browser link without Telegram', () => {
+    const url = buildWebShareUrl('abc123token');
+    expect(url).toContain('token=abc123token');
+    expect(url).not.toContain('t.me');
   });
 });
