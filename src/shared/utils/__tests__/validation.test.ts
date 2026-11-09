@@ -40,6 +40,16 @@ describe('validateFlightForm', () => {
     expect(errors).toContain('Укажите дату вылета');
   });
 
+  it('принимает вылет и возврат в прошлом', () => {
+    const errors = validateFlightForm({
+      ...validFormData,
+      type: 'roundTrip',
+      departureDate: '2026-04-11',
+      returnDate: '2026-04-13',
+    });
+    expect(errors).toEqual([]);
+  });
+
   it('требует returnDate для roundTrip', () => {
     const errors = validateFlightForm({
       ...validFormData,

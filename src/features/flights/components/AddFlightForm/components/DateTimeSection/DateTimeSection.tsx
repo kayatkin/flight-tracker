@@ -1,7 +1,6 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { t } from '@shared/i18n';
 import { FlightFormData } from '@shared/hooks';
-import { toLocalISODate } from '@shared/utils/date';
 import FlightTypeSection from '../FlightTypeSection/FlightTypeSection';
 import styles from './DateTimeSection.module.css';
 
@@ -14,11 +13,7 @@ const DateTimeSection: React.FC<DateTimeSectionProps> = ({
   formData,
   updateFormData
 }) => {
-  // Сегодняшняя дата для ограничения выбора
-  const today = useMemo(() => toLocalISODate(), []);
-
-  // Минимальная дата для обратного рейса
-  const minReturnDate = formData.departureDate || today;
+  const minReturnDate = formData.departureDate || undefined;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -49,7 +44,6 @@ const DateTimeSection: React.FC<DateTimeSectionProps> = ({
               name="departureDate"
               value={formData.departureDate}
               onChange={handleChange}
-              min={today}
               required
               className={styles.dateInput}
               aria-label={t('form.departureDateLabel')}
