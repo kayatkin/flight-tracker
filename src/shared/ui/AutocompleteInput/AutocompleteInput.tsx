@@ -8,6 +8,7 @@ interface AutocompleteInputProps {
   isOpen: boolean;
   onSelectSuggestion: (value: string) => void;
   onCloseSuggestions: () => void;
+  onOpenSuggestions?: () => void;
   placeholder: string;
   label?: string;
   hideLabel?: boolean; // Новый пропс для скрытия label
@@ -25,6 +26,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
   isOpen,
   onSelectSuggestion,
   onCloseSuggestions,
+  onOpenSuggestions,
   placeholder,
   label,
   hideLabel = false, // Значение по умолчанию
@@ -102,7 +104,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          onFocus={() => {}} // Оставлено для consistency, но не выполняет действий
+          onFocus={() => onOpenSuggestions?.()}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}

@@ -43,6 +43,7 @@ const AirlineSection: React.FC<AirlineSectionProps> = ({
             isOpen={airlineAutocomplete.isOpen}
             onSelectSuggestion={handleAirlineSelect}
             onCloseSuggestions={airlineAutocomplete.closeSuggestions}
+            onOpenSuggestions={airlineAutocomplete.openSuggestions}
             placeholder={t('form.airlinePlaceholder')}
             label={t('form.airlineTitle')}
             hideLabel={true}
